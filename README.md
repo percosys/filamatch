@@ -75,7 +75,7 @@ by hand, every time. Filamatch keeps that information in the design:
 |---|---|
 | **Autodesk Fusion** | Current release, macOS or Windows. Filamatch uses Fusion's built-in Python; nothing else to install. |
 | **OrcaSlicer** | For **Send to Orca**. Bambu Studio also works for project preparation. Without a slicer you can still export a tagged 3MF. |
-| **Bambuddy** (optional) | To read the filaments loaded on Bambu Lab printers. Without it, pick slots by hand or use the catalog. Direct printer connections are on the [roadmap](docs/roadmap.md). |
+| **Bambuddy** (optional) | To read the filaments loaded on Bambu Lab printers. Without it, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. A manual printer setup and direct printer connections are on the [roadmap](docs/roadmap.md). |
 
 Windows support is written but has been tested less than macOS.
 

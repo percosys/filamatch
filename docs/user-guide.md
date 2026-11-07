@@ -19,8 +19,9 @@ When nothing is set up yet, Filamatch shows a short welcome:
 1. **Connect Bambuddy.** Enter the address of your Bambuddy server (for
    example `http://192.168.1.20:8000`) and an API key created in Bambuddy.
    Filamatch then reads your printers and the spools in their AMS slots.
-2. **Or skip.** You can use the catalog and pick slots by hand. Connect later
-   in Settings.
+2. **Or skip.** You can still add filaments from the catalog. Without a printer
+   connection, an export puts the filaments in slots 1, 2, 3… in the order
+   they appear in the design. Connect later in Settings.
 
 ## Home
 
