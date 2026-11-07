@@ -11,8 +11,11 @@
 
 <p align="center">
   <a href="https://github.com/percosys/filamatch/releases/latest">Download</a> ·
-  <a href="docs/user-guide.md">User guide</a> ·
-  <a href="https://buymeacoffee.com/percosys">Buy me a coffee</a>
+  <a href="docs/user-guide.md">User guide</a>
+</p>
+
+<p align="center">
+  <a href="https://buymeacoffee.com/percosys"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="40"></a>
 </p>
 
 ![Filamatch in Fusion: the design's filaments matched to printer slots](docs/images/home.png)
@@ -124,9 +127,12 @@ Settings live in your user folder (see
 
 ## Support
 
-Filamatch is free and open source. If it saves you time, you can
-[buy me a coffee](https://buymeacoffee.com/percosys). Bug reports and test
-results from other printers help just as much: see
+Filamatch is free and open source. If it saves you time, you can buy me a
+coffee:
+
+<a href="https://buymeacoffee.com/percosys"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="48"></a>
+
+Bug reports and test results from other printers help just as much: see
 [CONTRIBUTING](CONTRIBUTING.md).
 
 ## License and credits

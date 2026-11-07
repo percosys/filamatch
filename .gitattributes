@@ -1,1 +1,2 @@
 .gitlab-ci.yml export-ignore
+scripts/publish_public.py export-ignore
