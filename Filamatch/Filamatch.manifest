@@ -1,0 +1,14 @@
+{
+  "autodeskProduct": "Fusion",
+  "type": "addin",
+  "id": "a3dbeff6-cf80-42bd-973a-62b46c7080c9",
+  "author": "Percosys",
+  "description": {
+    "": "Filamatch: give each body a real filament, match it to the slots on your printer, and send the design to OrcaSlicer ready to print."
+  },
+  "version": "0.3.0",
+  "runOnStartup": true,
+  "supportedOS": "windows|mac",
+  "editEnabled": true,
+  "iconFilename": "AddInIcon.svg"
+}

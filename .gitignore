@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Slicer CLI output
+result.json
+
+
+# Release zips (scripts/build_release.py)
+dist/
+
+# Local notes and history that are not published
+_private/

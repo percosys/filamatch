@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Filamatch</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <svg width="0" height="0" class="icon-defs" aria-hidden="true" focusable="false">
+    <symbol id="icon-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4L10.6 6a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z"/></symbol>
+    <symbol id="icon-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></symbol>
+  </svg>
+
+  <div id="demo-banner" class="banner banner--warning" role="note" hidden>
+    <strong>Preview</strong> with sample data. Open the palette from Fusion to connect.
+  </div>
+
+  <div id="init-error" class="banner banner--error" role="alert" hidden>
+    <span id="init-error-text"></span>
+    <button id="init-retry-btn" class="link link--small" type="button">Retry</button>
+  </div>
+
+  <main id="app" class="app">
+    <!-- =============================== Home =============================== -->
+    <section id="screen-home" class="screen" data-screen="home" aria-labelledby="home-title">
+      <header class="topbar">
+        <img class="topbar__logo" src="filamatch.svg" alt="" width="20" height="20">
+        <h1 id="home-title" class="topbar__title" tabindex="-1">Filamatch</h1>
+        <span id="busy-indicator" class="busy-indicator" hidden aria-hidden="true"></span>
+        <button id="printer-pill" class="pill" type="button" title="Printer used for slot matching">
+          <span id="printer-pill-dot" class="dot dot--off" aria-hidden="true"></span>
+          <span id="printer-pill-label">No printer</span>
+        </button>
+        <button id="open-settings-btn" class="icon-btn" type="button" aria-label="Settings" title="Settings">
+          <svg width="16" height="16" aria-hidden="true"><use href="#icon-gear"></use></svg>
+        </button>
+      </header>
+      <p id="connection-status" class="sr-only" role="status" aria-live="polite">Connecting to Fusion&hellip;</p>
+
+      <div class="screen__body">
+        <section class="design" aria-labelledby="design-title">
+          <div class="section-head">
+            <h2 id="design-title" class="section-head__title">This design</h2>
+            <span id="materials-summary" class="faint">0 bodies &middot; 0 filaments</span>
+            <button id="refresh-materials-btn" class="icon-btn icon-btn--small" type="button" aria-label="Check the design again" title="Check the design again">
+              <svg width="14" height="14" aria-hidden="true"><use href="#icon-refresh"></use></svg>
+            </button>
+          </div>
+          <div id="filament-list" class="list" role="list" aria-label="Filaments in this design and their printer slots"></div>
+          <p id="materials-status" class="status status--muted" role="status" aria-live="polite"></p>
+          <div class="links">
+            <button id="open-add-btn" class="link" type="button">+ Add filaments</button>
+            <button id="open-material-browser-btn" class="link" type="button">Open Material Browser</button>
+          </div>
+        </section>
+
+        <section class="card print-settings" aria-labelledby="print-settings-label">
+          <div class="card__row">
+            <div class="card__main">
+              <div id="print-settings-label" class="card__label">Print settings</div>
+              <div id="print-settings-summary" class="card__value">Loading printer profiles&hellip;</div>
+            </div>
+            <button id="print-settings-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="print-settings-body">Change</button>
+          </div>
+          <div id="print-settings-body" class="card__body" hidden>
+            <div class="field">
+              <label class="field-label" for="target-vendor">Vendor</label>
+              <select id="target-vendor" class="select-input" disabled><option value="">Loading profiles&hellip;</option></select>
+            </div>
+            <div class="field">
+              <label class="field-label" for="target-printer">Printer</label>
+              <select id="target-printer" class="select-input" disabled><option value="">&mdash;</option></select>
+            </div>
+            <div class="field">
+              <label class="field-label" for="target-process">Process</label>
+              <select id="target-process" class="select-input" disabled><option value="">&mdash;</option></select>
+            </div>
+            <p id="profiles-status" class="status status--muted" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <section class="send" aria-label="Send to Orca">
+          <div id="export-readiness" class="readiness" role="status" aria-live="polite"></div>
+          <button id="export-btn" class="btn btn--primary btn--big" type="button">Send to Orca</button>
+          <p id="export-status" class="status status--muted" role="status" aria-live="polite"></p>
+          <p class="save-line">
+            <span id="output-file-label">Saves the 3MF next to your other exports</span>
+            <span aria-hidden="true">&middot;</span>
+            <button id="browse-export-path-btn" class="link link--small" type="button" title="Choose where the 3MF is saved">Change</button>
+          </p>
+          <div id="export-details" class="result-details" hidden></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============================ Add filaments ============================ -->
+    <section id="screen-add" class="screen" data-screen="add" aria-labelledby="add-title" hidden>
+      <header class="topbar">
+        <button class="icon-btn" type="button" data-screen-back aria-label="Back">
+          <svg width="16" height="16" aria-hidden="true"><use href="#icon-back"></use></svg>
+        </button>
+        <h1 id="add-title" class="topbar__title" tabindex="-1">Add filaments</h1>
+      </header>
+
+      <div class="screen__body">
+        <div class="tabs" role="tablist" aria-label="Where the filaments come from">
+          <button id="tab-printer" class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-printer" data-tab="printer">On printer</button>
+          <button id="tab-catalog" class="tab" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="panel-catalog" data-tab="catalog">Catalog</button>
+          <button id="tab-online" class="tab" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="panel-online" data-tab="online">Search online</button>
+        </div>
+
+        <!-- On printer (Bambuddy) -->
+        <div id="panel-printer" class="tab-panel" role="tabpanel" aria-labelledby="tab-printer" data-tab-panel="printer">
+          <div class="row-tools">
+            <label class="sr-only" for="bambuddy-printer">Printer</label>
+            <select id="bambuddy-printer" class="select-input" disabled>
+              <option value="">Connect Bambuddy first</option>
+            </select>
+            <button id="bambuddy-refresh-btn" class="icon-btn" type="button" aria-label="Read the printer again" title="Read the printer again">
+              <svg width="14" height="14" aria-hidden="true"><use href="#icon-refresh"></use></svg>
+            </button>
+          </div>
+          <p id="bambuddy-status" class="status status--muted" role="status" aria-live="polite"></p>
+          <div id="bambuddy-empty" class="empty-card">
+            <p class="empty-card__title">Connect your printer to see what is loaded.</p>
+            <button id="bambuddy-setup-btn" class="btn btn--ghost" type="button">Connect Bambuddy</button>
+          </div>
+          <div id="bambuddy-slots-list" class="list" role="list" aria-label="Filaments loaded on the printer" hidden></div>
+          <p id="bambuddy-slots-note" class="faint" hidden>Filaments already in Fusion are skipped. The same filament in several slots is shown once.</p>
+          <div class="sticky-action">
+            <button id="bambuddy-import-btn" class="btn btn--primary btn--big" type="button" disabled>Add to Fusion</button>
+            <p id="bambuddy-import-status" class="status status--muted" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <!-- Catalog -->
+        <div id="panel-catalog" class="tab-panel" role="tabpanel" aria-labelledby="tab-catalog" data-tab-panel="catalog" hidden>
+          <label class="sr-only" for="catalog-search">Search filaments</label>
+          <input id="catalog-search" class="text-input" type="search" placeholder="Search name, brand, colour or type" autocomplete="off" spellcheck="false">
+          <div id="category-filters" class="category-filters" role="group" aria-label="Filter the catalog by category">
+            <button type="button" class="category-chip is-active" data-category="" aria-pressed="true">All</button>
+          </div>
+          <div class="row-tools row-tools--text">
+            <span id="catalog-count" class="faint">0 filaments</span>
+            <button id="select-all-btn" class="link link--small" type="button" title="Select the filaments shown">Select shown</button>
+            <button id="select-none-btn" class="link link--small" type="button">Clear</button>
+          </div>
+          <div id="catalog-list" class="catalog-list" role="group" aria-label="Filament catalog">
+            <p class="empty-state">Loading the catalog&hellip;</p>
+          </div>
+          <div class="sticky-action">
+            <button id="import-btn" class="btn btn--primary btn--big" type="button" disabled>Add selected to Fusion</button>
+            <span id="catalog-selection" class="sr-only">0 selected</span>
+            <p id="catalog-status" class="status status--muted" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <!-- Search online (Open Filament Database) -->
+        <div id="panel-online" class="tab-panel" role="tabpanel" aria-labelledby="tab-online" data-tab-panel="online" hidden>
+          <div class="row-tools">
+            <label class="sr-only" for="ofd-query">Search the Open Filament Database</label>
+            <input id="ofd-query" class="text-input" type="search" placeholder="e.g. PLA black, PETG, Prusament" autocomplete="off" spellcheck="false">
+            <label class="sr-only" for="ofd-material">Material</label>
+            <select id="ofd-material" class="select-input select-input--narrow">
+              <option value="">All</option>
+              <option value="PLA">PLA</option>
+              <option value="PETG">PETG</option>
+              <option value="ABS">ABS</option>
+              <option value="ASA">ASA</option>
+              <option value="TPU">TPU</option>
+              <option value="PC">PC</option>
+              <option value="PA">PA</option>
+              <option value="PVA">PVA</option>
+            </select>
+            <button id="ofd-search-btn" class="btn btn--ghost" type="button">Search</button>
+          </div>
+          <p id="ofd-dataset" class="faint">Open Filament Database (community data)</p>
+          <p id="ofd-status" class="status status--muted" role="status" aria-live="polite"></p>
+          <div id="ofd-results" class="catalog-list ofd-results" role="group" aria-label="Open Filament Database results">
+            <p class="empty-state">Search by name, brand or material.</p>
+          </div>
+          <div class="sticky-action">
+            <button id="ofd-import-btn" class="btn btn--primary btn--big" type="button" disabled>Add selected to Fusion</button>
+            <span id="ofd-selection" class="sr-only">0 selected</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== Settings ============================== -->
+    <section id="screen-settings" class="screen" data-screen="settings" aria-labelledby="settings-title" hidden>
+      <header class="topbar">
+        <button class="icon-btn" type="button" data-screen-back aria-label="Back">
+          <svg width="16" height="16" aria-hidden="true"><use href="#icon-back"></use></svg>
+        </button>
+        <h1 id="settings-title" class="topbar__title" tabindex="-1">Settings</h1>
+        <span id="app-version" class="version-chip" title="Add-in version">v&mdash;</span>
+      </header>
+
+      <div class="screen__body">
+        <section class="group" aria-labelledby="connections-title">
+          <h2 id="connections-title" class="group__title">Connections</h2>
+
+          <div class="card">
+            <div class="card__row">
+              <span id="bambuddy-dot" class="dot dot--off" aria-hidden="true"></span>
+              <div class="card__main">
+                <div class="card__name">Bambuddy</div>
+                <div id="bambuddy-summary" class="faint">Not connected</div>
+              </div>
+              <button id="bambuddy-edit-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="bambuddy-edit">Edit</button>
+            </div>
+            <div id="bambuddy-edit" class="card__body" hidden>
+              <div class="field">
+                <label class="field-label" for="bambuddy-url">Address</label>
+                <input id="bambuddy-url" class="text-input" type="text" placeholder="192.168.1.20:8000" autocomplete="off" spellcheck="false">
+              </div>
+              <div class="field">
+                <label class="field-label" for="bambuddy-api-key">API key</label>
+                <input id="bambuddy-api-key" class="text-input" type="password" placeholder="bb_..." autocomplete="off" spellcheck="false">
+                <button id="bambuddy-remove-key-btn" class="link link--small" type="button" hidden>Remove key</button>
+              </div>
+              <label class="checkbox-field" for="bambuddy-verify-tls">
+                <input id="bambuddy-verify-tls" type="checkbox" checked>
+                <span>Verify the HTTPS certificate</span>
+              </label>
+              <p class="faint">Use the direct address (port 8000), not a login-protected one. The key is kept in your system keychain.</p>
+              <button id="bambuddy-connect-btn" class="btn btn--primary" type="button">Connect</button>
+              <p id="setup-bambuddy-status" class="status status--muted" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__row">
+              <span id="slicer-dot" class="dot dot--off" aria-hidden="true"></span>
+              <div class="card__main">
+                <div class="card__name">OrcaSlicer</div>
+                <div id="slicer-summary" class="faint">Looking for OrcaSlicer&hellip;</div>
+              </div>
+              <button id="slicer-edit-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="slicer-edit">Change</button>
+            </div>
+            <div id="slicer-edit" class="card__body" hidden>
+              <div class="field">
+                <label class="field-label" for="orca-path">OrcaSlicer app</label>
+                <div class="input-with-button">
+                  <input id="orca-path" class="text-input" type="text" placeholder="/Applications/OrcaSlicer.app" autocomplete="off" spellcheck="false">
+                  <button id="browse-slicer-path-btn" class="btn btn--ghost" type="button">Browse&hellip;</button>
+                </div>
+              </div>
+              <p id="slicer-status" class="status status--muted" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="export-title">
+          <h2 id="export-title" class="group__title">Export</h2>
+          <div class="field">
+            <label class="field-label" for="output-path">Save the 3MF to</label>
+            <div class="input-with-button">
+              <input id="output-path" class="text-input" type="text" placeholder="&lt;folder&gt;/design.3mf" autocomplete="off" spellcheck="false">
+              <button id="settings-browse-export-btn" class="btn btn--ghost" type="button">Browse&hellip;</button>
+            </div>
+          </div>
+          <p id="settings-export-status" class="status status--muted" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="group" aria-labelledby="library-title">
+          <h2 id="library-title" class="group__title">Fusion library</h2>
+          <label class="switch-field" for="auto-library-update">
+            <span>Update the Filamatch library after adding filaments</span>
+            <input id="auto-library-update" type="checkbox" checked>
+          </label>
+          <button id="create-library-btn" class="link" type="button">Rebuild library now</button>
+          <p id="custom-library-status" class="status status--muted" role="status" aria-live="polite">Library: checking&hellip;</p>
+          <p id="favorites-status" class="status status--muted" role="status" aria-live="polite">Favorites: checking&hellip;</p>
+        </section>
+
+        <details class="advanced" id="advanced-section">
+          <summary class="advanced__summary">Advanced</summary>
+          <div class="advanced__body">
+            <label class="checkbox-field" for="prepare-enabled">
+              <input id="prepare-enabled" type="checkbox" checked>
+              <span>Prepare the project for the printer (apply print settings)</span>
+            </label>
+            <label class="checkbox-field" for="orca-enabled">
+              <input id="orca-enabled" type="checkbox" checked>
+              <span>Open Orca after export</span>
+            </label>
+            <label class="checkbox-field" for="write-project-settings">
+              <input id="write-project-settings" type="checkbox" checked>
+              <span>Write Orca project settings when not preparing</span>
+            </label>
+            <div class="field">
+              <label class="field-label" for="orca-profile-dir">Orca filament profile folder (optional)</label>
+              <input id="orca-profile-dir" class="text-input" type="text" placeholder="/path/to/OrcaSlicer/user/default/filament" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="button-row">
+              <button id="refresh-profiles-btn" class="btn btn--ghost btn--small" type="button">Reload Orca profiles</button>
+              <button id="import-profiles-btn" class="btn btn--ghost btn--small" type="button">Import Orca profiles&hellip;</button>
+            </div>
+
+            <h3 class="advanced__title">Diagnostics and log</h3>
+            <div class="button-row">
+              <button id="diagnostics-btn" class="btn btn--ghost btn--small" type="button">Run diagnostics</button>
+              <button id="refresh-log-btn" class="btn btn--ghost btn--small" type="button">Refresh log</button>
+              <button id="clear-log-btn" class="btn btn--ghost btn--small" type="button">Clear log</button>
+            </div>
+            <p id="library-status" class="status status--muted" role="status" aria-live="polite"></p>
+            <p id="custom-library-message" class="faint" hidden></p>
+            <p id="diagnostics-status" class="status status--muted" role="status" aria-live="polite"></p>
+            <pre id="diagnostics-output" class="diagnostics-output" tabindex="0" hidden></pre>
+            <div id="log-list" class="log-list" role="log" aria-live="polite" aria-relevant="additions" tabindex="0">
+              <p class="log-empty">No log entries yet.</p>
+            </div>
+            <p id="log-count" class="faint">0 lines</p>
+          </div>
+        </details>
+        <p id="settings-status" class="status status--muted" role="status" aria-live="polite">Settings save automatically.</p>
+      </div>
+    </section>
+
+    <!-- =============================== Welcome =============================== -->
+    <section id="screen-welcome" class="screen" data-screen="welcome" aria-labelledby="welcome-title" hidden>
+      <header class="topbar">
+        <img class="topbar__logo" src="filamatch.svg" alt="" width="20" height="20">
+        <span class="topbar__title">Filamatch</span>
+      </header>
+      <div class="screen__body welcome">
+        <h1 id="welcome-title" class="welcome__title" tabindex="-1">Where are your filaments?</h1>
+        <p class="welcome__lead">Connect Bambuddy to see what is loaded in your printer. You can skip this and pick filaments from the catalog.</p>
+        <div class="field">
+          <label class="field-label" for="welcome-url">Bambuddy address</label>
+          <input id="welcome-url" class="text-input" type="text" placeholder="192.168.1.20:8000" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="field-label" for="welcome-key">API key</label>
+          <input id="welcome-key" class="text-input" type="password" placeholder="bb_..." autocomplete="off" spellcheck="false">
+        </div>
+        <p class="faint">The key is kept in your system keychain.</p>
+        <button id="welcome-connect-btn" class="btn btn--primary btn--big" type="button">Connect</button>
+        <p id="welcome-status" class="status status--muted" role="status" aria-live="polite"></p>
+        <p class="save-line"><button id="welcome-skip-btn" class="link" type="button">Skip, use the catalog</button></p>
+      </div>
+    </section>
+  </main>
+
+  <noscript>
+    <p class="note noscript-note">JavaScript is disabled; this palette cannot talk to Fusion.</p>
+  </noscript>
+</body>
+</html>

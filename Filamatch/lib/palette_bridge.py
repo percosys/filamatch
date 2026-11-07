@@ -1,0 +1,3034 @@
+"""Fusion side of the Filamatch palette.
+
+- Creates the HTML palette (``palette/index.html``) and dispatches the
+  actions its page sends with ``adsk.fusionSendData`` (see :func:`dispatch`
+  for the full list); replies go back with ``palette.sendInfoToHTML``.
+- Keeps the settings in ``config.SETTINGS_FILE`` (secrets in the system
+  keychain) and the session log shown in the palette.
+- Watches finished Fusion commands and design switches, so the palette's
+  filament list follows material changes without a refresh button.
+- Runs slow work (printer fetch, profile lists, the slicer CLI, the Open
+  Filament Database download) on a worker thread, so Fusion never freezes.
+
+The workflow: the user assigns filament materials to bodies in Fusion and
+the add-in detects them (first appearance gives the slot order). Export
+applies coloured appearances temporarily, exports the 3MF, injects the
+per-object slicer metadata, restores the appearances, and can prepare a full
+printer project with the slicer CLI.
+
+Import-safe outside Fusion: ``adsk`` imports are guarded and handler classes
+are only defined inside Fusion. Self-test: ``python3 -m Filamatch.lib.palette_bridge``.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import traceback
+import types
+import uuid
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+
+from . import testing
+
+from .. import config
+
+APP_NAME = config.ADDIN_NAME
+ADDIN_VERSION = config.VERSION
+
+PALETTE_ID = config.PALETTE_ID
+PALETTE_NAME = config.ADDIN_NAME
+PALETTE_WIDTH = 460
+PALETTE_HEIGHT = 800
+#: Smallest height Filamatch asks for when it fits the palette to a screen.
+PALETTE_MIN_HEIGHT = 360
+MAX_EXTRUDER = 16
+
+PALETTE_HTML = config.PALETTE_DIR / "index.html"
+
+#: Settings, the session log and user data (see config.py for the locations;
+#: ``FILAMATCH_DATA_DIR`` isolates the tests from the real files).
+DATA_DIR = config.DATA_DIR
+LOG_DIR = config.LOG_DIR
+SETTINGS_FILE = config.SETTINGS_FILE
+
+#: Marker written once the data of earlier versions (temp folders) is copied.
+_LEGACY_MIGRATED_MARKER = ".migrated_from_temp"
+#: Download caches of earlier versions: not copied, they are downloaded again.
+_LEGACY_CACHE_ENTRIES = frozenset({"openfilament", "profile_cache", "flattened"})
+_LOG_LIMIT = 400
+
+DEFAULT_SETTINGS: Dict[str, Any] = {
+    "output_path": "",
+    "write_project_settings": True,
+    "orca_enabled": True,
+    "orca_path": "",
+    "orca_profile_dir": "",
+    "slicer_path": "",
+    "prepare_enabled": True,
+    "target_vendor": "",
+    "target_printer": "",
+    "target_process": "",
+    "auto_library_update": True,
+    "custom_library_path": "",
+    "printer_source": "bambuddy",
+    "bambuddy_url": "",
+    "bambuddy_api_key": "",
+    "bambuddy_printer_id": 0,
+    "bambuddy_slot_map": {},
+    # False allows an https Bambuddy with a self-signed certificate (LAN).
+    "bambuddy_verify_tls": True,
+}
+
+#: Settings whose values live in the OS keychain (see ``secret_store``) when
+#: it works; ``settings.json`` then stores them empty.
+SECRET_SETTINGS: Tuple[str, ...] = ("bambuddy_api_key",)
+
+#: Keychain use is limited to the Fusion process; the self-test lifts this.
+_SECRETS_NEED_FUSION = True
+
+LIBRARY_INFO: Dict[str, Any] = {
+    "path": "",
+    "loaded": False,
+    "writable": False,
+    "message": (
+        "Fusion's API cannot add materials to .adsklib libraries, so catalog "
+        "filaments are imported into the active design with matching colored "
+        "appearances. The catalog is organized by category for reuse."
+    ),
+}
+
+LOGGER = logging.getLogger("Filamatch")
+
+try:  # pragma: no cover - the adsk modules only exist inside Fusion.
+    import adsk.core
+    import adsk.fusion
+except ImportError:  # pragma: no cover - exercised by the standalone self-test.
+    adsk = None  # type: ignore[assignment]
+
+#: Session log lines shown in the palette ("HH:MM:SS message").
+_LOG_LINES: List[str] = []
+
+#: Strong references to Fusion palette event handlers.
+_PALETTE_HANDLERS: List[Any] = []
+
+
+# ---------------------------------------------------------------------------
+# Logging helpers
+# ---------------------------------------------------------------------------
+
+
+def log_message(message: str) -> None:
+    """Append a timestamped message to the palette log and the add-in log file."""
+    line = "{} {}".format(time.strftime("%H:%M:%S"), message)
+    _LOG_LINES.append(line)
+    del _LOG_LINES[:-_LOG_LIMIT]
+    LOGGER.info(message)
+
+
+def get_log_lines() -> List[str]:
+    """Return a copy of the current session log lines."""
+    return list(_LOG_LINES)
+
+
+def _error_text(exc: BaseException) -> str:
+    """Return a concise error label for palette replies."""
+    return "{}: {}".format(type(exc).__name__, exc)
+
+
+# ---------------------------------------------------------------------------
+# Settings persistence
+# ---------------------------------------------------------------------------
+
+
+def load_settings(path: Optional[Path] = None) -> Dict[str, Any]:
+    """Load persisted palette settings, falling back to defaults.
+
+    Args:
+        path: Optional settings JSON path (defaults to the add-in temp dir).
+
+    Returns:
+        A settings dict containing every key from :data:`DEFAULT_SETTINGS`.
+    """
+    settings = dict(DEFAULT_SETTINGS)
+    settings_path = Path(path) if path is not None else SETTINGS_FILE
+    if (
+        adsk is not None
+        and not os.environ.get(config.DATA_DIR_ENV, "").strip()
+        and settings_path == SETTINGS_FILE
+    ):
+        migrate_legacy_data_dir()
+    try:
+        if settings_path.is_file():
+            raw = json.loads(settings_path.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                for key in DEFAULT_SETTINGS:
+                    if key in raw:
+                        settings[key] = raw[key]
+    except Exception:
+        LOGGER.exception("Could not read palette settings from %s", settings_path)
+        _set_aside_unreadable(settings_path)
+    if _uses_secret_store(settings_path):
+        _load_secret_settings(settings, settings_path)
+    return settings
+
+
+def migrate_legacy_data_dir(
+    legacy_dirs: Optional[Sequence[Path]] = None,
+    data_dir: Optional[Path] = None,
+    legacy_library_dir: Optional[Path] = None,
+) -> int:
+    """Copy data that earlier versions kept in temp folders into DATA_DIR, once.
+
+    Versions before 0.3 kept settings, added filaments and imported profiles
+    in ``$TMPDIR/Filamatch`` (and FusionFilament Bridge in
+    ``$TMPDIR/FusionFilamentBridge``), which the OS cleans up. Entries that
+    are not in ``data_dir`` yet are copied (newest folder first; logs and
+    download caches are skipped), then a saved library path inside the old
+    FusionFilament Bridge library folder is dropped. Returns the number of
+    copied entries. The marker file stops repeat attempts, also after an error.
+    """
+    legacy_dirs = list(legacy_dirs if legacy_dirs is not None else config.LEGACY_DATA_DIRS)
+    data_dir = Path(data_dir or DATA_DIR)
+    legacy_library_dir = Path(legacy_library_dir or config.LEGACY_DOCUMENTS_DIR)
+    marker = data_dir / _LEGACY_MIGRATED_MARKER
+    if marker.exists() or not any(Path(folder).is_dir() for folder in legacy_dirs):
+        return 0
+    copied = 0
+    note = "copied"
+    try:
+        data_dir.mkdir(parents=True, exist_ok=True)
+        for folder in legacy_dirs:
+            folder = Path(folder)
+            if not folder.is_dir():
+                continue
+            for entry in folder.iterdir():
+                target = data_dir / entry.name
+                if (
+                    entry.suffix == ".log"
+                    or entry.name in _LEGACY_CACHE_ENTRIES
+                    or entry.name.startswith(".")
+                    or target.exists()
+                ):
+                    continue
+                staging = data_dir / (".partial-" + entry.name)
+                if staging.exists():
+                    shutil.rmtree(staging, ignore_errors=True)
+                if entry.is_dir():
+                    shutil.copytree(entry, staging)
+                else:
+                    shutil.copy2(entry, staging)
+                os.replace(staging, target)
+                copied += 1
+        settings_path = data_dir / "settings.json"
+        if settings_path.is_file():
+            raw = json.loads(settings_path.read_text(encoding="utf-8"))
+            library = str(raw.get("custom_library_path") or "") if isinstance(raw, dict) else ""
+            if library.startswith(str(legacy_library_dir) + os.sep):
+                raw["custom_library_path"] = ""
+                _write_settings_file(raw, settings_path)
+        LOGGER.info("Copied %d item(s) from the old temp data folders", copied)
+    except Exception as exc:
+        note = "failed: {}".format(exc)
+        LOGGER.exception("Could not copy the old temp data folders")
+    try:
+        marker.write_text("{} ({})\n".format(note, ", ".join(str(f) for f in legacy_dirs)), encoding="utf-8")
+    except OSError:
+        LOGGER.debug("Could not write the migration marker", exc_info=True)
+    return copied
+
+
+def _uses_secret_store(settings_path: Path) -> bool:
+    """Return whether secrets for this settings file belong in the keychain.
+
+    Only the real session settings file, inside Fusion, uses the keychain.
+    Tests run outside Fusion or point ``FILAMATCH_DATA_DIR`` / an
+    explicit path elsewhere and keep the plain-file behaviour, so they never
+    touch the user's keychain (a keychain item created by Fusion would make
+    macOS prompt another process that reads it).
+    """
+    if _SECRETS_NEED_FUSION and adsk is None:
+        return False
+    if os.environ.get(config.DATA_DIR_ENV, "").strip():
+        return False
+    return Path(settings_path) == SETTINGS_FILE
+
+
+def _load_secret_settings(settings: Dict[str, Any], settings_path: Path) -> None:
+    """Fill secrets from the keychain; move plain-text ones into it."""
+    from . import secret_store
+
+    migrated = False
+    for key in SECRET_SETTINGS:
+        plain = str(settings.get(key) or "").strip()
+        if plain:
+            if secret_store.set_secret(key, plain):
+                migrated = True
+            continue
+        stored = secret_store.get_secret(key)
+        if stored:
+            settings[key] = stored
+    if migrated:
+        _write_settings_file(settings, settings_path)
+        log_message("Moved the saved Bambuddy API key into the system keychain")
+
+
+def _set_aside_unreadable(settings_path: Path) -> None:
+    """Rename an unreadable settings file so the next save cannot overwrite it."""
+    backup = settings_path.with_name(
+        "{}.unreadable-{}".format(settings_path.name, time.strftime("%Y%m%d-%H%M%S"))
+    )
+    try:
+        os.replace(settings_path, backup)
+        log_message(
+            "The settings file could not be read; it was kept as {} and the "
+            "defaults are used.".format(backup.name)
+        )
+    except OSError:
+        LOGGER.debug("Could not set the unreadable settings file aside", exc_info=True)
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Write ``text`` to ``path`` so a crash leaves the old or the new file, never half."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(".{}.{}.tmp".format(path.name, os.getpid()))
+    try:
+        with temporary.open("w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.chmod(temporary, 0o600)
+        except OSError:
+            pass
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            try:
+                temporary.unlink()
+            except OSError:
+                pass
+
+
+def _write_settings_file(settings: Mapping[str, Any], settings_path: Path) -> None:
+    """Write settings JSON, keeping keychain-stored secrets out of the file."""
+    stored = dict(settings)
+    if _uses_secret_store(settings_path):
+        from . import secret_store
+
+        for key in SECRET_SETTINGS:
+            value = str(stored.get(key) or "").strip()
+            if not value:
+                continue
+            if secret_store.get_secret(key) == value or secret_store.set_secret(key, value):
+                stored[key] = ""
+    try:
+        _atomic_write_text(settings_path, json.dumps(stored, indent=2) + "\n")
+    except Exception:
+        LOGGER.exception("Could not write palette settings to %s", settings_path)
+
+
+def save_settings(settings: Mapping[str, Any], path: Optional[Path] = None) -> Dict[str, Any]:
+    """Persist recognised palette settings keys and return the stored dict.
+
+    Args:
+        settings: Mapping with any of the :data:`DEFAULT_SETTINGS` keys.
+        path: Optional settings JSON path (defaults to the add-in temp dir).
+
+    Returns:
+        The merged settings that were written.
+    """
+    merged = load_settings(path)
+    for key in DEFAULT_SETTINGS:
+        if key in settings:
+            merged[key] = settings[key]
+    settings_path = Path(path) if path is not None else SETTINGS_FILE
+    _write_settings_file(merged, settings_path)
+    return merged
+
+
+def public_settings(settings: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return settings safe to send to the palette (never the API key itself)."""
+    payload = dict(settings)
+    key = str(payload.pop("bambuddy_api_key", "") or "")
+    payload["bambuddy_api_key_set"] = bool(key.strip())
+    slot_map = payload.get("bambuddy_slot_map")
+    if not isinstance(slot_map, dict):
+        payload["bambuddy_slot_map"] = {}
+    return payload
+
+
+# ---------------------------------------------------------------------------
+# Fusion object helpers
+# ---------------------------------------------------------------------------
+
+
+def _active_design() -> Any:
+    """Return the active Fusion ``Design``, or ``None`` when unavailable."""
+    if adsk is None:
+        return None
+    try:
+        app = adsk.core.Application.get()
+        return adsk.fusion.Design.cast(app.activeProduct)
+    except Exception:
+        LOGGER.exception("Could not read the active Fusion design")
+        return None
+
+
+def _active_app() -> Any:
+    """Return the Fusion ``Application`` object, or ``None`` outside Fusion."""
+    if adsk is None:
+        return None
+    try:
+        return adsk.core.Application.get()
+    except Exception:
+        LOGGER.exception("Could not read the Fusion application object")
+        return None
+
+
+def _default_output_path() -> str:
+    """Return a sensible default output path for the active design."""
+    design = _active_design()
+    try:
+        from . import exporter
+
+        if design is not None:
+            return str(exporter.default_export_path(design))
+    except Exception:
+        LOGGER.exception("Could not compute a default export path")
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# Payload builders (pure helpers, also covered by the self-test)
+# ---------------------------------------------------------------------------
+
+
+def _catalog_payload(entries: Sequence[Any]) -> List[Dict[str, Any]]:
+    """Convert catalog entries into JSON-friendly palette rows."""
+    rows: List[Dict[str, Any]] = []
+    for entry in entries:
+        rows.append(
+            {
+                "id": entry.id,
+                "display_name": entry.display_name,
+                "manufacturer": getattr(entry, "manufacturer", ""),
+                "product_line": getattr(entry, "product_line", ""),
+                "color_name": getattr(entry, "color_name", ""),
+                "color_hex": entry.color_hex,
+                "slicer_filament_type": getattr(entry, "slicer_filament_type", ""),
+                "density_g_cm3": getattr(entry, "density_g_cm3", None),
+                "category": getattr(entry, "category", "") or getattr(entry, "slicer_filament_type", ""),
+            }
+        )
+    return rows
+
+
+#: Parsed catalog entries, reused while the catalog files are unchanged.
+_CATALOG_CACHE: Dict[str, Any] = {"key": None, "entries": []}
+
+
+def _catalog_files_key() -> Tuple[Any, ...]:
+    """Return the modification times of the bundled and user catalog files."""
+    stamps = []
+    for path in (config.CATALOG_FILE, config.USER_CATALOG_FILE):
+        try:
+            stamps.append(Path(path).stat().st_mtime_ns)
+        except OSError:
+            stamps.append(None)
+    return tuple(stamps)
+
+
+def _load_catalog_entries() -> List[Any]:
+    """Load bundled catalog entries plus persistent user (OpenFilament) entries.
+
+    Cached until one of the catalog files changes: every finished Fusion
+    command can trigger a refresh, so re-reading both files each time is waste.
+    """
+    key = _catalog_files_key()
+    if _CATALOG_CACHE["key"] == key and _CATALOG_CACHE["entries"]:
+        return list(_CATALOG_CACHE["entries"])
+    entries = _read_catalog_entries()
+    _CATALOG_CACHE.update(key=key, entries=list(entries))
+    return entries
+
+
+def _read_catalog_entries() -> List[Any]:
+    """Read and merge the bundled and user catalogs from disk."""
+    from . import catalog
+
+    entries = list(catalog.load_catalog())
+    try:
+        from . import openfilament
+
+        user_entries = openfilament.load_user_catalog()
+        if user_entries:
+            # Lenient: one bad user entry must not hide all the others.
+            parsed = catalog.parse_catalog(user_entries, source="<user_catalog>", strict=False)
+            entries = catalog.merge_catalogs(entries, parsed, "<user_catalog>")
+    except Exception:
+        LOGGER.exception("Could not merge the user filament catalog")
+    return entries
+
+
+def _profiles_summary() -> Dict[str, Any]:
+    """Return a lightweight profile summary (installed slicers + imported presets)."""
+    try:
+        from . import slicer_profiles
+
+        settings = load_settings()
+        installs = slicer_profiles.find_installed_slicers()
+        return {
+            "ok": True,
+            "slicers": [
+                {"kind": item.kind, "name": item.name, "path": item.path, "version": item.version}
+                for item in installs
+            ],
+            "imported": slicer_profiles.imported_profiles(),
+            "selected": {
+                "slicer_path": settings.get("slicer_path") or settings.get("orca_path") or "",
+                "vendor": settings.get("target_vendor") or "",
+                "printer": settings.get("target_printer") or "",
+                "process": settings.get("target_process") or "",
+            },
+            "vendors": [],
+            "printers": [],
+            "processes": [],
+        }
+    except Exception as exc:
+        LOGGER.exception("Could not build the profile summary")
+        return {"ok": False, "error": _error_text(exc), "slicers": [], "imported": {}, "selected": {}}
+
+
+def _openfilament_summary() -> Dict[str, Any]:
+    """Return the OpenFilament cache summary without forcing a download."""
+    try:
+        from . import openfilament
+
+        return openfilament.dataset_summary()
+    except Exception:
+        LOGGER.exception("Could not read the OpenFilament dataset summary")
+        return {"cached": False, "version": "", "counts": {}}
+
+
+def _custom_library_destination(settings: Optional[Mapping[str, Any]] = None) -> Optional[Path]:
+    """Return the configured custom-library path (or None for the default)."""
+    values = settings if settings is not None else load_settings()
+    configured = str(values.get("custom_library_path") or "").strip()
+    return Path(configured).expanduser() if configured else None
+
+
+def _custom_library_payload(app: Any) -> Dict[str, Any]:
+    """Return the custom-library status row for the palette."""
+    try:
+        from . import custom_library
+
+        status = custom_library.custom_library_status(
+            app, destination=_custom_library_destination()
+        )
+        return {
+            "ok": True,
+            "path": status.path,
+            "exists": bool(status.exists),
+            "loaded": bool(status.loaded),
+            "material_count": int(status.material_count),
+            "message": status.message,
+        }
+    except Exception as exc:
+        LOGGER.exception("Could not read the custom library status")
+        return {
+            "ok": False,
+            "path": "",
+            "exists": False,
+            "loaded": False,
+            "material_count": 0,
+            "message": _error_text(exc),
+        }
+
+
+def _normalize_favorite_material_names(app: Any) -> int:
+    """Rename existing Favorites materials to standard brand/material/color labels."""
+    if app is None:
+        return 0
+    try:
+        favorites = app.favoriteMaterials
+        entries = _load_catalog_entries()
+    except Exception:
+        LOGGER.debug("Favorite names could not be normalized", exc_info=True)
+        return 0
+    mapping: Dict[str, str] = {}
+    for entry in entries:
+        display_name = str(getattr(entry, "display_name", "") or "").strip()
+        if not display_name:
+            continue
+        mapping[entry.id] = display_name
+        mapping[display_name] = display_name
+        legacy = "{} {} - {}".format(
+            getattr(entry, "manufacturer", ""),
+            getattr(entry, "product_line", ""),
+            getattr(entry, "color_name", ""),
+        ).strip()
+        if legacy:
+            mapping[legacy] = display_name
+    renamed = 0
+    try:
+        count = int(favorites.count)
+    except Exception:
+        return 0
+    for index in range(count):
+        try:
+            material = favorites.item(index)
+            current = str(getattr(material, "name", "") or "").strip()
+            desired = mapping.get(current)
+            if desired and desired != current:
+                material.name = desired
+                renamed += 1
+                LOGGER.info("Renamed favorite %r to %r.", current, desired)
+        except Exception:
+            LOGGER.debug("Could not normalize one favorite name", exc_info=True)
+    if renamed:
+        log_message("Normalized {} favorite material name(s)".format(renamed))
+    return renamed
+
+
+def _stale_swatch_note(app: Any, stale: Optional[Sequence[str]] = None) -> str:
+    """Tell the user which favorites still show an old (white) template swatch.
+
+    ``stale`` can come from :func:`favorites.replace_and_list_stale`, which
+    saves a second walk over every favorite.
+    """
+    try:
+        from . import favorites
+
+        if stale is None:
+            stale = favorites.stale_swatch_favorites(app, _load_catalog_entries())
+    except Exception:
+        LOGGER.debug("Could not check favorite swatches", exc_info=True)
+        return ""
+    renamed = [name for name in stale if name.startswith(favorites.OLD_FAVORITE_PREFIX)]
+    others = [name for name in stale if name not in renamed]
+    parts = []
+    if renamed:
+        parts.append(
+            "{} old favorite(s) were replaced by new ones with close colours and renamed "
+            "'{}...': {}. Fusion cannot delete favorites for us: right-click each in "
+            "Favorites > Remove from Favorites.".format(
+                len(renamed), favorites.OLD_FAVORITE_PREFIX, ", ".join(renamed)
+            )
+        )
+    if others:
+        parts.append(
+            "{} favorite(s) still show the swatch of an old template: {}. Import or "
+            "sync them again to replace them.".format(len(others), ", ".join(others))
+        )
+    note = " ".join(parts)
+    if note:
+        log_message(note)
+    return note
+
+
+def _refresh_custom_library(app: Any, settings: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+    """Rebuild and load the custom library from the current Favorites snapshot."""
+    try:
+        from . import custom_library
+        from . import favorites
+
+        _normalize_favorite_material_names(app)
+        replaced, stale = favorites.replace_and_list_stale(app, _load_catalog_entries())
+        if replaced:
+            log_message(
+                "Replaced {} old favorite(s) with close-colour ones: {}".format(
+                    len(replaced), ", ".join(replaced)
+                )
+            )
+        status = custom_library.ensure_custom_library(
+            app, destination=_custom_library_destination(settings), force=True
+        )
+        log_message(
+            "Custom library refreshed: {!r} ({} materials, loaded={})".format(
+                status.path, status.material_count, status.loaded
+            )
+        )
+        return {
+            "ok": True,
+            "path": status.path,
+            "exists": bool(status.exists),
+            "loaded": bool(status.loaded),
+            "material_count": int(status.material_count),
+            "message": " ".join(part for part in (status.message, _stale_swatch_note(app, stale)) if part),
+        }
+    except Exception as exc:
+        LOGGER.exception("Custom library refresh failed")
+        log_message("Custom library refresh failed: {}".format(_error_text(exc)))
+        return {
+            "ok": False,
+            "path": "",
+            "exists": False,
+            "loaded": False,
+            "material_count": 0,
+            "message": _error_text(exc),
+        }
+
+
+def _categories_payload(entries: Sequence[Any]) -> List[Dict[str, Any]]:
+    """Group catalog ids by category, in catalog (first-appearance) order.
+
+    Args:
+        entries: Catalog entries.
+
+    Returns:
+        ``[{"name": "PLA", "filament_ids": [...]}, ...]`` ordered by the first
+        occurrence of each category in the catalog.
+    """
+    order: List[str] = []
+    ids_by_category: Dict[str, List[str]] = {}
+    for entry in entries:
+        category = (getattr(entry, "category", "") or getattr(entry, "slicer_filament_type", "")).strip()
+        if not category:
+            category = "Other"
+        if category not in ids_by_category:
+            order.append(category)
+            ids_by_category[category] = []
+        ids_by_category[category].append(entry.id)
+    return [{"name": category, "filament_ids": ids_by_category[category]} for category in order]
+
+
+def _detected_material_payload(material: Any) -> Dict[str, Any]:
+    """Convert one ``materials_workflow.DetectedMaterial`` into a palette row."""
+    body_names = list(getattr(material, "body_names", ()) or ())
+    density = getattr(material, "density_g_cm3", None)
+    return {
+        "material_id": getattr(material, "material_id", ""),
+        "material_name": getattr(material, "material_name", ""),
+        "display_name": getattr(material, "display_name", ""),
+        "color_hex": getattr(material, "color_hex", "#FFFFFF"),
+        "filament_type": getattr(material, "filament_type", ""),
+        "density_g_cm3": density,
+        "category": getattr(material, "category", ""),
+        "body_count": len(body_names),
+        "bodies": body_names,
+        "slot": getattr(material, "slot", 0),
+    }
+
+
+def _materials_payload(design: Any, entries: Sequence[Any]) -> List[Dict[str, Any]]:
+    """Detect the assembly's materials and convert them into palette rows."""
+    if design is None:
+        return []
+    try:
+        from . import materials_workflow
+
+        detected = materials_workflow.collect_assembly_materials(design, entries)
+    except Exception:
+        LOGGER.exception("Could not detect assembly materials")
+        log_message("Could not detect assembly materials: {}".format(traceback.format_exc()))
+        return []
+    return [_detected_material_payload(material) for material in detected]
+
+
+def _materials_used_payload(detected: Sequence[Any], result: Any) -> List[Dict[str, Any]]:
+    """Build the export-result list of materials/filament slots that were used."""
+    rows: List[Dict[str, Any]] = []
+    for material in detected:
+        rows.append(
+            {
+                "slot": getattr(material, "slot", 0),
+                "material_id": getattr(material, "material_id", ""),
+                "display_name": getattr(material, "display_name", ""),
+                "color_hex": getattr(material, "color_hex", ""),
+                "filament_type": getattr(material, "filament_type", ""),
+                "density_g_cm3": getattr(material, "density_g_cm3", None),
+                "body_count": len(getattr(material, "body_names", ()) or ()),
+            }
+        )
+    return rows
+
+
+def _library_payload() -> Dict[str, Any]:
+    """Return the informational custom-library status row for the palette."""
+    return dict(LIBRARY_INFO)
+
+
+def _favorites_summary(app: Any) -> Dict[str, Any]:
+    """Return the app-level Favorites summary shown in the palette."""
+    if app is None:
+        return {"count": 0, "names": []}
+    try:
+        from . import favorites
+
+        return favorites.favorites_summary(app)
+    except Exception:
+        LOGGER.exception("Could not read the Favorites library summary")
+        return {"count": 0, "names": []}
+
+
+# ---------------------------------------------------------------------------
+# Palette replies
+# ---------------------------------------------------------------------------
+
+
+def _send(palette: Any, action: str, payload: Mapping[str, Any]) -> None:
+    """Send one JSON reply to the palette, ignoring a closed/invalid palette."""
+    body = dict(payload)
+    body.setdefault("log", get_log_lines())
+    try:
+        palette.sendInfoToHTML(action, json.dumps(body))
+    except Exception:
+        LOGGER.exception("Could not send %r to the palette", action)
+
+
+def _send_error(palette: Any, action: str, message: str, **extra: Any) -> None:
+    """Send an error reply to the palette (always includes the session log)."""
+    payload: Dict[str, Any] = {"ok": False, "error": message, "log": get_log_lines()}
+    payload.update(extra)
+    _send(palette, action, payload)
+
+
+def _parse_payload(data: Any) -> Dict[str, Any]:
+    """Decode an incoming palette payload into a dict (never raises)."""
+    if data is None or data == "":
+        return {}
+    if isinstance(data, dict):
+        return data
+    try:
+        decoded = json.loads(str(data))
+    except Exception:
+        LOGGER.warning("Palette sent malformed JSON (%d characters)", len(str(data)))
+        return {}
+    return decoded if isinstance(decoded, dict) else {}
+
+
+# ---------------------------------------------------------------------------
+# Background jobs
+# ---------------------------------------------------------------------------
+#
+# Fusion calls the palette handlers on its UI thread, so a slow network call
+# or slicer run would freeze Fusion. Such work runs on a worker thread
+# instead; when it ends, a Fusion custom event brings the result back to the
+# UI thread, where the Fusion API and the palette can be used again. Worker
+# code must not touch the Fusion API. Outside Fusion (tests) jobs run inline.
+
+_JOBS_LOCK = threading.Lock()
+_JOB_RESULTS: Dict[str, Tuple[Any, Any, Optional[BaseException]]] = {}
+_JOB_EVENT: Dict[str, Any] = {"app": None, "event": None, "handler": None, "unavailable": False}
+
+
+def _register_job_event(app: Any) -> bool:
+    """Register the custom event that reports finished jobs; False when unavailable."""
+    if _JOB_EVENT["event"] is not None:
+        return True
+    if _JOB_EVENT["unavailable"] or adsk is None:
+        return False
+    try:
+        try:
+            app.unregisterCustomEvent(config.JOB_EVENT_ID)  # left over from an earlier load
+        except Exception:
+            pass
+        event = app.registerCustomEvent(config.JOB_EVENT_ID)
+        handler = _JobFinishedHandler()
+        event.add(handler)
+        _JOB_EVENT.update(app=app, event=event, handler=handler)
+        return True
+    except Exception:
+        _JOB_EVENT["unavailable"] = True
+        LOGGER.warning("Background jobs are unavailable; slow actions run inline", exc_info=True)
+        return False
+
+
+def _unregister_job_event() -> None:
+    """Remove the custom event (palette closed); unfinished jobs are dropped."""
+    event, handler, app = _JOB_EVENT["event"], _JOB_EVENT["handler"], _JOB_EVENT["app"]
+    _JOB_EVENT.update(app=None, event=None, handler=None)
+    with _JOBS_LOCK:
+        _JOB_RESULTS.clear()
+    try:
+        if event is not None and handler is not None:
+            event.remove(handler)
+        if app is not None:
+            app.unregisterCustomEvent(config.JOB_EVENT_ID)
+    except Exception:
+        LOGGER.debug("Could not unregister the job event", exc_info=True)
+
+
+def _run_job(name: str, work: Any, finish: Any) -> None:
+    """Run ``work()`` on a worker thread, then ``finish(result, error)`` on Fusion's UI thread."""
+    app = _active_app()
+    if app is None or not _register_job_event(app):
+        try:
+            result, error = work(), None
+        except Exception as exc:
+            result, error = None, exc
+        finish(result, error)
+        return
+    job_id = uuid.uuid4().hex
+
+    def target() -> None:
+        result, error = None, None
+        try:
+            result = work()
+        except Exception as exc:
+            error = exc
+        with _JOBS_LOCK:
+            _JOB_RESULTS[job_id] = (finish, result, error)
+        try:
+            app.fireCustomEvent(config.JOB_EVENT_ID, job_id)
+        except Exception:
+            LOGGER.exception("Could not report the finished %s job", name)
+
+    threading.Thread(target=target, name="Filamatch-" + name, daemon=True).start()
+
+
+def _complete_job(job_id: str) -> None:
+    """Call the finish step of a job that ended (on Fusion's UI thread)."""
+    with _JOBS_LOCK:
+        item = _JOB_RESULTS.pop(job_id, None)
+    if item is None:
+        return
+    finish, result, error = item
+    if error is not None:
+        LOGGER.error("Background job failed", exc_info=(type(error), error, error.__traceback__))
+    try:
+        finish(result, error)
+    except Exception:
+        LOGGER.exception("Could not finish a background job")
+
+
+# ---------------------------------------------------------------------------
+# Action handlers
+# ---------------------------------------------------------------------------
+
+
+def _initialize_custom_library(app: Any, settings: Mapping[str, Any]) -> Dict[str, Any]:
+    """Auto-load (and refresh when stale) the custom library on palette startup."""
+    try:
+        from . import custom_library
+
+        _normalize_favorite_material_names(app)
+        status = custom_library.ensure_custom_library(
+            app,
+            destination=_custom_library_destination(settings),
+            force=False,
+        )
+        log_message(
+            "Custom library available at palette start: {!r} ({} materials, loaded={})".format(
+                status.path, status.material_count, status.loaded
+            )
+        )
+        return {
+            "ok": True,
+            "path": status.path,
+            "exists": bool(status.exists),
+            "loaded": bool(status.loaded),
+            "material_count": int(status.material_count),
+            "message": " ".join(part for part in (status.message, _stale_swatch_note(app)) if part),
+        }
+    except Exception as exc:
+        LOGGER.exception("Could not auto-load the custom material library")
+        return {
+            "ok": False,
+            "path": "",
+            "exists": False,
+            "loaded": False,
+            "material_count": 0,
+            "message": _error_text(exc),
+        }
+
+
+def _bambuddy_slot_display_name(slot: Any) -> str:
+    """Return the standard display label for a Bambuddy slot."""
+    try:
+        from . import inventory_sync
+
+        if getattr(slot, "spool", None) is not None:
+            return inventory_sync.entry_for_spool(slot.spool, slot).display_name
+    except Exception:
+        LOGGER.debug("Could not derive the slot display name", exc_info=True)
+    return str(getattr(slot, "display_name", "") or "")
+
+
+def _bambuddy_context_payload(
+    settings: Mapping[str, Any], materials: Optional[Sequence[Any]] = None
+) -> Dict[str, Any]:
+    """Fetch the printer slot context and auto-match it against the design materials."""
+    from . import printer_sources
+    from . import slot_mapping
+
+    context = printer_sources.fetch_context(settings)
+    printer_ids = {printer.id for printer in context.printers}
+    selected_printer_id = int(settings.get("bambuddy_printer_id") or 0)
+    if selected_printer_id not in printer_ids:
+        selected_printer_id = context.printers[0].id if context.printers else 0
+    slots = [
+        slot for slot in context.slots if slot.printer_id == selected_printer_id
+    ]
+    detected = list(materials or [])
+    saved_map = settings.get("bambuddy_slot_map")
+    if not isinstance(saved_map, dict):
+        saved_map = {}
+    mapping = slot_mapping.build_mapping(detected, slots, saved_map)
+    return {
+        "ok": True,
+        "configured": True,
+        "source": context.source,
+        "fetched_at": context.fetched_at,
+        "selected_printer_id": selected_printer_id,
+        "printers": [
+            {
+                "id": printer.id,
+                "name": printer.name,
+                "model": printer.model,
+                "location": printer.location,
+                "label": printer.label,
+            }
+            for printer in context.printers
+        ],
+        "slots": [
+            {
+                "key": slot.key,
+                "printer_id": slot.printer_id,
+                "printer_name": slot.printer_name,
+                "ams_id": slot.ams_id,
+                "tray_id": slot.tray_id,
+                "label": slot.slot_label,
+                "loaded": slot.loaded,
+                "filament_type": slot.filament_type,
+                "color_hex": slot.color_hex,
+                "display_name": _bambuddy_slot_display_name(slot),
+                "spool_display_name": slot.spool.display_name if slot.spool is not None else "",
+
+                "spool_id": slot.spool.id if slot.spool is not None else 0,
+                "spool_preset": slot.spool.slicer_filament_name if slot.spool is not None else "",
+                "remaining_g": slot.spool.remaining_g if slot.spool is not None else None,
+                "remaining_percent": slot.remaining,
+                "location": slot.spool.location if slot.spool is not None else "",
+            }
+            for slot in slots
+        ],
+        "mapping": mapping,
+    }
+
+
+def _bambuddy_request_updates(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return the Bambuddy fields one palette request changes (not saved yet)."""
+    updates: Dict[str, Any] = {}
+    for key in ("bambuddy_url", "bambuddy_api_key"):
+        if key in data and data.get(key) is not None and str(data.get(key)).strip():
+            updates[key] = str(data.get(key)).strip()
+    if "bambuddy_verify_tls" in data:
+        updates["bambuddy_verify_tls"] = bool(data.get("bambuddy_verify_tls"))
+    if "bambuddy_printer_id" in data:
+        try:
+            updates["bambuddy_printer_id"] = int(data.get("bambuddy_printer_id") or 0)
+        except (TypeError, ValueError):
+            updates["bambuddy_printer_id"] = 0
+    return updates
+
+
+def _bambuddy_settings_for_request(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """Saved settings with this request's Bambuddy fields applied (in memory only).
+
+    The caller saves the fields with :func:`save_settings` once Bambuddy
+    answered, so a mistyped address is never stored.
+    """
+    current = load_settings()
+    current.update(_bambuddy_request_updates(data))
+    return current
+
+
+def _handle_bambuddy_context(data: Mapping[str, Any], palette: Any) -> None:
+    """Fetch printers/slots from the printer source (in the background) and auto-match."""
+    try:
+        from . import materials_workflow
+
+        settings = _bambuddy_settings_for_request(data)
+        design = _active_design()
+        entries = _load_catalog_entries()
+        materials = (
+            materials_workflow.collect_assembly_materials(design, entries)
+            if design is not None
+            else []
+        )
+    except Exception as exc:
+        LOGGER.exception("Could not read the design for the printer context")
+        _send_error(palette, "bambuddyContextData", _error_text(exc))
+        return
+
+    def finish(payload: Any, error: Optional[BaseException]) -> None:
+        if error is not None:
+            _send_error(palette, "bambuddyContextData", _error_text(error))
+            return
+        updates = _bambuddy_request_updates(data)
+        if updates:
+            save_settings(updates)
+        log_message(
+            "Bambuddy context: {} printer(s), {} slot(s), {} auto-matched material(s)".format(
+                len(payload["printers"]),
+                len(payload["slots"]),
+                sum(1 for row in payload["mapping"] if row.get("slot_key")),
+            )
+        )
+        _send(palette, "bambuddyContextData", payload)
+
+    _run_job("printer", lambda: _bambuddy_context_payload(settings, materials), finish)
+
+
+def _handle_bambuddy_import(data: Mapping[str, Any], palette: Any) -> None:
+    """Import the spools currently in the selected AMS slots into Fusion.
+
+    The printer context is fetched in the background; the Fusion import runs
+    when it arrives.
+    """
+    try:
+        from . import printer_sources
+
+        settings = _bambuddy_settings_for_request(data)
+        if _active_design() is None:
+            raise RuntimeError("Open a Fusion design before importing Bambuddy spools.")
+        if _active_app() is None:
+            raise RuntimeError("Bambuddy spool import requires the Fusion application.")
+    except Exception as exc:
+        LOGGER.exception("Could not start the Bambuddy import")
+        _send_error(palette, "bambuddyImportResult", _error_text(exc))
+        return
+
+    def finish(context: Any, error: Optional[BaseException]) -> None:
+        if error is not None:
+            _send_error(palette, "bambuddyImportResult", _error_text(error))
+            return
+        updates = _bambuddy_request_updates(data)
+        if updates:
+            save_settings(updates)
+        _import_bambuddy_slots(data, settings, context, palette)
+
+    _run_job("printer", lambda: printer_sources.fetch_context(settings), finish)
+
+
+def _import_bambuddy_slots(
+    data: Mapping[str, Any], settings: Mapping[str, Any], context: Any, palette: Any
+) -> None:
+    """Import the fetched slots into Favorites and the design (Fusion UI thread)."""
+    try:
+        from . import inventory_sync
+
+        design = _active_design()
+        app = _active_app()
+        if design is None or app is None:
+            raise RuntimeError("Open a Fusion design before importing Bambuddy spools.")
+        printer_id = int(settings.get("bambuddy_printer_id") or 0)
+        slots = [slot for slot in context.slots if slot.printer_id == printer_id]
+        raw_keys = data.get("slot_keys")
+        selected_keys = (
+            [str(key) for key in raw_keys if str(key).strip()]
+            if isinstance(raw_keys, list) and raw_keys
+            else None
+        )
+        entries, results = inventory_sync.sync_slots_to_favorites(
+            app, design, slots, selected_keys=selected_keys
+        )
+        try:
+            from . import openfilament
+
+            openfilament.append_user_catalog(
+                [entry.to_catalog_dict() for entry in entries]
+            )
+        except Exception:
+            LOGGER.exception("Could not persist Bambuddy spool entries in the user catalog")
+        custom_library_payload = _custom_library_payload(app)
+        if bool(settings.get("auto_library_update", True)):
+            custom_library_payload = _refresh_custom_library(app, settings)
+        catalog_entries = _load_catalog_entries()
+        payload = {
+            "ok": True,
+            "imported": [
+                {
+                    "id": entry.id,
+                    "display_name": entry.display_name,
+                    "spool_id": entry.spool_id,
+                    "slot_key": entry.slot_key,
+                    "slot_label": next(
+                        (
+                            slot.slot_label
+                            for slot in slots
+                            if slot.key == entry.slot_key
+                        ),
+                        "",
+                    ),
+                    "color_hex": entry.color_hex,
+                    "remaining_g": entry.remaining_g,
+                    "spool_preset": entry.spool_preset,
+                }
+                for entry in entries
+            ],
+            "favorites": _favorites_summary(app),
+            "custom_library": custom_library_payload,
+            "materials": _materials_payload(design, catalog_entries),
+            "catalog": _catalog_payload(catalog_entries),
+            "categories": _categories_payload(catalog_entries),
+        }
+        log_message(
+            "Imported {} Bambuddy spool(s) into Favorites and the design".format(
+                len(entries)
+            )
+        )
+        _send(palette, "bambuddyImportResult", payload)
+    except Exception as exc:
+        LOGGER.exception("Could not import Bambuddy spools")
+        _send_error(palette, "bambuddyImportResult", _error_text(exc))
+
+
+def _handle_init(palette: Any) -> None:
+    """Send catalog, detected materials, settings and library info to the palette."""
+    try:
+        entries = _load_catalog_entries()
+        settings = load_settings()
+        if not settings.get("output_path"):
+            settings["output_path"] = _default_output_path()
+        design = _active_design()
+        _DESIGN_WATCH["fingerprint"] = design_fingerprint(design)
+        app = _active_app()
+        if app is not None and bool(settings.get("auto_library_update", True)):
+            custom_library_payload = _initialize_custom_library(app, settings)
+        else:
+            custom_library_payload = _custom_library_payload(app)
+        payload = {
+            "ok": True,
+            "version": ADDIN_VERSION,
+            "catalog": _catalog_payload(entries),
+            "categories": _categories_payload(entries),
+            "design_name": _design_name(design),
+            "materials": _materials_payload(design, entries),
+            "settings": public_settings(settings),
+            "bambuddy": {
+                "configured": bool(str(settings.get("bambuddy_url") or "").strip()),
+                "key_set": bool(str(settings.get("bambuddy_api_key") or "").strip()),
+                "url": str(settings.get("bambuddy_url") or ""),
+                "printer_id": int(settings.get("bambuddy_printer_id") or 0),
+                "slot_map": settings.get("bambuddy_slot_map") or {},
+            },
+            "library": _library_payload(),
+            "favorites": _favorites_summary(app),
+            "profiles": _profiles_summary(),
+            "openfilament": _openfilament_summary(),
+            "custom_library": custom_library_payload,
+        }
+        log_message(
+            "Palette initialised ({} catalog entries, {} categories)".format(
+                len(entries), len(payload["categories"])
+            )
+        )
+        _send(palette, "initData", payload)
+    except Exception as exc:
+        LOGGER.exception("Palette init failed")
+        _send_error(palette, "initData", _error_text(exc))
+
+
+def _import_selected_materials(app: Any, design: Any, selected: Sequence[Any]) -> List[Any]:
+    """Import catalog entries into Favorites + the design (legacy fallback).
+
+    Args:
+        app: Fusion ``Application`` (needed for the Favorites library).
+        design: Active Fusion design.
+        selected: Catalog entries to import.
+
+    Returns:
+        Result objects exposing ``catalog_id``, ``favorite_material``,
+        ``favorite_appearance``, ``design_material``, ``color_hex``,
+        ``replaced_existing`` and ``relinked_bodies``.
+    """
+    try:
+        from . import favorites
+    except ImportError:
+        LOGGER.warning("favorites module unavailable; using design-only import")
+        from . import materials_workflow
+
+        source_appearance = materials_workflow.find_source_appearance(design, app)
+        legacy = materials_workflow.import_catalog_entries(
+            design, selected, source_appearance=source_appearance
+        )
+        return [
+            type(
+                "LegacyImportResult",
+                (),
+                {
+                    "catalog_id": item.catalog_id,
+                    "favorite_material": None,
+                    "favorite_appearance": None,
+                    "design_material": item.material,
+                    "color_hex": "",
+                    "replaced_existing": False,
+                    "relinked_bodies": 0,
+                },
+            )()
+            for item in legacy
+        ]
+    return favorites.import_catalog_to_favorites(app, design, selected)
+
+
+def _handle_import(data: Mapping[str, Any], palette: Any) -> None:
+    """Import the selected catalog entries (with colored appearances)."""
+    try:
+        from . import catalog
+        from . import materials_workflow
+
+        raw_ids = data.get("ids") or []
+        if not isinstance(raw_ids, list) or not raw_ids:
+            _send_error(palette, "importResult", "No catalog entries were selected.")
+            return
+        wanted = {str(item) for item in raw_ids}
+        entries = _load_catalog_entries()
+        selected = [entry for entry in entries if entry.id in wanted]
+        if not selected:
+            _send_error(palette, "importResult", "None of the selected catalog ids exist.")
+            return
+
+        design = _active_design()
+        if design is None:
+            _send_error(
+                palette,
+                "importResult",
+                "Open a Fusion design before importing filament materials.",
+            )
+            return
+
+        app = _active_app()
+        import_settings = load_settings()
+        imported: List[Dict[str, Any]] = []
+        errors: List[Dict[str, str]] = []
+        custom_library_payload: Dict[str, Any] = _custom_library_payload(app)
+        try:
+            results = _import_selected_materials(app, design, selected)
+            for result in results:
+                design_material = getattr(result, "design_material", None)
+                favorite_material = getattr(result, "favorite_material", None)
+                favorite_appearance = getattr(result, "favorite_appearance", None)
+                design_appearance = (
+                    getattr(design_material, "appearance", None) if design_material else None
+                )
+                imported.append(
+                    {
+                        "id": getattr(result, "catalog_id", ""),
+                        "fusion_name": getattr(design_material, "name", ""),
+                        "appearance_name": getattr(design_appearance, "name", ""),
+                        "favorite_name": getattr(favorite_material, "name", ""),
+                        "favorite_appearance_name": getattr(favorite_appearance, "name", ""),
+                        "color_hex": getattr(result, "color_hex", ""),
+                        "replaced": bool(getattr(result, "replaced_existing", False)),
+                        "relinked_bodies": int(getattr(result, "relinked_bodies", 0) or 0),
+                    }
+                )
+                log_message(
+                    "Imported {!r} into Favorites ({!r}, {}) and design material {!r}".format(
+                        getattr(result, "catalog_id", ""),
+                        getattr(favorite_material, "name", ""),
+                        getattr(result, "color_hex", ""),
+                        getattr(design_material, "name", ""),
+                    )
+                )
+        except Exception as exc:
+            LOGGER.exception("Import failed")
+            for entry in selected:
+                errors.append({"id": entry.id, "message": _error_text(exc)})
+
+        if imported and bool(import_settings.get("auto_library_update", True)):
+            custom_library_payload = _refresh_custom_library(app, import_settings)
+        elif app is not None:
+            custom_library_payload = _custom_library_payload(app)
+
+        _send(
+            palette,
+            "importResult",
+            {
+                "ok": bool(imported) and not errors,
+                "imported": imported,
+                "errors": errors,
+                "materials": _materials_payload(design, entries),
+                "library": _library_payload(),
+                "favorites": _favorites_summary(app),
+                "custom_library": custom_library_payload,
+            },
+        )
+    except Exception as exc:
+        LOGGER.exception("Palette import action failed")
+        _send_error(palette, "importResult", _error_text(exc))
+
+
+def _handle_refresh_materials(palette: Any, fingerprint: Optional[str] = None) -> None:
+    """Rescan the active design and send the detected assembly materials."""
+    try:
+        entries = _load_catalog_entries()
+        design = _active_design()
+        _DESIGN_WATCH["fingerprint"] = fingerprint or design_fingerprint(design)
+        log_message("Refreshed assembly materials from the active design")
+        _send(
+            palette,
+            "materialsData",
+            {
+                "ok": True,
+                "design_name": _design_name(design),
+                "materials": _materials_payload(design, entries),
+            },
+        )
+    except Exception as exc:
+        LOGGER.exception("Palette refresh_materials failed")
+        _send_error(palette, "materialsData", _error_text(exc))
+
+
+# ---------------------------------------------------------------------------
+# Design change detection
+# ---------------------------------------------------------------------------
+
+#: Last design fingerprint sent to the palette, and the Fusion event handlers
+#: that watch for changes while the palette is open.
+_DESIGN_WATCH: Dict[str, Any] = {"fingerprint": "", "handlers": []}
+
+#: Commands that end constantly and never change materials.
+_IGNORED_COMMANDS = frozenset({"SelectCommand"})
+
+
+def _design_name(design: Any) -> str:
+    """Return the active design's document name without the ``vNN`` suffix."""
+    try:
+        name = str(design.parentDocument.name or "")
+    except Exception:
+        return ""
+    parts = name.rsplit(" v", 1)
+    if len(parts) == 2 and parts[1].isdigit():
+        return parts[0]
+    return name
+
+
+def design_fingerprint(design: Any) -> str:
+    """Return a cheap signature of every body and its physical material.
+
+    Assigning, removing or swapping a material, adding or deleting a body, and
+    switching designs all change it; moving or orbiting does not.
+    """
+    if design is None:
+        return ""
+    rows: List[str] = []
+    try:
+        for component in design.allComponents:
+            component_material = getattr(component, "material", None)
+            component_key = "{}|{}".format(
+                getattr(component, "id", "") or component.name,
+                getattr(component_material, "id", "") if component_material else "",
+            )
+            for body in component.bRepBodies:
+                material = getattr(body, "material", None)
+                rows.append(
+                    "{}|{}|{}".format(
+                        component_key,
+                        body.name,
+                        getattr(material, "id", "") if material else "",
+                    )
+                )
+    except Exception:
+        LOGGER.debug("Could not fingerprint the design", exc_info=True)
+        return ""
+    digest = hashlib.sha1("\n".join(sorted(rows)).encode("utf-8")).hexdigest()
+    return "{}:{}".format(_design_name(design), digest)
+
+
+def _check_design_changed(palette: Any) -> bool:
+    """Send fresh materials to the palette when the design fingerprint changed."""
+    fingerprint = design_fingerprint(_active_design())
+    if fingerprint == _DESIGN_WATCH["fingerprint"]:
+        return False
+    _DESIGN_WATCH["fingerprint"] = fingerprint
+    _handle_refresh_materials(palette, fingerprint)
+    return True
+
+
+def _visible_palette() -> Any:
+    """Return the add-in palette when it is open and visible, else ``None``."""
+    if adsk is None:
+        return None
+    try:
+        palette = adsk.core.Application.get().userInterface.palettes.itemById(PALETTE_ID)
+        if palette is not None and palette.isVisible:
+            return palette
+    except Exception:
+        LOGGER.debug("Could not look up the palette", exc_info=True)
+    return None
+
+
+def _start_design_watch(app: Any, user_interface: Any) -> None:
+    """Watch for finished commands and design switches while the palette is open."""
+    _stop_design_watch()
+    watches = (
+        (user_interface.commandTerminated, _CommandTerminatedHandler()),
+        (app.documentActivated, _DocumentActivatedHandler()),
+    )
+    for event, handler in watches:
+        try:
+            event.add(handler)
+            _DESIGN_WATCH["handlers"].append((event, handler))
+        except Exception:
+            LOGGER.exception("Could not watch the design for material changes")
+
+
+def _stop_design_watch() -> None:
+    """Remove the design change handlers."""
+    for event, handler in _DESIGN_WATCH["handlers"]:
+        try:
+            event.remove(handler)
+        except Exception:
+            LOGGER.debug("Could not remove a design watch handler", exc_info=True)
+    del _DESIGN_WATCH["handlers"][:]
+
+
+def _usable_slicer_path(candidate: str, installs: Sequence[Any]) -> str:
+    """Return a valid slicer path, falling back to an installed slicer."""
+    text = str(candidate or "").strip()
+    if text:
+        try:
+            if Path(text).expanduser().exists():
+                return text
+        except OSError:
+            pass
+    preferred = [item for item in installs if getattr(item, "kind", "") == "orca"] + list(
+        installs
+    )
+    for item in preferred:
+        path = str(getattr(item, "path", "") or "").strip()
+        if path:
+            try:
+                if Path(path).exists():
+                    return path
+            except OSError:
+                continue
+    return ""
+
+
+def _profiles_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """Build the full profile listing for the palette (vendors/printers/processes)."""
+    from . import slicer_profiles
+
+    settings = load_settings()
+    requested_slicer = str(
+        data.get("slicer_path")
+        or settings.get("slicer_path")
+        or settings.get("orca_path")
+        or ""
+    ).strip()
+    installs = slicer_profiles.find_installed_slicers()
+    slicer_exe = _usable_slicer_path(requested_slicer, installs)
+
+    vendors = slicer_profiles.list_vendors(slicer_exe) if slicer_exe else []
+    vendor = str(
+        data.get("vendor") or settings.get("target_vendor") or (vendors[0]["id"] if vendors else "")
+    ).strip()
+    printers = slicer_profiles.list_printers(slicer_exe, vendor) if vendor else []
+    printer_names = {item["name"] for item in printers}
+    printer = str(data.get("printer") or settings.get("target_printer") or "").strip()
+    if printer not in printer_names:
+        printer = printers[0]["name"] if printers else ""
+    processes = (
+        slicer_profiles.list_processes(slicer_exe, vendor, printer)
+        if vendor and printer
+        else []
+    )
+    process_names = {item["name"] for item in processes}
+    process = str(data.get("process") or settings.get("target_process") or "").strip()
+    if process not in process_names:
+        process = ""
+        for item in processes:
+            if item.get("default"):
+                process = item["name"]
+                break
+        if not process and processes:
+            process = processes[0]["name"]
+    return {
+        "ok": True,
+        "slicers": [
+            {"kind": item.kind, "name": item.name, "path": item.path, "version": item.version}
+            for item in installs
+        ],
+        "vendors": vendors,
+        "printers": printers,
+        "processes": processes,
+        "imported": slicer_profiles.imported_profiles(),
+        "selected": {
+            "slicer_path": slicer_exe,
+            "vendor": vendor,
+            "printer": printer,
+            "process": process,
+        },
+    }
+
+
+def _handle_get_profiles(data: Mapping[str, Any], palette: Any) -> None:
+    """List slicer vendors/printers/processes (in the background: may download)."""
+
+    def finish(payload: Any, error: Optional[BaseException]) -> None:
+        if error is not None:
+            _send_error(palette, "profilesData", _error_text(error))
+        else:
+            _send(palette, "profilesData", payload)
+
+    _run_job("profiles", lambda: _profiles_payload(data), finish)
+
+
+def _handle_import_profiles(palette: Any) -> None:
+    """Open a native multi-select dialog and import user slicer profile JSONs."""
+    try:
+        from . import slicer_profiles
+
+        dialog = _create_file_dialog("Import slicer profiles (machine/process/filament JSON)")
+        _set_dialog_property(dialog, "filter", "Slicer profiles (*.json);;All files (*)")
+        _set_dialog_property(dialog, "isMultiSelectEnabled", True)
+        imported = slicer_profiles.imported_profiles()
+        root = str(imported.get("root") or "")
+        if root and Path(root).is_dir():
+            _set_dialog_property(dialog, "initialDirectory", root)
+        result = dialog.showOpen()
+        if result != adsk.core.DialogResults.DialogOK:
+            _send(palette, "profilesImported", {"ok": False, "cancelled": True})
+            return
+        try:
+            chosen = list(dialog.filenames or [])
+        except Exception:
+            chosen = []
+        if not chosen:
+            filename = str(getattr(dialog, "filename", "") or "").strip()
+            chosen = [filename] if filename else []
+        if not chosen:
+            _send(palette, "profilesImported", {"ok": False, "cancelled": True})
+            return
+        summary = slicer_profiles.import_profile_files(chosen)
+        payload = _profiles_payload({})
+        payload.update({"ok": True, "imported": summary})
+        log_message(
+            "Imported slicer profiles: {} machine(s), {} process(es), {} filament(s)".format(
+                len(summary.get("machines") or []),
+                len(summary.get("processes") or []),
+                len(summary.get("filaments") or []),
+            )
+        )
+        _send(palette, "profilesImported", payload)
+    except Exception as exc:
+        LOGGER.exception("Importing slicer profiles failed")
+        _send_error(palette, "profilesImported", _error_text(exc))
+
+
+def _handle_create_library(palette: Any) -> None:
+    """Rebuild the user's custom material library from the current Favorites."""
+    try:
+        app = _active_app()
+        if app is None:
+            _send_error(
+                palette,
+                "libraryCreated",
+                "Open Fusion before creating the material library.",
+            )
+            return
+        settings = load_settings()
+        payload = _refresh_custom_library(app, settings)
+        if payload.get("ok"):
+            try:
+                save_settings({"custom_library_path": str(payload.get("path") or "")})
+            except Exception:
+                LOGGER.exception("Could not persist the custom library path")
+        _send(
+            palette,
+            "libraryCreated",
+            {
+                "ok": bool(payload.get("ok")),
+                "custom_library": payload,
+                "error": payload.get("message") if not payload.get("ok") else "",
+            },
+        )
+    except Exception as exc:
+        LOGGER.exception("Creating the custom library failed")
+        _send_error(
+            palette,
+            "libraryCreated",
+            _error_text(exc),
+            custom_library={"ok": False, "message": _error_text(exc)},
+        )
+
+
+def _handle_openfilament_search(data: Mapping[str, Any], palette: Any) -> None:
+    """Search the Open Filament Database (in the background: the first search downloads it)."""
+
+    def finish(payload: Any, error: Optional[BaseException]) -> None:
+        if error is not None:
+            _send_error(palette, "openFilamentData", _error_text(error))
+            return
+        log_message("OpenFilament search {!r}: {} result(s)".format(payload.pop("query"), len(payload["results"])))
+        _send(palette, "openFilamentData", payload)
+
+    _run_job("search", lambda: _openfilament_search_payload(data), finish)
+
+
+def _openfilament_search_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """Run one Open Filament Database search (no Fusion API: safe on a worker thread)."""
+    from . import openfilament
+
+    query = str(data.get("query") or "").strip()
+    material = str(data.get("material") or "").strip() or None
+    try:
+        limit = max(1, min(100, int(data.get("limit") or 50)))
+    except Exception:
+        limit = 50
+    results = openfilament.search(query, material=material, limit=limit)
+    summary = openfilament.dataset_summary()
+    try:
+        materials = openfilament.search_materials()
+    except Exception:
+        materials = []
+    rows = [
+        {
+            "key": item.key,
+            "brand": item.brand,
+            "material": item.material,
+            "filament": item.filament,
+            "variant": item.variant,
+            "color_hex": item.color_hex,
+            "density_g_cm3": item.density_g_cm3,
+            "min_print_temp": item.min_print_temp,
+            "max_print_temp": item.max_print_temp,
+            "min_bed_temp": item.min_bed_temp,
+            "max_bed_temp": item.max_bed_temp,
+        }
+        for item in results
+    ]
+    return {"ok": True, "results": rows, "summary": summary, "materials": materials, "query": query}
+
+
+def _handle_openfilament_import(data: Mapping[str, Any], palette: Any) -> None:
+    """Import selected OpenFilament results into Favorites + the active design."""
+    try:
+        from . import catalog
+        from . import favorites
+        from . import openfilament
+
+        keys = data.get("keys") or []
+        if not isinstance(keys, list) or not keys:
+            _send_error(palette, "openFilamentImportResult", "No online filaments were selected.")
+            return
+        design = _active_design()
+        if design is None:
+            _send_error(
+                palette, "openFilamentImportResult", "Open a Fusion design before importing."
+            )
+            return
+        entries_data = openfilament.get_entries([str(key) for key in keys])
+        if not entries_data:
+            _send_error(
+                palette,
+                "openFilamentImportResult",
+                "The selected OpenFilament entries could not be resolved from the cached dataset.",
+            )
+            return
+        parsed = catalog.parse_catalog(entries_data, source="<openfilament>")
+        results = favorites.import_catalog_to_favorites(_active_app(), design, parsed)
+        imported = []
+        for result in results:
+            imported.append(
+                {
+                    "id": result.catalog_id,
+                    "fusion_name": getattr(result.design_material, "name", ""),
+                    "favorite_name": getattr(result.favorite_material, "name", ""),
+                    "color_hex": result.color_hex,
+                }
+            )
+        added = 0
+        try:
+            added = openfilament.append_user_catalog(entries_data)
+        except Exception:
+            LOGGER.exception("Could not persist the imported OpenFilament entries")
+        custom_library_payload = _custom_library_payload(_active_app())
+        import_settings = load_settings()
+        if imported and bool(import_settings.get("auto_library_update", True)):
+            custom_library_payload = _refresh_custom_library(
+                _active_app(), import_settings
+            )
+        log_message(
+            "Imported {} OpenFilament filament(s) into Favorites and the design".format(
+                len(imported)
+            )
+        )
+        catalog_entries = _load_catalog_entries()
+        _send(
+            palette,
+            "openFilamentImportResult",
+            {
+                "ok": bool(imported),
+                "imported": imported,
+                "errors": [],
+                "favorites": _favorites_summary(_active_app()),
+                "custom_library": custom_library_payload,
+                "catalog_count": len(catalog_entries),
+                "catalog": _catalog_payload(catalog_entries),
+                "categories": _categories_payload(catalog_entries),
+                "user_catalog_added": added,
+            },
+        )
+    except Exception as exc:
+        LOGGER.exception("OpenFilament import failed")
+        _send_error(palette, "openFilamentImportResult", _error_text(exc))
+
+
+def _resolve_profile_target(data: Mapping[str, Any]) -> Any:
+    """Resolve the saved/payload target into a slicer_profiles.ProfileTarget."""
+    from . import slicer_profiles
+
+    settings = load_settings()
+    target = data.get("target") if isinstance(data.get("target"), dict) else {}
+    slicer_exe = str(
+        target.get("slicer_path")
+        or data.get("slicer_path")
+        or settings.get("slicer_path")
+        or settings.get("orca_path")
+        or ""
+    ).strip()
+    installs = slicer_profiles.find_installed_slicers()
+    slicer_exe = _usable_slicer_path(slicer_exe, installs)
+    if not slicer_exe:
+        raise RuntimeError(
+            "No slicer executable configured. Set the slicer path in the palette and "
+            "try again (OrcaSlicer or Bambu Studio)."
+        )
+    vendor = str(target.get("vendor") or settings.get("target_vendor") or "").strip()
+    printer = str(target.get("printer") or settings.get("target_printer") or "").strip()
+    process = str(target.get("process") or settings.get("target_process") or "").strip()
+    if not vendor or not printer:
+        raise RuntimeError(
+            "Choose a target vendor and printer in the Target Printer section before "
+            "preparing the project."
+        )
+    printers = slicer_profiles.list_printers(slicer_exe, vendor)
+    machine = next((item for item in printers if item.get("name") == printer), None)
+    if machine is None and len(printers) == 1:
+        machine = printers[0]
+    if machine is None:
+        raise RuntimeError(
+            "Printer preset {!r} was not found for vendor {!r}. Refresh the profile list "
+            "and choose the printer again.".format(printer, vendor)
+        )
+    processes = slicer_profiles.list_processes(slicer_exe, vendor, machine["name"])
+    proc = next((item for item in processes if item.get("name") == process), None)
+    if proc is None:
+        proc = next((item for item in processes if item.get("default")), None)
+    if proc is None and processes:
+        proc = processes[0]
+    if proc is None:
+        raise RuntimeError("No process presets were found for {!r}.".format(machine["name"]))
+    return slicer_profiles, slicer_exe, slicer_profiles.ProfileTarget(
+        vendor=vendor,
+        printer_name=machine["name"],
+        machine_path=str(machine.get("machine_path") or ""),
+        process_name=proc["name"],
+        process_path=str(proc.get("process_path") or ""),
+        source=str(machine.get("source") or ""),
+    )
+
+
+def _attach_bambuddy_slot_manifest(
+    output_path: Path, detected: Sequence[Any], settings: Mapping[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """Attach the Bambuddy/AMS slot association manifest to an exported 3MF.
+
+    The export must never fail just because Bambuddy is offline; errors are
+    logged and reported separately.  Returns the manifest payload (None when
+    Bambuddy is not configured or no material is mapped).
+    """
+    from . import inventory_sync
+    from . import printer_sources
+    from . import slot_mapping
+
+    if not printer_sources.is_configured(settings):
+        return None
+    try:
+        context = printer_sources.fetch_context(settings)
+        printer_id = int(settings.get("bambuddy_printer_id") or 0)
+        printers = {printer.id: printer for printer in context.printers}
+        if printer_id not in printers and context.printers:
+            printer_id = context.printers[0].id
+        slots = [slot for slot in context.slots if slot.printer_id == printer_id]
+        saved_map = settings.get("bambuddy_slot_map")
+        rows = slot_mapping.build_mapping(
+            list(detected), slots, saved_map if isinstance(saved_map, dict) else {}
+        )
+        mapped_rows = [row for row in rows if row.get("slot_key")]
+        slots_by_key = {slot.key: slot for slot in slots}
+        entries = []
+        seen_spools = set()
+        for row in mapped_rows:
+            slot = slots_by_key.get(str(row.get("slot_key")))
+            if slot is None or slot.spool is None:
+                continue
+            if slot.spool.id in seen_spools:
+                continue
+            seen_spools.add(slot.spool.id)
+            entries.append(inventory_sync.entry_for_spool(slot.spool, slot))
+        if not entries:
+            return None
+        printer = printers.get(printer_id)
+        manifest = inventory_sync.slot_manifest(
+            entries,
+            printer_name=printer.name if printer is not None else "",
+            printer_id=printer_id,
+        )
+        manifest["materials"] = [
+            {
+                "fusion_material_id": row["material_id"],
+                "display_name": row["display_name"],
+                "slot_key": row["slot_key"],
+                "slot_label": row["slot_label"],
+            }
+            for row in mapped_rows
+        ]
+        inventory_sync.attach_slot_manifest(output_path, manifest)
+        log_message(
+            "Attached Bambuddy slot manifest for {} mapped filament(s)".format(
+                len(mapped_rows)
+            )
+        )
+        return manifest
+    except Exception:
+        LOGGER.exception("Could not attach the Bambuddy slot manifest")
+        log_message("Bambuddy slot manifest was not attached (export continued)")
+        return None
+
+
+def _launch_orca(executable: str, file_path: Path) -> bool:
+    """Launch Orca Slicer (or another configured slicer) with an exported 3MF.
+
+    Args:
+        executable: Path to the slicer executable or macOS ``.app`` bundle.
+        file_path: Exported 3MF to open.
+
+    Returns:
+        True when a process was started.
+
+    Raises:
+        OSError: If the executable does not exist or launching fails.
+    """
+    executable = (executable or "").strip()
+    if not executable:
+        raise OSError("no slicer executable configured")
+    path = Path(executable)
+    if not path.exists():
+        raise OSError("slicer executable not found: {}".format(executable))
+    if sys.platform == "darwin" and (path.is_dir() or path.suffix.lower() == ".app"):
+        command = ["open", "-a", str(path), str(file_path)]
+    elif path.is_dir():
+        raise OSError("slicer path is a folder, not a program: {}".format(executable))
+    else:
+        command = [str(path), str(file_path)]
+    kwargs: Dict[str, Any] = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+    if os.name == "nt":
+        kwargs["creationflags"] = getattr(subprocess, "DETACHED_PROCESS", 0)
+    else:
+        kwargs["start_new_session"] = True
+    subprocess.Popen(command, **kwargs)
+    return True
+
+
+class _PrepareFailed(Exception):
+    """Printer preparation failed; ``extra`` describes the 3MF that was kept."""
+
+    def __init__(self, message: str, extra: Mapping[str, Any]) -> None:
+        super().__init__(message)
+        self.extra = dict(extra)
+
+
+def _handle_export(data: Mapping[str, Any], palette: Any) -> None:
+    """Export the design, then prepare the printer project and open the slicer.
+
+    The Fusion export runs here on Fusion's UI thread. Preparing the project
+    with the slicer CLI (up to minutes), attaching the printer slot manifest
+    (network) and launching the slicer run in the background
+    (:func:`_finish_export_files`); :func:`_report_export` then saves the
+    settings and answers the palette.
+
+    The base 3MF always carries the per-object material metadata but no partial
+    ``project_settings.config`` (that partial file made slicers show an
+    "Untitled" printer). With a printer target the slicer CLI builds a
+    complete project from the target's machine, process and filament presets.
+    """
+    backups: List[Any] = []
+    name_backups: List[Any] = []
+    detected: Sequence[Any] = []
+    try:
+        from . import exporter
+        from . import materials_workflow
+
+        output_path = str(data.get("output_path") or "").strip()
+        if not output_path:
+            _send_error(palette, "exportResult", "Choose an output .3mf path first.")
+            return
+        target_data = data.get("target") if isinstance(data.get("target"), dict) else {}
+        prepare_enabled = bool(target_data.get("prepare", False))
+        orca = data.get("orca") if isinstance(data.get("orca"), dict) else {}
+        settings = load_settings()
+        incoming_slots = data.get("bambuddy_slot_map")
+        if isinstance(incoming_slots, dict):
+            settings["bambuddy_slot_map"] = incoming_slots
+        try:
+            incoming_printer = int(data.get("bambuddy_printer_id") or 0)
+        except (TypeError, ValueError):
+            incoming_printer = 0
+        if incoming_printer:
+            settings["bambuddy_printer_id"] = incoming_printer
+
+        design = _active_design()
+        if design is None:
+            _send_error(palette, "exportResult", "Open a Fusion design before exporting.")
+            return
+
+        entries = _load_catalog_entries()
+        # Fusion writes only body names into the 3MF, so duplicate names (two
+        # "Body1" in different components) are made unique until the export ends.
+        name_backups = materials_workflow.apply_unique_export_names(design)
+        detected = materials_workflow.collect_assembly_materials(design, entries)
+        if not detected:
+            _send_error(
+                palette,
+                "exportResult",
+                "No materials were detected in the assembly. Assign Filamatch "
+                "materials to your bodies/components and click Refresh, then export.",
+            )
+            return
+
+        mapping = materials_workflow.build_mapping(detected)
+        source_appearance = materials_workflow.find_source_appearance(design, _active_app())
+        output = Path(output_path).expanduser()
+        base_output = (
+            output.with_name(output.stem + ".base.3mf") if prepare_enabled else output
+        )
+        log_message(
+            "Exporting {} object(s) with {} detected material(s) to {!r}{}".format(
+                len(mapping),
+                len(detected),
+                str(output),
+                " (printer preparation enabled)" if prepare_enabled else "",
+            )
+        )
+        try:
+            backups = materials_workflow.apply_export_appearances(
+                design, detected, source_appearance=source_appearance
+            )
+            base_result = exporter.export_and_inject(
+                design=design,
+                output_path=base_output,
+                mapping=mapping,
+                filaments=None,
+                write_project_settings=False,
+            )
+        except exporter.InjectionFailedError as exc:
+            LOGGER.exception("Export succeeded but material metadata injection failed")
+            _send_error(
+                palette,
+                "exportResult",
+                "The 3MF was exported but material metadata injection failed: {}".format(
+                    _error_text(exc)
+                ),
+                raw_export_path=str(getattr(exc, "raw_export_path", base_output)),
+                output_path=str(getattr(exc, "raw_export_path", base_output)),
+                materials_used=_materials_used_payload(detected, None),
+            )
+            return
+        except Exception as exc:
+            LOGGER.exception("Automatic material export failed")
+            _send_error(
+                palette,
+                "exportResult",
+                _error_text(exc),
+                materials_used=_materials_used_payload(detected, None),
+            )
+            return
+        finally:
+            materials_workflow.restore_appearances(backups)
+            backups = []
+            materials_workflow.restore_body_names(name_backups)
+            name_backups = []
+    except Exception as exc:
+        LOGGER.exception("Palette export action failed")
+        try:
+            from . import materials_workflow
+
+            materials_workflow.restore_appearances(backups)
+        except Exception:
+            LOGGER.exception("Could not restore appearances after export failure")
+        _send_error(
+            palette,
+            "exportResult",
+            _error_text(exc),
+            materials_used=_materials_used_payload(detected, None),
+        )
+        return
+    finally:
+        if name_backups:
+            try:
+                from . import materials_workflow
+
+                materials_workflow.restore_body_names(name_backups)
+            except Exception:
+                LOGGER.exception("Could not restore body names after export")
+
+    skipped = list(getattr(base_result, "unmatched_names", None) or [])
+    if skipped:
+        log_message(
+            "Not in the 3MF, so left out (hidden or not solid?): {}".format(", ".join(skipped))
+        )
+    job: Dict[str, Any] = {
+        "data": data,
+        "settings": settings,
+        "target_data": target_data,
+        "orca": orca,
+        "prepare_enabled": prepare_enabled,
+        "output": output,
+        "base_output": base_output,
+        "detected": list(detected),
+        "mapped_count": base_result.mapped_count,
+        "materials_used": _materials_used_payload(detected, base_result),
+    }
+    _run_job(
+        "export",
+        lambda: _finish_export_files(job),
+        lambda outcome, error: _report_export(job, outcome, error, palette),
+    )
+
+
+def _wants_slicer_launch(orca: Mapping[str, Any], settings: Mapping[str, Any]) -> bool:
+    """The palette's choice for this export wins; the saved setting is the fallback."""
+    if "enabled" in orca:
+        return bool(orca.get("enabled"))
+    return bool(settings.get("orca_enabled"))
+
+
+def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
+    """Prepare the project, attach the slot manifest and open the slicer.
+
+    Runs on a worker thread: files, subprocesses and network only, no Fusion
+    API. Raises :class:`_PrepareFailed` when printer preparation fails (the
+    material-tagged 3MF is kept and described in its ``extra``).
+    """
+    data, settings = job["data"], job["settings"]
+    target_data, orca = job["target_data"], job["orca"]
+    output, base_output, detected = job["output"], job["base_output"], job["detected"]
+    outcome: Dict[str, Any] = {
+        "prepared": False,
+        "printer_name": "",
+        "process_name": "",
+        "log_tail": "",
+        "prepared_target": None,
+        "slot_manifest": None,
+        "orca_launched": False,
+        "orca_error": "",
+        "resolved_slicer_path": str(
+            target_data.get("slicer_path")
+            or settings.get("slicer_path")
+            or settings.get("orca_path")
+            or ""
+        ).strip(),
+    }
+    if job["prepare_enabled"]:
+        try:
+            slicer_profiles, slicer_exe, prepared_target = _resolve_profile_target(data)
+            outcome["resolved_slicer_path"] = str(slicer_exe or outcome["resolved_slicer_path"])
+            log_message(
+                "Preparing project for {!r} / {!r} via {!r}".format(
+                    prepared_target.printer_name, prepared_target.process_name, slicer_exe
+                )
+            )
+            prepared_result = slicer_profiles.prepare_project(
+                base_output, output, prepared_target, slicer_exe, detected
+            )
+            outcome.update(
+                prepared=True,
+                prepared_target=prepared_target,
+                printer_name=str(getattr(prepared_result, "printer_name", "") or ""),
+                process_name=str(getattr(prepared_result, "process_name", "") or ""),
+                log_tail=str(getattr(prepared_result, "log_tail", "") or "")[-4000:],
+            )
+            if base_output != output:
+                try:
+                    base_output.unlink()
+                except OSError:
+                    LOGGER.debug("Could not remove the intermediate base 3MF", exc_info=True)
+        except Exception as exc:
+            LOGGER.exception("Printer preparation failed")
+            preserved = output
+            try:
+                shutil.copy2(str(base_output), str(output))
+                if base_output != output:
+                    base_output.unlink()
+            except Exception:
+                preserved = base_output
+                LOGGER.exception("Could not preserve the base 3MF after prepare failure")
+            extra: Dict[str, Any] = {
+                "prepared": False,
+                "base_export_path": str(preserved),
+                "output_path": str(preserved),
+                "materials_used": _materials_used_payload(detected, None),
+            }
+            log_file_text = str(getattr(exc, "log_tail", "") or "")
+            if log_file_text:
+                extra["log_tail"] = log_file_text[-4000:]
+            raise _PrepareFailed(
+                "Printer preparation failed: {} (the material-tagged 3MF without a "
+                "printer profile was kept at {})".format(_error_text(exc), preserved),
+                extra,
+            ) from exc
+
+    try:
+        outcome["slot_manifest"] = _attach_bambuddy_slot_manifest(output, detected, settings)
+    except Exception:
+        LOGGER.exception("Unexpected slot-manifest failure during export")
+
+    if _wants_slicer_launch(orca, settings):
+        executable = str(
+            orca.get("executable")
+            or target_data.get("slicer_path")
+            or settings.get("slicer_path")
+            or settings.get("orca_path")
+            or ""
+        ).strip()
+        try:
+            outcome["orca_launched"] = _launch_orca(executable, output)
+            log_message("Launched slicer: {}".format(executable))
+        except Exception as exc:
+            outcome["orca_error"] = _error_text(exc)
+            log_message("Could not launch slicer: {}".format(outcome["orca_error"]))
+    return outcome
+
+
+def _report_export(
+    job: Mapping[str, Any], outcome: Any, error: Optional[BaseException], palette: Any
+) -> None:
+    """Save the export choices and answer the palette (Fusion UI thread)."""
+    if isinstance(error, _PrepareFailed):
+        _send_error(palette, "exportResult", str(error), **error.extra)
+        return
+    if error is not None:
+        _send_error(
+            palette, "exportResult", _error_text(error), materials_used=job["materials_used"]
+        )
+        return
+    settings, target_data, orca = job["settings"], job["target_data"], job["orca"]
+    output = job["output"]
+    prepared_target = outcome["prepared_target"]
+    updates: Dict[str, Any] = {
+        "output_path": str(output),
+        "slicer_path": outcome["resolved_slicer_path"],
+        "prepare_enabled": job["prepare_enabled"],
+        "target_vendor": str(
+            (prepared_target.vendor if prepared_target else "")
+            or target_data.get("vendor")
+            or settings.get("target_vendor")
+            or ""
+        ),
+        "target_printer": str(
+            (prepared_target.printer_name if prepared_target else "")
+            or target_data.get("printer")
+            or settings.get("target_printer")
+            or ""
+        ),
+        "target_process": str(
+            (prepared_target.process_name if prepared_target else "")
+            or target_data.get("process")
+            or settings.get("target_process")
+            or ""
+        ),
+    }
+    if "enabled" in orca:
+        updates["orca_enabled"] = bool(orca.get("enabled"))
+    # An empty value in this request must not wipe a saved path.
+    orca_path = str(orca.get("executable") or target_data.get("slicer_path") or "").strip()
+    if orca_path:
+        updates["orca_path"] = orca_path
+    if "profile_dir" in orca:
+        updates["orca_profile_dir"] = str(orca.get("profile_dir") or "")
+    try:
+        settings = save_settings(updates)
+    except Exception:
+        LOGGER.exception("Could not persist palette settings after export")
+
+    slot_manifest = outcome["slot_manifest"] or {}
+    payload: Dict[str, Any] = {
+        "ok": True,
+        "output_path": str(output),
+        "prepared": outcome["prepared"],
+        "printer_name": outcome["printer_name"],
+        "process_name": outcome["process_name"],
+        "materials_used": job["materials_used"],
+        "mapped_count": job["mapped_count"],
+        "project_settings_written": outcome["prepared"],
+        "filament_count": len(job["detected"]),
+        "orca_launched": outcome["orca_launched"],
+        "settings": public_settings(settings),
+        "bambuddy_slots": slot_manifest.get("materials", []),
+        "bambuddy_printer": slot_manifest.get("printer_name", ""),
+    }
+    if outcome["log_tail"]:
+        payload["log_tail"] = outcome["log_tail"]
+    if outcome["orca_error"]:
+        payload["orca_error"] = outcome["orca_error"]
+    if not outcome["prepared"]:
+        payload["warning"] = (
+            "No printer profile was applied. Choose a Target Printer in the palette "
+            "to export a fully configured slicer project."
+        )
+    log_message(
+        "Export complete: {!r} ({} materials, {} objects, prepared={}, printer={!r})".format(
+            str(output),
+            len(job["detected"]),
+            job["mapped_count"],
+            outcome["prepared"],
+            outcome["printer_name"],
+        )
+    )
+    _send(palette, "exportResult", payload)
+
+
+def _set_dialog_property(dialog: Any, name: str, value: Any) -> None:
+    """Best-effort setter for a FileDialog property (platform differences)."""
+    try:
+        setattr(dialog, name, value)
+    except Exception:
+        LOGGER.debug("Could not set FileDialog.%s to %r", name, value, exc_info=True)
+
+
+def _create_file_dialog(title: str) -> Any:
+    """Create a Fusion FileDialog for the active application.
+
+    Args:
+        title: Dialog window title.
+
+    Returns:
+        An ``adsk.core.FileDialog`` instance.
+
+    Raises:
+        RuntimeError: If the Fusion user interface is unavailable.
+    """
+    app = _active_app()
+    if app is None:
+        raise RuntimeError("Fusion is not available; cannot open a file dialog.")
+    dialog = app.userInterface.createFileDialog()
+    _set_dialog_property(dialog, "title", title)
+    return dialog
+
+
+def _handle_browse_export_path(data: Mapping[str, Any], palette: Any) -> None:
+    """Open Fusion's native save dialog and return the chosen .3mf path."""
+    try:
+        current_path = str(data.get("current_path") or "").strip()
+        dialog = _create_file_dialog("Choose 3MF export file")
+        _set_dialog_property(dialog, "filter", "3MF files (*.3mf);;All files (*)")
+        current = Path(current_path).expanduser() if current_path else None
+        if current is not None and current.name:
+            _set_dialog_property(dialog, "initialFilename", current.name)
+        if current is not None and current.parent.is_dir():
+            _set_dialog_property(dialog, "initialDirectory", str(current.parent))
+        else:
+            _set_dialog_property(dialog, "initialDirectory", str(Path.home()))
+        result = dialog.showSave()
+        if result == adsk.core.DialogResults.DialogOK:
+            chosen = str(dialog.filename or "").strip()
+            if not chosen:
+                _send(
+                    palette,
+                    "exportPathData",
+                    {"ok": False, "cancelled": True, "path": current_path},
+                )
+                return
+            _send(palette, "exportPathData", {"ok": True, "path": chosen})
+            log_message("Export path selected: {!r}".format(chosen))
+        else:
+            _send(
+                palette,
+                "exportPathData",
+                {"ok": False, "cancelled": True, "path": current_path},
+            )
+    except Exception as exc:
+        LOGGER.exception("File dialog for the export path failed")
+        _send(palette, "exportPathData", {"ok": False, "error": _error_text(exc)})
+
+
+def _handle_browse_slicer_path(data: Mapping[str, Any], palette: Any) -> None:
+    """Open Fusion's native open dialog and return a slicer executable path."""
+    try:
+        current_path = str(data.get("current_path") or "").strip()
+        dialog = _create_file_dialog("Choose slicer executable")
+        initial_directory = str(Path.home())
+        if sys.platform == "darwin":
+            _set_dialog_property(dialog, "filter", "Applications (*.app);;All files (*)")
+            if Path("/Applications").is_dir():
+                initial_directory = "/Applications"
+        elif os.name == "nt":
+            _set_dialog_property(dialog, "filter", "Executables (*.exe);;All files (*)")
+            program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+            if Path(program_files).is_dir():
+                initial_directory = program_files
+        else:
+            _set_dialog_property(dialog, "filter", "All files (*)")
+        current = Path(current_path).expanduser() if current_path else None
+        if current is not None and current.name:
+            _set_dialog_property(dialog, "initialFilename", current.name)
+            if current.parent.is_dir():
+                initial_directory = str(current.parent)
+        _set_dialog_property(dialog, "initialDirectory", initial_directory)
+        result = dialog.showOpen()
+        if result == adsk.core.DialogResults.DialogOK:
+            chosen = str(dialog.filename or "").strip()
+            if not chosen:
+                _send(
+                    palette,
+                    "slicerPathData",
+                    {"ok": False, "cancelled": True, "path": current_path},
+                )
+                return
+            _send(palette, "slicerPathData", {"ok": True, "path": chosen})
+            log_message("Slicer path selected: {!r}".format(chosen))
+        else:
+            _send(
+                palette,
+                "slicerPathData",
+                {"ok": False, "cancelled": True, "path": current_path},
+            )
+    except Exception as exc:
+        LOGGER.exception("File dialog for the slicer path failed")
+        _send(palette, "slicerPathData", {"ok": False, "error": _error_text(exc)})
+
+
+def _handle_diagnostics(palette: Any) -> None:
+    """Run the add-in diagnostics and return the report text."""
+    try:
+        try:
+            from . import diagnostics
+
+            text = diagnostics.run_diagnostics()
+        except Exception:
+            LOGGER.exception("Diagnostics module unavailable")
+            text = "Diagnostics failed:\n" + traceback.format_exc()
+        _send(palette, "diagnosticsResult", {"ok": True, "text": text})
+    except Exception as exc:
+        LOGGER.exception("Palette diagnostics action failed")
+        _send_error(palette, "diagnosticsResult", _error_text(exc))
+
+
+def _handle_open_material_browser(palette: Any) -> None:
+    """Open Fusion's Physical Material browser so the user can assign materials."""
+    try:
+        app = _active_app()
+        if app is None:
+            raise RuntimeError("The Fusion application is not available.")
+        ui = getattr(app, "userInterface", None)
+        if ui is None:
+            raise RuntimeError("Fusion's user interface is not available.")
+        definitions = getattr(ui, "commandDefinitions", None)
+        if definitions is None:
+            raise RuntimeError("Fusion's command definitions are not available.")
+        command = None
+        for command_id in ("PhysicalMaterialCommand", "MaterialCommand"):
+            try:
+                candidate = definitions.itemById(command_id)
+            except Exception:
+                candidate = None
+            if candidate is not None:
+                command = candidate
+                break
+        if command is None:
+            raise RuntimeError(
+                "Fusion did not expose the Physical Material command. Open Physical Material "
+                "from the Fusion toolbar instead."
+            )
+        # Acknowledge first: executing the native command opens a modal Material
+        # Browser and can block the palette event loop until it closes, which
+        # previously made the UI report a 20 s timeout even though the command
+        # had launched.
+        _send(palette, "materialBrowserData", {"ok": True})
+        try:
+            command.execute()
+        except Exception:
+            LOGGER.exception("Fusion rejected the Physical Material command after acknowledgement")
+        else:
+            log_message("Opened the Fusion Physical Material browser")
+    except Exception as exc:
+        LOGGER.exception("Could not open the Fusion Material Browser")
+        _send_error(palette, "materialBrowserData", _error_text(exc))
+
+
+def _handle_save_settings(data: Mapping[str, Any], palette: Any) -> None:
+    """Persist palette settings and acknowledge them."""
+    try:
+        settings = save_settings(data)
+        log_message("Settings saved")
+        _send(palette, "settingsSaved", {"ok": True, "settings": public_settings(settings)})
+    except Exception as exc:
+        LOGGER.exception("Could not save palette settings")
+        _send_error(palette, "settingsSaved", _error_text(exc))
+
+
+def _handle_clear_bambuddy_key(palette: Any) -> None:
+    """Forget the saved Bambuddy API key (keychain and settings file)."""
+    try:
+        from . import secret_store
+
+        secret_store.delete_secret("bambuddy_api_key")
+        settings = save_settings({"bambuddy_api_key": ""})
+        settings["bambuddy_api_key"] = ""
+        log_message("Removed the saved Bambuddy API key")
+        _send(palette, "settingsSaved", {"ok": True, "settings": public_settings(settings)})
+    except Exception as exc:
+        LOGGER.exception("Could not remove the Bambuddy API key")
+        _send_error(palette, "settingsSaved", _error_text(exc))
+
+
+def _handle_get_log(palette: Any) -> None:
+    """Send the current session log lines."""
+    _send(palette, "logData", {"ok": True})
+
+
+def _fit_palette_height(payload: Mapping[str, Any], palette: Any) -> None:
+    """Fit the palette height to the page content (fire-and-forget, no reply).
+
+    ``viewport`` is the page's own height, so the difference to the palette
+    height is Fusion's title and button bars. Fusion ignores the new height
+    while the palette is docked.
+    """
+    try:
+        content = int(payload.get("content") or 0)
+        viewport = int(payload.get("viewport") or 0)
+    except (TypeError, ValueError):
+        return
+    if content <= 0 or viewport <= 0:
+        return
+    try:
+        current = int(palette.height)
+        wanted = max(PALETTE_MIN_HEIGHT, min(PALETTE_HEIGHT, content + max(0, current - viewport)))
+        if abs(wanted - current) > 8:
+            palette.height = wanted
+    except Exception:
+        LOGGER.debug("Could not fit the palette height", exc_info=True)
+
+
+def dispatch(action: str, data: Any, palette: Any) -> None:
+    """Dispatch one incoming palette action to its handler.
+
+    ``response`` messages are the return values Fusion sends back for every
+    ``sendInfoToHTML`` call; they are ignored to avoid a feedback loop. Unknown
+    actions are logged but never answered (a reply could also loop).
+    """
+    payload = _parse_payload(data)
+    if action == "response":
+        return
+    LOGGER.debug("Palette action %r", action)
+    if action == "init":
+        _handle_init(palette)
+    elif action == "import_selected":
+        _handle_import(payload, palette)
+    elif action == "refresh_materials":
+        _handle_refresh_materials(palette)
+    elif action == "design_check":
+        _check_design_changed(palette)
+    elif action == "fit_height":
+        _fit_palette_height(payload, palette)
+    elif action == "export_3mf":
+        _handle_export(payload, palette)
+    elif action == "browse_export_path":
+        _handle_browse_export_path(payload, palette)
+    elif action == "browse_slicer_path":
+        _handle_browse_slicer_path(payload, palette)
+    elif action == "get_profiles":
+        _handle_get_profiles(payload, palette)
+    elif action == "import_profiles":
+        _handle_import_profiles(palette)
+    elif action == "create_library":
+        _handle_create_library(palette)
+    elif action == "bambuddy_context":
+        _handle_bambuddy_context(payload, palette)
+    elif action == "bambuddy_import":
+        _handle_bambuddy_import(payload, palette)
+    elif action == "open_material_browser":
+        _handle_open_material_browser(palette)
+    elif action == "openfilament_search":
+        _handle_openfilament_search(payload, palette)
+    elif action == "openfilament_import":
+        _handle_openfilament_import(payload, palette)
+    elif action == "run_diagnostics":
+        _handle_diagnostics(palette)
+    elif action == "clear_bambuddy_key":
+        _handle_clear_bambuddy_key(palette)
+    elif action == "save_settings":
+        _handle_save_settings(payload, palette)
+    elif action == "get_log":
+        _handle_get_log(palette)
+    else:
+        LOGGER.warning("Unknown palette action %r", action)
+        log_message("Unknown palette action: {!r}".format(action))
+
+
+# ---------------------------------------------------------------------------
+# Palette lifecycle (Fusion only)
+# ---------------------------------------------------------------------------
+
+
+def show_palette(ui: Any = None) -> Any:
+    """Create (or reveal) the add-in HTML palette and attach its event handler.
+
+    Args:
+        ui: Optional Fusion ``UserInterface``; resolved from the application
+            when omitted.
+
+    Returns:
+        The Fusion ``Palette`` object.
+
+    Raises:
+        RuntimeError: When the Fusion API or the palette HTML is unavailable.
+    """
+    if adsk is None:
+        raise RuntimeError("The adsk modules are not available outside Fusion 360")
+    if not PALETTE_HTML.is_file():
+        raise RuntimeError(
+            "Palette HTML file is missing: {}\nThe add-in folder must include the "
+            "'palette' directory (index.html, style.css, app.js).".format(PALETTE_HTML)
+        )
+
+    app = adsk.core.Application.get()
+    user_interface = ui if ui is not None else app.userInterface
+    palettes = user_interface.palettes
+    if not os.environ.get(config.DATA_DIR_ENV, "").strip():
+        # Before the page asks for anything that reads the data folder.
+        migrate_legacy_data_dir()
+
+    existing = palettes.itemById(PALETTE_ID)
+    if existing is not None and not _PALETTE_HANDLERS:
+        # Left over from an earlier load of the add-in: its page talks to a
+        # handler this module does not own, so build a fresh palette.
+        try:
+            existing.deleteMe()
+            existing = None
+        except Exception as exc:
+            raise RuntimeError(
+                "An old Filamatch palette is still open and could not be closed. "
+                "Close it, or restart Fusion."
+            ) from exc
+    if existing is not None:
+        try:
+            existing.isVisible = True
+        except Exception:
+            LOGGER.exception("Could not show the existing palette")
+        return existing
+
+    # Fusion's documented signature is:
+    #   add(id, name, htmlFileURL, isVisible, showCloseButton, isResizable, width, height[, useNewWebBrowser])
+    # Some builds use older argument orders, so several layouts are attempted.
+    palette = None
+    errors: List[str] = []
+    argument_variants = [
+        (True, True, True, PALETTE_WIDTH, PALETTE_HEIGHT),
+        (True, True, PALETTE_WIDTH, PALETTE_HEIGHT, True),
+        (True, True, PALETTE_WIDTH, PALETTE_HEIGHT),
+    ]
+    for html_url in (str(PALETTE_HTML), PALETTE_HTML.as_uri()):
+        for extra_arguments in argument_variants:
+            try:
+                palette = palettes.add(PALETTE_ID, PALETTE_NAME, html_url, *extra_arguments)
+                break
+            except Exception as exc:
+                errors.append("{} (args={}): {}".format(html_url, extra_arguments, exc))
+                LOGGER.exception(
+                    "palettes.add failed for %r with arguments %r", html_url, extra_arguments
+                )
+        if palette is not None:
+            break
+    if palette is None:
+        raise RuntimeError("Could not create the palette: {}".format("; ".join(errors)))
+
+    # Floating, so the page can fit the palette height to each screen
+    # (Fusion ignores the height of a docked palette). Users can still dock it.
+    try:
+        palette.dockingState = adsk.core.PaletteDockingStates.PaletteDockStateFloating
+    except Exception:
+        LOGGER.warning("Could not make the palette float", exc_info=True)
+
+    handler = _PaletteIncomingHandler(palette)
+    try:
+        palette.incomingFromHTML.add(handler)
+        _PALETTE_HANDLERS.append(handler)
+    except Exception:
+        LOGGER.exception("Could not attach the palette incoming-message handler")
+        raise
+    _start_design_watch(app, user_interface)
+
+    log_message("Palette opened")
+    return palette
+
+
+def close_palette(ui: Any = None) -> None:
+    """Delete the palette if it exists (called from the add-in ``stop``)."""
+    if adsk is None:
+        return
+    try:
+        app = adsk.core.Application.get()
+        user_interface = ui if ui is not None else app.userInterface
+        palette = user_interface.palettes.itemById(PALETTE_ID)
+        if palette is not None:
+            palette.deleteMe()
+    except Exception:
+        LOGGER.exception("Could not close the palette")
+    finally:
+        _stop_design_watch()
+        _unregister_job_event()
+        del _PALETTE_HANDLERS[:]
+
+
+if adsk is not None:  # pragma: no branch - always true inside Fusion.
+
+    class _PaletteIncomingHandler(adsk.core.HTMLEventHandler):  # type: ignore[misc]
+        """Dispatch messages sent by ``adsk.fusionSendData`` in the palette."""
+
+        def __init__(self, palette: Any) -> None:
+            super().__init__()
+            self._palette = palette
+
+        def notify(self, args: Any) -> None:
+            """Handle one incoming palette message without breaking the palette."""
+            try:
+                dispatch(args.action, args.data, self._palette)
+            except Exception:
+                LOGGER.exception("Unhandled palette message failure")
+
+    class _JobFinishedHandler(adsk.core.CustomEventHandler):  # type: ignore[misc]
+        """Finish a background job on Fusion's UI thread."""
+
+        def notify(self, args: Any) -> None:
+            try:
+                _complete_job(str(getattr(args, "additionalInfo", "") or ""))
+            except Exception:
+                LOGGER.exception("Could not finish a background job")
+
+    class _CommandTerminatedHandler(adsk.core.ApplicationCommandEventHandler):  # type: ignore[misc]
+        """Re-read the design after a Fusion command ends (Physical Material, undo...)."""
+
+        def notify(self, args: Any) -> None:
+            try:
+                if str(getattr(args, "commandId", "") or "") in _IGNORED_COMMANDS:
+                    return
+                palette = _visible_palette()
+                if palette is not None:
+                    _check_design_changed(palette)
+            except Exception:
+                LOGGER.exception("Design change check failed after a command")
+
+    class _DocumentActivatedHandler(adsk.core.DocumentEventHandler):  # type: ignore[misc]
+        """Re-read the design when another document tab becomes active."""
+
+        def notify(self, args: Any) -> None:
+            try:
+                palette = _visible_palette()
+                if palette is not None:
+                    _check_design_changed(palette)
+            except Exception:
+                LOGGER.exception("Design change check failed after a document switch")
+                print(traceback.format_exc())
+
+
+# ---------------------------------------------------------------------------
+# Pure-Python self-test (no Fusion required)
+# ---------------------------------------------------------------------------
+
+_PASSED = 0
+_FAILED = 0
+
+
+def _check(condition: bool, label: str) -> None:
+    """Record and print one PASS/FAIL check."""
+    global _PASSED, _FAILED
+    if condition:
+        _PASSED += 1
+        print("PASS {}".format(label))
+    else:
+        _FAILED += 1
+        print("FAIL {}".format(label))
+
+
+class _FakePalette:
+    """Minimal palette stand-in recording Python -> HTML replies."""
+
+    def __init__(self) -> None:
+        self.sent: List[Any] = []
+
+    def sendInfoToHTML(self, action: str, data: str) -> bool:
+        """Record one reply message."""
+        try:
+            self.sent.append((action, json.loads(data)))
+        except Exception:
+            self.sent.append((action, {}))
+        return True
+
+
+def _self_test() -> int:
+    """Run the palette-bridge pure-Python self-test.
+
+    Returns:
+        Process exit code (0 success, 1 failure).
+    """
+    from . import catalog
+
+    entries = catalog.load_catalog()
+    _check(len(entries) == 5, "bundled catalog loads 5 entries")
+
+    catalog_payload = _catalog_payload(entries)
+    _check(len(catalog_payload) == 5, "catalog payload has 5 rows")
+    _check(
+        catalog_payload[0]["id"] == "bambu_pla_basic_black"
+        and catalog_payload[0]["color_hex"] == "#161616"
+        and catalog_payload[0]["category"] == "PLA",
+        "catalog payload exposes palette fields including category",
+    )
+
+    categories = _categories_payload(entries)
+    names = [category["name"] for category in categories]
+    _check(
+        names == ["PLA", "PETG", "ABS", "Fiber-Reinforced"],
+        "categories are grouped in first-appearance order: {}".format(names),
+    )
+    _check(
+        sum(len(category["filament_ids"]) for category in categories) == len(entries),
+        "every catalog entry is assigned to exactly one category group",
+    )
+    by_name = {category["name"]: category["filament_ids"] for category in categories}
+    _check(
+        by_name["PLA"] == ["bambu_pla_basic_black", "prusament_pla_orange"],
+        "PLA category holds the two PLA entries in catalog order",
+    )
+
+    fake_material = type(
+        "FakeMaterial",
+        (),
+        {
+            "material_id": "bambu_pla_basic_black",
+            "material_name": "bambu_pla_basic_black",
+            "display_name": "Bambu Lab PLA Basic - Black",
+            "color_hex": "#161616",
+            "filament_type": "PLA",
+            "density_g_cm3": 1.24,
+            "category": "PLA",
+            "body_names": ("Body1", "Body2"),
+            "slot": 1,
+        },
+    )()
+    row = _detected_material_payload(fake_material)
+    _check(
+        row["slot"] == 1 and row["body_count"] == 2 and row["color_hex"] == "#161616",
+        "detected material payload exposes slot/colour/body count",
+    )
+    _check(
+        _materials_payload(None, entries) == [],
+        "assembly materials are empty when no design is active",
+    )
+
+    with tempfile.TemporaryDirectory(prefix="filamatch_palette_") as temp_dir:
+        settings_path = Path(temp_dir) / "settings.json"
+        defaults = load_settings(settings_path)
+        _check(
+            defaults["write_project_settings"] is True
+            and defaults["output_path"] == ""
+            and defaults["prepare_enabled"] is True
+            and "target_vendor" in defaults
+            and "slicer_path" in defaults,
+            "default settings load including printer-target keys",
+        )
+        saved = save_settings(
+            {"output_path": "/tmp/out.3mf", "orca_path": "/Applications/OrcaSlicer.app"},
+            settings_path,
+        )
+        reloaded = load_settings(settings_path)
+        _check(
+            saved["output_path"] == reloaded["output_path"] == "/tmp/out.3mf"
+            and reloaded["orca_enabled"] is True,
+            "settings round-trip through JSON",
+        )
+        _check(
+            load_settings(settings_path)["printer_source"] == "bambuddy",
+            "Bambuddy is the default printer source",
+        )
+
+        # The session settings file keeps the API key in the keychain
+        # (memory backend here, so the real keychain is never touched).
+        from . import secret_store
+
+        global SETTINGS_FILE, _SECRETS_NEED_FUSION
+        saved_globals = (SETTINGS_FILE, _SECRETS_NEED_FUSION)
+        saved_env = {
+            name: os.environ.pop(name, None)
+            for name in ("FILAMATCH_DATA_DIR", secret_store.BACKEND_ENV)
+        }
+        os.environ[secret_store.BACKEND_ENV] = "memory"
+        secret_store.reset_backend()
+        SETTINGS_FILE = Path(temp_dir) / "session_settings.json"
+        _SECRETS_NEED_FUSION = False
+        try:
+            SETTINGS_FILE.write_text(
+                json.dumps({"bambuddy_api_key": "bb_legacy"}), encoding="utf-8"
+            )
+            migrated = load_settings()
+            on_disk = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+            _check(
+                migrated["bambuddy_api_key"] == "bb_legacy"
+                and on_disk["bambuddy_api_key"] == ""
+                and secret_store.get_secret("bambuddy_api_key") == "bb_legacy",
+                "a plain-text Bambuddy API key moves into the keychain",
+            )
+            save_settings({"bambuddy_api_key": "bb_new", "output_path": "/tmp/k.3mf"})
+            on_disk = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+            reloaded = load_settings()
+            _check(
+                on_disk["bambuddy_api_key"] == ""
+                and on_disk["output_path"] == "/tmp/k.3mf"
+                and reloaded["bambuddy_api_key"] == "bb_new"
+                and public_settings(reloaded)["bambuddy_api_key_set"] is True,
+                "a saved Bambuddy API key stays out of settings.json",
+            )
+            _SECRETS_NEED_FUSION = True
+            _check(
+                load_settings()["bambuddy_api_key"] == "",
+                "outside Fusion the keychain is never read",
+            )
+        finally:
+            SETTINGS_FILE, _SECRETS_NEED_FUSION = saved_globals
+            for name, value in saved_env.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+            secret_store.reset_backend()
+
+    # The palette height follows the page content, inside the min/max limits.
+    sized = types.SimpleNamespace(height=PALETTE_HEIGHT)
+    dispatch("fit_height", json.dumps({"content": 400, "viewport": 733}), sized)
+    tall = types.SimpleNamespace(height=PALETTE_HEIGHT)
+    dispatch("fit_height", {"content": 5000, "viewport": 733}, tall)
+    short = types.SimpleNamespace(height=PALETTE_HEIGHT)
+    dispatch("fit_height", {"content": 50, "viewport": 733}, short)
+    _check(
+        sized.height == 467 and tall.height == PALETTE_HEIGHT and short.height == PALETTE_MIN_HEIGHT,
+        "the palette height fits the page content within its limits",
+    )
+
+    # Upgrade from a temp data folder: copied once, old library path dropped.
+    legacy = Path(temp_dir) / "legacy_data"
+    fresh = Path(temp_dir) / "fresh_data"
+    old_library = Path(temp_dir) / "OldDocs"
+    (legacy / "openfilament").mkdir(parents=True)
+    (legacy / "openfilament" / "all.json").write_text("{}", encoding="utf-8")
+    (legacy / "user_catalog.json").write_text("[]", encoding="utf-8")
+    (legacy / "old.log").write_text("x", encoding="utf-8")
+    (legacy / "settings.json").write_text(json.dumps({
+        "bambuddy_url": "http://printer:8000",
+        "custom_library_path": str(old_library / "FusionFilament Library builds" / "1" / "FusionFilament Library.adsklib"),
+    }), encoding="utf-8")
+    copied = migrate_legacy_data_dir([legacy], fresh, old_library)
+    moved = json.loads((fresh / "settings.json").read_text(encoding="utf-8"))
+    _check(
+        copied == 2
+        and not (fresh / "openfilament").exists()
+        and (fresh / "user_catalog.json").is_file()
+        and not (fresh / "old.log").exists()
+        and moved["bambuddy_url"] == "http://printer:8000"
+        and moved["custom_library_path"] == "",
+        "old temp data is copied (not caches or logs) and the old library path is dropped",
+    )
+    (fresh / "user_catalog.json").unlink()
+    _check(
+        migrate_legacy_data_dir([legacy], fresh, old_library) == 0
+        and not (fresh / "user_catalog.json").exists(),
+        "the old data folder is copied only once",
+    )
+
+    # Design change detection: the fingerprint follows bodies and their materials.
+    def fake_design(first: str, second: str) -> Any:
+        def body(name: str, material_id: str) -> Any:
+            material = types.SimpleNamespace(id=material_id) if material_id else None
+            return types.SimpleNamespace(name=name, material=material)
+
+        component = types.SimpleNamespace(
+            id="c1", name="Root", material=None,
+            bRepBodies=[body("Body1", first), body("Body2", second)],
+        )
+        return types.SimpleNamespace(
+            allComponents=[component],
+            parentDocument=types.SimpleNamespace(name="Bracket v12"),
+        )
+
+    baseline = design_fingerprint(fake_design("A", "B"))
+    _check(
+        baseline == design_fingerprint(fake_design("A", "B"))
+        and baseline != design_fingerprint(fake_design("A", "C"))
+        and baseline.startswith("Bracket:")
+        and design_fingerprint(None) == "",
+        "the design fingerprint follows body materials",
+    )
+    refreshed: List[Any] = []
+    current = {"design": fake_design("A", "B")}
+    saved_hooks = (_active_design, _handle_refresh_materials, _DESIGN_WATCH["fingerprint"])
+    globals()["_active_design"] = lambda: current["design"]
+    globals()["_handle_refresh_materials"] = lambda palette, fingerprint=None: refreshed.append(palette)
+    _DESIGN_WATCH["fingerprint"] = ""
+    try:
+        dispatch("design_check", "{}", "first")
+        dispatch("design_check", "{}", "unchanged")
+        current["design"] = fake_design("A", "C")
+        dispatch("design_check", "{}", "changed")
+    finally:
+        globals()["_active_design"], globals()["_handle_refresh_materials"] = saved_hooks[:2]
+        _DESIGN_WATCH["fingerprint"] = saved_hooks[2]
+    _check(
+        refreshed == ["first", "changed"],
+        "design_check refreshes the palette only when materials changed",
+    )
+
+    # The JS -> Python "response" echo must be ignored (feedback-loop guard).
+    palette = _FakePalette()
+    dispatch("response", '{"value": true}', palette)
+    _check(palette.sent == [], "response messages are ignored without a reply loop")
+    dispatch("unknown_action_xyz", "{}", palette)
+    _check(palette.sent == [], "unknown actions are logged but never answered")
+    _check(
+        _library_payload()["writable"] is False
+        and "cannot add materials" in _library_payload()["message"],
+        "library info explains the Fusion API limitation",
+    )
+
+    # Favorites summary is app-level and degrades gracefully without Fusion.
+    _check(
+        _favorites_summary(None) == {"count": 0, "names": []},
+        "favorites summary is empty without a Fusion application",
+    )
+    fake_favorites = types.ModuleType("favorites")
+    fake_favorites.favorites_summary = lambda app: {"count": 2, "names": ["a", "b"]}
+    testing.sibling_set(__package__, "favorites", fake_favorites)
+    try:
+        _check(
+            _favorites_summary(object())["count"] == 2,
+            "favorites summary delegates to the favorites module",
+        )
+    finally:
+        testing.sibling_pop(__package__, "favorites")
+
+    print()
+    if _FAILED:
+        print("PALETTE BRIDGE SELF-TEST FAILED ({} passed, {} failed)".format(_PASSED, _FAILED))
+        return 1
+    print("PALETTE BRIDGE SELF-TEST PASSED ({} checks)".format(_PASSED))
+    return 0
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
+    raise SystemExit(_self_test())

@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "description": "Filamatch master filament catalog. schema: see Filamatch/catalog.py. template_material values reference materials present in Fusion's stock 'Fusion Material Library' (stock Fusion libraries do not ship PLA/PETG materials); the catalog density is applied over the template.",
+  "filaments": [
+    {
+      "id": "bambu_pla_basic_black",
+      "manufacturer": "Bambu Lab",
+      "product_line": "PLA Basic",
+      "color_name": "Black",
+      "color_hex": "#161616",
+      "slicer_filament_type": "PLA",
+      "density_g_cm3": 1.24,
+      "template_material": "ABS Plastic",
+      "adsklib_path": null,
+      "orca_filament_profile": "Bambu PLA Basic @BBL X1C.json",
+      "category": "PLA"
+    },
+    {
+      "id": "bambu_petg_hf_white",
+      "manufacturer": "Bambu Lab",
+      "product_line": "PETG HF",
+      "color_name": "White",
+      "color_hex": "#FFFFFF",
+      "slicer_filament_type": "PETG",
+      "density_g_cm3": 1.27,
+      "template_material": "PET Plastic",
+      "adsklib_path": null,
+      "orca_filament_profile": "Bambu PETG HF @BBL X1C.json",
+      "category": "PETG"
+    },
+    {
+      "id": "prusament_pla_orange",
+      "manufacturer": "Prusament",
+      "product_line": "PLA",
+      "color_name": "Orange",
+      "color_hex": "#FF6600",
+      "slicer_filament_type": "PLA",
+      "density_g_cm3": 1.24,
+      "template_material": "ABS Plastic",
+      "adsklib_path": null,
+      "orca_filament_profile": "Prusament PLA @MK3S.json",
+      "category": "PLA"
+    },
+    {
+      "id": "polymaker_polylite_abs_black",
+      "manufacturer": "Polymaker",
+      "product_line": "PolyLite ABS",
+      "color_name": "Black",
+      "color_hex": "#111111",
+      "slicer_filament_type": "ABS",
+      "density_g_cm3": 1.04,
+      "template_material": "ABS Plastic",
+      "adsklib_path": null,
+      "orca_filament_profile": "Polymaker PolyLite ABS @BBL X1C.json",
+      "category": "ABS"
+    },
+    {
+      "id": "generic_abs_gf30",
+      "manufacturer": "Generic",
+      "product_line": "ABS-GF30",
+      "color_name": "Black",
+      "color_hex": "#222222",
+      "slicer_filament_type": "ABS-GF",
+      "density_g_cm3": 1.12,
+      "template_material": "ABS Plastic",
+      "adsklib_path": null,
+      "orca_filament_profile": null,
+      "category": "Fiber-Reinforced"
+    }
+  ]
+}
