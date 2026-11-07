@@ -210,7 +210,8 @@ AES. Fusion add-ins can ship extra code, but each package adds risk.
 - **Printer modes (firmware with Authorization Control, Jan 2025):**
   - Reading status is still allowed for third parties. Bambu's own
     announcement lists "MQTT status push" as still working. [V]
-  - Cloud mode + local MQTT: read works. LAN-only: read works.
+  - Cloud mode + local MQTT: read works (per Bambu, NOT tested by us).
+    LAN-only: read works (tested on an H2D and an X1C, 2026-11-07).
     LAN-only + Developer Mode: read and control. [V]
   - **Open:** one P2S forum report says local reads failed while the
     printer was in cloud mode. Test on an H2D in cloud mode and in

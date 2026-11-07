@@ -5,8 +5,9 @@
 **New**
 - Read Bambu Lab printers directly on your network, without Bambuddy:
   Settings > Printer > **Bambu printer (LAN)**, with the IP address and the
-  access code from the printer screen. Works in LAN-only mode and in cloud
-  mode; developer mode is not needed.
+  access code from the printer screen. Tested in LAN-only mode; developer
+  mode is not needed. Cloud mode on the same network should also work, but
+  it is not tested yet.
   - AMS, AMS 2 Pro, AMS HT and the external spool. On an H2D the slot labels
     show the nozzle: "AMS 1 - T1 (L)", "External (R)".
   - Filament names come from the installed Bambu Studio and OrcaSlicer

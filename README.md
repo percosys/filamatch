@@ -60,9 +60,10 @@ by hand, every time. Filamatch keeps that information in the design:
   Pro and AMS HT slot and the external spool, with the left and right nozzle
   on an H2D. Several printers at once. Two ways to connect:
   - **directly to the printer** on your network, with its IP address and
-    access code from the printer screen. Works in LAN-only mode and in cloud
-    mode; developer mode is not needed. Filamatch checks the printer's Bambu
-    Lab certificate.
+    access code from the printer screen. Tested in LAN-only mode; developer
+    mode is not needed. Cloud mode on the same network should also work
+    (Bambu still allows other apps to read the printer status), but it is not
+    tested yet. Filamatch checks the printer's Bambu Lab certificate.
   - or through [Bambuddy](https://github.com/maziggy/bambuddy), a self-hosted
     Bambu Lab printer manager. Slots with a Bambuddy inventory spool also
     show grams left.

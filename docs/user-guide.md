@@ -33,8 +33,11 @@ You need two things from the printer screen: the **IP address** and the
 **access code**. Both are on the network page of the printer settings
 (**Network** or **WLAN**, depending on the model).
 
-The printer can be in LAN-only mode or in cloud mode. Developer mode is not
-needed. The computer must be on the same network as the printer.
+Filamatch is tested with printers in LAN-only mode. Developer mode is not
+needed. Cloud mode should also work, because Bambu still allows other apps
+to read the printer status, but it is not tested yet. If a printer in cloud
+mode does not answer, please [open an issue](https://github.com/percosys/filamatch/issues).
+The computer must be on the same network as the printer.
 
 1. Open **Settings > Printer**, choose **Bambu printer (LAN)** and click
    **Add printer**.
