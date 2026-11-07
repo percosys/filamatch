@@ -18,7 +18,7 @@
   <a href="https://buymeacoffee.com/percosys"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="40"></a>
 </p>
 
-![Filamatch in Fusion: the design's filaments matched to printer slots](docs/images/home.png)
+![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
 ## Why
 
