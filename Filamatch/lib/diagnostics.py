@@ -340,6 +340,17 @@ def run_diagnostics() -> str:
                 "configured" if printer_sources.is_configured(settings) else "not set up",
             )
         )
+        from . import bambu_lan
+
+        lan_printers = bambu_lan.printers_from_settings(settings)
+        # Models only: the report is pasted into public bug reports.
+        report.add(
+            "Bambu LAN printers: {}{}; Bambu CA file: {}".format(
+                len(lan_printers),
+                " ({})".format(", ".join(printer.model for printer in lan_printers)) if lan_printers else "",
+                "OK" if bambu_lan.CA_FILE.is_file() else "MISSING",
+            )
+        )
     except Exception:
         report.add("Printer source: ERROR reading the settings")
         report.add(traceback.format_exc())

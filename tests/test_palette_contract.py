@@ -21,6 +21,8 @@ PALETTE_DIR = REPO_ROOT / "Filamatch" / "palette"
 INDEX = PALETTE_DIR / "index.html"
 STYLE = PALETTE_DIR / "style.css"
 APP = PALETTE_DIR / "app.js"
+BRIDGE = REPO_ROOT / "Filamatch" / "lib" / "palette_bridge.py"
+LIB_DIR = REPO_ROOT / "Filamatch" / "lib"
 
 FAILURES: List[str] = []
 PASSED = 0
@@ -99,6 +101,14 @@ def main() -> int:
         "open_material_browser",
         "materialBrowserData",
         "design_check",
+        "set_printer_source",
+        "bambu_lan_test",
+        "bambu_lan_save",
+        "bambu_lan_remove",
+        "bambuLanTestResult",
+        "bambuLanPrinters",
+        "printer_source",
+        "printer_configured",
     )
     for action in required_actions:
         check(action in js, "app.js handles palette action {!r}".format(action))
@@ -203,6 +213,58 @@ def main() -> int:
         and "requestBambuddyContext" in js,
         "app.js renders Bambuddy slots and the material-to-slot list",
     )
+    check(
+        'id="printer-source-bambuddy"' in html and 'id="printer-source-bambu-lan"' in html
+        and 'id="bambuddy-card"' in html and 'id="bambu-lan-card"' in html,
+        "Settings offers the printer source choice with a Bambuddy and a LAN card",
+    )
+    check(
+        all('id="{}"'.format(i) in html for i in (
+            "bambu-lan-list", "bambu-lan-add-toggle", "bambu-lan-form", "bambu-lan-ip",
+            "bambu-lan-name", "bambu-lan-test-btn", "bambu-lan-save-btn",
+            "bambu-lan-trust-btn", "bambu-lan-result"))
+        and re.search(r'id="bambu-lan-code"[^>]*type="password"', html) is not None,
+        "the LAN card lists printers and offers Add printer (IP, password access code, name, Test, Save, Trust)",
+    )
+    check(
+        'id="welcome-lan-btn"' in html and 'id="welcome-bambuddy-btn"' in html
+        and 'id="welcome-skip-btn"' in html,
+        "the welcome screen offers Bambuddy, a Bambu printer on the network, and Skip",
+    )
+    lan_senders = [js.split("function " + name, 1)[-1].split("\n  }\n", 1)[0]
+                   for name in ("onLanTestClick", "onLanSaveClick")]
+    check(
+        "access_code" not in collect
+        and all("access_code" in body for body in lan_senders)
+        and "bambu-lan-code" not in collect,
+        "the access code is sent only by bambu_lan_test / bambu_lan_save",
+    )
+    lan_saved = js.split("function handleBambuLanPrinters", 1)[-1].split("\n  }\n", 1)[0]
+    check(
+        "bambu-lan-code" in lan_saved and "input.value = ''" in lan_saved,
+        "a successful LAN save clears the access code field",
+    )
+
+    # Both sides of the bridge: every request the palette sends is dispatched
+    # in palette_bridge.py, and every reply it waits for is sent by Python.
+    if BRIDGE.is_file():
+        bridge = BRIDGE.read_text(encoding="utf-8")
+        lib_text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(LIB_DIR.glob("*.py")))
+        response_map = js.split("var RESPONSE_BY_REQUEST = {", 1)[-1].split("};", 1)[0]
+        pairs = re.findall(r"^\s*(\w+):\s*'(\w+)'", response_map, re.MULTILINE)
+        check(len(pairs) > 10, "app.js RESPONSE_BY_REQUEST lists the request -> reply actions")
+        for request_action, reply_action in pairs:
+            check(
+                'action == "{}"'.format(request_action) in bridge,
+                "palette_bridge.py dispatches palette request {!r}".format(request_action),
+            )
+            check(
+                '"{}"'.format(reply_action) in lib_text,
+                "Python sends reply {!r} (for {!r})".format(reply_action, request_action),
+            )
+    else:
+        check(False, "palette_bridge.py exists")
+
     check(
         "milestone" not in html.lower() and "spoolman" not in html.lower(),
         "index.html carries no developer notes",

@@ -38,6 +38,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from . import bambu_lan
 from . import testing
 
 from .. import config
@@ -87,6 +88,9 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "bambuddy_slot_map": {},
     # False allows an https Bambuddy with a self-signed certificate (LAN).
     "bambuddy_verify_tls": True,
+    # Bambu printers read directly over the LAN (see bambu_lan.LanPrinter);
+    # each access code lives in the keychain, the file keeps it empty.
+    "bambu_lan_printers": [],
 }
 
 #: Settings whose values live in the OS keychain (see ``secret_store``) when
@@ -95,17 +99,6 @@ SECRET_SETTINGS: Tuple[str, ...] = ("bambuddy_api_key",)
 
 #: Keychain use is limited to the Fusion process; the self-test lifts this.
 _SECRETS_NEED_FUSION = True
-
-LIBRARY_INFO: Dict[str, Any] = {
-    "path": "",
-    "loaded": False,
-    "writable": False,
-    "message": (
-        "Fusion's API cannot add materials to .adsklib libraries, so catalog "
-        "filaments are imported into the active design with matching colored "
-        "appearances. The catalog is organized by category for reuse."
-    ),
-}
 
 LOGGER = logging.getLogger("Filamatch")
 
@@ -277,9 +270,30 @@ def _load_secret_settings(settings: Dict[str, Any], settings_path: Path) -> None
         stored = secret_store.get_secret(key)
         if stored:
             settings[key] = stored
+    printers = []
+    for account, entry in _lan_printer_secrets(settings):
+        plain = str(entry.get("access_code") or "").strip()
+        if plain:
+            if secret_store.set_secret(account, plain):
+                migrated = True
+        else:
+            entry["access_code"] = secret_store.get_secret(account) or ""
+        printers.append(entry)
+    if printers:
+        settings[bambu_lan.SETTINGS_KEY] = printers
     if migrated:
         _write_settings_file(settings, settings_path)
-        log_message("Moved the saved Bambuddy API key into the system keychain")
+        log_message("Moved saved secrets into the system keychain")
+
+
+def _lan_printer_secrets(settings: Mapping[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
+    """Return ``(keychain account, copy of entry)`` for each saved LAN printer."""
+    raw = settings.get(bambu_lan.SETTINGS_KEY)
+    pairs: List[Tuple[str, Dict[str, Any]]] = []
+    for item in raw if isinstance(raw, list) else []:
+        if isinstance(item, Mapping) and str(item.get("serial") or "").strip():
+            pairs.append((bambu_lan.secret_account(str(item["serial"]).strip()), dict(item)))
+    return pairs
 
 
 def _set_aside_unreadable(settings_path: Path) -> None:
@@ -331,6 +345,14 @@ def _write_settings_file(settings: Mapping[str, Any], settings_path: Path) -> No
                 continue
             if secret_store.get_secret(key) == value or secret_store.set_secret(key, value):
                 stored[key] = ""
+        printers = []
+        for account, entry in _lan_printer_secrets(stored):
+            code = str(entry.get("access_code") or "").strip()
+            if code and (secret_store.get_secret(account) == code or secret_store.set_secret(account, code)):
+                entry["access_code"] = ""
+            printers.append(entry)
+        if printers:
+            stored[bambu_lan.SETTINGS_KEY] = printers
     try:
         _atomic_write_text(settings_path, json.dumps(stored, indent=2) + "\n")
     except Exception:
@@ -364,7 +386,28 @@ def public_settings(settings: Mapping[str, Any]) -> Dict[str, Any]:
     slot_map = payload.get("bambuddy_slot_map")
     if not isinstance(slot_map, dict):
         payload["bambuddy_slot_map"] = {}
+    payload[bambu_lan.SETTINGS_KEY] = _lan_printers_public(settings)
     return payload
+
+
+def _lan_printers_public(settings: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """Saved LAN printers without access codes or full serials."""
+    return [printer.public() for printer in bambu_lan.printers_from_settings(settings)]
+
+
+def _printer_source_payload(settings: Mapping[str, Any]) -> Dict[str, Any]:
+    """Source fields the palette needs to show the printer setup."""
+    from . import printer_sources
+
+    return {
+        "printer_source": printer_sources.selected_source_id(settings),
+        "printer_configured": printer_sources.is_configured(settings),
+        "bambu_lan": {"printers": _lan_printers_public(settings)},
+        "sources": [
+            {"id": info.source_id, "label": info.label}
+            for info in printer_sources.registered_sources()
+        ],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -753,11 +796,6 @@ def _materials_used_payload(detected: Sequence[Any], result: Any) -> List[Dict[s
     return rows
 
 
-def _library_payload() -> Dict[str, Any]:
-    """Return the informational custom-library status row for the palette."""
-    return dict(LIBRARY_INFO)
-
-
 def _favorites_summary(app: Any) -> Dict[str, Any]:
     """Return the app-level Favorites summary shown in the palette."""
     if app is None:
@@ -887,6 +925,13 @@ def _run_job(name: str, work: Any, finish: Any) -> None:
     threading.Thread(target=target, name="Filamatch-" + name, daemon=True).start()
 
 
+def _is_user_error(error: BaseException) -> bool:
+    """Errors that explain themselves (wrong access code, server offline): no traceback."""
+    from . import bambuddy
+
+    return isinstance(error, (bambu_lan.BambuLanError, bambuddy.BambuddyError))
+
+
 def _complete_job(job_id: str) -> None:
     """Call the finish step of a job that ended (on Fusion's UI thread)."""
     with _JOBS_LOCK:
@@ -895,7 +940,10 @@ def _complete_job(job_id: str) -> None:
         return
     finish, result, error = item
     if error is not None:
-        LOGGER.error("Background job failed", exc_info=(type(error), error, error.__traceback__))
+        if _is_user_error(error):
+            LOGGER.warning("Background job: %s", error)
+        else:
+            LOGGER.error("Background job failed", exc_info=(type(error), error, error.__traceback__))
     try:
         finish(result, error)
     except Exception:
@@ -1014,6 +1062,7 @@ def _bambuddy_context_payload(
             for slot in slots
         ],
         "mapping": mapping,
+        "warnings": list(context.warnings),
     }
 
 
@@ -1187,6 +1236,8 @@ def _import_bambuddy_slots(
 
 def _handle_init(palette: Any) -> None:
     """Send catalog, detected materials, settings and library info to the palette."""
+    from . import printer_sources
+
     try:
         entries = _load_catalog_entries()
         settings = load_settings()
@@ -1208,18 +1259,19 @@ def _handle_init(palette: Any) -> None:
             "materials": _materials_payload(design, entries),
             "settings": public_settings(settings),
             "bambuddy": {
-                "configured": bool(str(settings.get("bambuddy_url") or "").strip()),
+                # The selected printer source (Bambuddy or LAN) is set up.
+                "configured": printer_sources.is_configured(settings),
                 "key_set": bool(str(settings.get("bambuddy_api_key") or "").strip()),
                 "url": str(settings.get("bambuddy_url") or ""),
                 "printer_id": int(settings.get("bambuddy_printer_id") or 0),
                 "slot_map": settings.get("bambuddy_slot_map") or {},
             },
-            "library": _library_payload(),
             "favorites": _favorites_summary(app),
             "profiles": _profiles_summary(),
             "openfilament": _openfilament_summary(),
             "custom_library": custom_library_payload,
         }
+        payload.update(_printer_source_payload(settings))
         log_message(
             "Palette initialised ({} catalog entries, {} categories)".format(
                 len(entries), len(payload["categories"])
@@ -1351,7 +1403,6 @@ def _handle_import(data: Mapping[str, Any], palette: Any) -> None:
                 "imported": imported,
                 "errors": errors,
                 "materials": _materials_payload(design, entries),
-                "library": _library_payload(),
                 "favorites": _favorites_summary(app),
                 "custom_library": custom_library_payload,
             },
@@ -2463,11 +2514,16 @@ def _handle_open_material_browser(palette: Any) -> None:
 
 
 def _handle_save_settings(data: Mapping[str, Any], palette: Any) -> None:
-    """Persist palette settings and acknowledge them."""
+    """Persist palette settings and acknowledge them.
+
+    The LAN printer list is changed only by its own actions: the palette holds
+    a public copy without serials and access codes.
+    """
     try:
-        settings = save_settings(data)
+        changes = {key: value for key, value in data.items() if key != bambu_lan.SETTINGS_KEY}
+        settings = save_settings(changes)
         log_message("Settings saved")
-        _send(palette, "settingsSaved", {"ok": True, "settings": public_settings(settings)})
+        _send(palette, "settingsSaved", _settings_reply(settings))
     except Exception as exc:
         LOGGER.exception("Could not save palette settings")
         _send_error(palette, "settingsSaved", _error_text(exc))
@@ -2486,6 +2542,174 @@ def _handle_clear_bambuddy_key(palette: Any) -> None:
     except Exception as exc:
         LOGGER.exception("Could not remove the Bambuddy API key")
         _send_error(palette, "settingsSaved", _error_text(exc))
+
+
+def _settings_reply(settings: Mapping[str, Any]) -> Dict[str, Any]:
+    from . import printer_sources
+
+    return {
+        "ok": True,
+        "settings": public_settings(settings),
+        "printer_configured": printer_sources.is_configured(settings),
+    }
+
+
+def _handle_set_printer_source(data: Mapping[str, Any], palette: Any) -> None:
+    """Select Bambuddy or the LAN printers as the slot source."""
+    from . import printer_sources
+
+    try:
+        source = str(data.get("source") or "").strip().lower()
+        if source not in {info.source_id for info in printer_sources.registered_sources()}:
+            raise ValueError("Unknown printer source: {!r}".format(source))
+        settings = save_settings({printer_sources.SETTINGS_KEY: source})
+        log_message("Printer source: {}".format(source))
+        _send(palette, "settingsSaved", _settings_reply(settings))
+    except Exception as exc:
+        LOGGER.exception("Could not change the printer source")
+        _send_error(palette, "settingsSaved", _error_text(exc))
+
+
+def _lan_request(data: Mapping[str, Any]) -> Tuple[str, str, str]:
+    """``(ip, access code, fingerprint to trust)`` from a palette request.
+
+    An empty access code reuses the saved code of the printer at that address,
+    so editing a printer does not need the code again.
+    """
+    ip = str(data.get("ip") or "").strip()
+    code = str(data.get("access_code") or "").strip()
+    if not code:
+        for printer in bambu_lan.printers_from_settings(load_settings()):
+            if printer.ip == ip:
+                code = printer.access_code
+                break
+    return ip, code, str(data.get("trust_fingerprint") or "").strip()
+
+
+def _lan_error_payload(error: BaseException) -> Dict[str, Any]:
+    """Palette form of a failed printer test; asks for trust when that helps."""
+    if isinstance(error, bambu_lan.UntrustedCertificate):
+        return {
+            "ok": False,
+            "needs_trust": True,
+            "fingerprint": error.fingerprint,
+            "serial_tail": error.serial[-4:],
+            "error": str(error),
+        }
+    if isinstance(error, bambu_lan.BambuLanError):
+        return {"ok": False, "error": str(error)}
+    LOGGER.error("Bambu printer test failed", exc_info=error)
+    return {"ok": False, "error": _error_text(error)}
+
+
+def _handle_bambu_lan_test(data: Mapping[str, Any], palette: Any) -> None:
+    """Read one printer (in the background) and show what it has loaded."""
+    try:
+        ip, code, trust = _lan_request(data)
+    except Exception as exc:
+        LOGGER.exception("Could not start the printer test")
+        _send(palette, "bambuLanTestResult", {"ok": False, "error": _error_text(exc)})
+        return
+
+    def finish(result: Any, error: Optional[BaseException]) -> None:
+        if error is not None:
+            _send(palette, "bambuLanTestResult", _lan_error_payload(error))
+            return
+        log_message(
+            "Bambu printer test: {} at {}, {} slot(s), certificate {}".format(
+                result.model, ip, len(result.slots), result.certificate
+            )
+        )
+        _send(palette, "bambuLanTestResult", result.public())
+
+    _run_job("printer-test", lambda: bambu_lan.probe(ip, code, trust), finish)
+
+
+def _lan_printers_reply(settings: Mapping[str, Any], **extra: Any) -> Dict[str, Any]:
+    reply = _settings_reply(settings)
+    reply["printers"] = _lan_printers_public(settings)
+    reply.update(extra)
+    return reply
+
+
+def _handle_bambu_lan_save(data: Mapping[str, Any], palette: Any) -> None:
+    """Test a printer again, then save it and select the LAN source.
+
+    The access code goes to the keychain; nothing is saved when the test fails.
+    """
+    try:
+        ip, code, trust = _lan_request(data)
+        name = str(data.get("name") or "").strip()
+    except Exception as exc:
+        LOGGER.exception("Could not start saving the printer")
+        _send_error(palette, "bambuLanPrinters", _error_text(exc))
+        return
+
+    def finish(result: Any, error: Optional[BaseException]) -> None:
+        from . import printer_sources
+
+        if error is not None:
+            reply = _lan_printers_reply(load_settings(), **_lan_error_payload(error))
+            _send(palette, "bambuLanPrinters", reply)
+            return
+        try:
+            printer = bambu_lan.LanPrinter(
+                id=bambu_lan.printer_id_for_serial(result.serial),
+                name=name or result.model,
+                model=result.model,
+                ip=ip,
+                serial=result.serial,
+                fingerprint=result.fingerprint if result.certificate == "pinned" else "",
+                access_code=code,
+            )
+            current = load_settings()
+            kept = [
+                entry.to_settings()
+                for entry in bambu_lan.printers_from_settings(current)
+                if entry.serial != printer.serial and entry.ip != printer.ip
+            ]
+            settings = save_settings(
+                {
+                    bambu_lan.SETTINGS_KEY: kept + [printer.to_settings()],
+                    printer_sources.SETTINGS_KEY: bambu_lan.SOURCE_ID,
+                }
+            )
+            log_message("Saved Bambu printer {} ({}) at {}".format(printer.name, printer.model, ip))
+            _send(palette, "bambuLanPrinters", _lan_printers_reply(settings))
+        except Exception as exc:
+            LOGGER.exception("Could not save the Bambu printer")
+            _send(palette, "bambuLanPrinters", _lan_printers_reply(load_settings(), ok=False, error=_error_text(exc)))
+
+    _run_job("printer-save", lambda: bambu_lan.probe(ip, code, trust), finish)
+
+
+def _handle_bambu_lan_remove(data: Mapping[str, Any], palette: Any) -> None:
+    """Forget one LAN printer and its access code."""
+    try:
+        from . import secret_store
+
+        try:
+            printer_id = int(data.get("id") or 0)
+        except (TypeError, ValueError):
+            printer_id = 0
+        current = load_settings()
+        printers = bambu_lan.printers_from_settings(current)
+        removed = [printer for printer in printers if printer.id == printer_id]
+        for printer in removed:
+            secret_store.delete_secret(bambu_lan.secret_account(printer.serial))
+            log_message("Removed Bambu printer {}".format(printer.name))
+        settings = save_settings(
+            {
+                bambu_lan.SETTINGS_KEY: [
+                    printer.to_settings() for printer in printers if printer.id != printer_id
+                ]
+            }
+        )
+        bambu_lan.clear_cache()
+        _send(palette, "bambuLanPrinters", _lan_printers_reply(settings))
+    except Exception as exc:
+        LOGGER.exception("Could not remove the Bambu printer")
+        _send_error(palette, "bambuLanPrinters", _error_text(exc))
 
 
 def _handle_get_log(palette: Any) -> None:
@@ -2565,6 +2789,14 @@ def dispatch(action: str, data: Any, palette: Any) -> None:
         _handle_clear_bambuddy_key(palette)
     elif action == "save_settings":
         _handle_save_settings(payload, palette)
+    elif action == "set_printer_source":
+        _handle_set_printer_source(payload, palette)
+    elif action == "bambu_lan_test":
+        _handle_bambu_lan_test(payload, palette)
+    elif action == "bambu_lan_save":
+        _handle_bambu_lan_save(payload, palette)
+    elif action == "bambu_lan_remove":
+        _handle_bambu_lan_remove(payload, palette)
     elif action == "get_log":
         _handle_get_log(palette)
     else:
@@ -2895,6 +3127,48 @@ def _self_test() -> int:
                 and public_settings(reloaded)["bambuddy_api_key_set"] is True,
                 "a saved Bambuddy API key stays out of settings.json",
             )
+            lan_printer = bambu_lan.LanPrinter(
+                id=7, name="Shop", model="X1C", ip="192.0.2.7",
+                serial="00M00TEST0007", access_code="12345678",
+            )
+            save_settings({bambu_lan.SETTINGS_KEY: [lan_printer.to_settings()]})
+            on_disk = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+            reloaded = load_settings()
+            shown = json.dumps(public_settings(reloaded)) + json.dumps(_printer_source_payload(reloaded))
+            _check(
+                on_disk[bambu_lan.SETTINGS_KEY][0]["access_code"] == ""
+                and secret_store.get_secret(bambu_lan.secret_account(lan_printer.serial)) == "12345678"
+                and bambu_lan.printers_from_settings(reloaded)[0].access_code == "12345678"
+                and "12345678" not in shown
+                and lan_printer.serial not in shown,
+                "a LAN printer access code stays in the keychain and out of the palette",
+            )
+            lan_palette = _FakePalette()
+            dispatch(
+                "save_settings",
+                json.dumps({bambu_lan.SETTINGS_KEY: [], "output_path": "/tmp/l.3mf"}),
+                lan_palette,
+            )
+            kept = bambu_lan.printers_from_settings(load_settings())
+            _check(
+                len(kept) == 1 and kept[0].serial == lan_printer.serial
+                and lan_palette.sent[-1][1].get("printer_configured") is False,
+                "save_settings from the palette cannot overwrite the LAN printers",
+            )
+            dispatch("set_printer_source", json.dumps({"source": "bambu_lan"}), lan_palette)
+            _check(
+                lan_palette.sent[-1][0] == "settingsSaved"
+                and lan_palette.sent[-1][1]["settings"]["printer_source"] == "bambu_lan"
+                and lan_palette.sent[-1][1]["printer_configured"] is True,
+                "set_printer_source selects the LAN printers",
+            )
+            dispatch("bambu_lan_remove", json.dumps({"id": 7}), lan_palette)
+            _check(
+                lan_palette.sent[-1][0] == "bambuLanPrinters"
+                and lan_palette.sent[-1][1]["printers"] == []
+                and secret_store.get_secret(bambu_lan.secret_account(lan_printer.serial)) is None,
+                "removing a LAN printer deletes its access code",
+            )
             _SECRETS_NEED_FUSION = True
             _check(
                 load_settings()["bambuddy_api_key"] == "",
@@ -2999,11 +3273,6 @@ def _self_test() -> int:
     _check(palette.sent == [], "response messages are ignored without a reply loop")
     dispatch("unknown_action_xyz", "{}", palette)
     _check(palette.sent == [], "unknown actions are logged but never answered")
-    _check(
-        _library_payload()["writable"] is False
-        and "cannot add materials" in _library_payload()["message"],
-        "library info explains the Fusion API limitation",
-    )
 
     # Favorites summary is app-level and degrades gracefully without Fusion.
     _check(

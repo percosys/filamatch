@@ -109,7 +109,28 @@ palette shows the slicer's log.
 
 - **Bambuddy** (`lib/bambuddy.py`): HTTP API `/api/v1`, `X-API-Key` header.
   Redirects are refused, so the key is never sent to another host. Requests
-  time out after a few seconds.
+  time out after a few seconds. The slots come from each printer's live
+  status (`/printers/{id}/status`), built with the same code as the LAN
+  connection, so both show the same slots. A slot with an inventory spool
+  linked (`/inventory/assignments`) uses that spool. When Bambuddy cannot
+  reach a printer, only its linked spools are shown, with a warning.
+- **Bambu printers on the LAN** (`lib/bambu_lan.py`, `lib/mqtt_lite.py`): the
+  printer's MQTT broker on port 8883 over TLS, user `bblp`, the access code as
+  password. One short session per read: subscribe to the report topic, send
+  `pushall` and `get_version`, read the answers, disconnect. These two
+  requests are the only ones in the code (a self-test checks it).
+  - The certificate must come from a Bambu Lab CA (`data/bambu_ca.pem`) and
+    name the printer serial. A certificate the user trusted is pinned by its
+    SHA-256 fingerprint.
+  - On a dual-nozzle printer (H2D) each AMS reports the nozzle it feeds,
+    and the slot labels show it: "AMS 1 - T1 (L)". AMS HT units have ids
+    128–135. The H2D has one external spool per nozzle.
+  - Filament names come from the filament id in the report (`tray_info_idx`,
+    for example `GFA01`), looked up in the installed Bambu Studio and
+    OrcaSlicer presets, your own presets included.
+  - Reports are cached for 20 seconds (5 minutes on P1 and A1 printers).
+  - The printers are read at the same time; one printer that does not
+    answer is a warning, not an error.
 - **Printer, process and filament presets** (`lib/slicer_profiles.py`): from
   the installed OrcaSlicer or Bambu Studio, from profile files you import, or
   downloaded from OrcaSlicer's profile collection on GitHub at the tag that
@@ -126,6 +147,7 @@ palette shows the slicer's log.
 | Log file `filamatch.log` | `~/Library/Logs/Filamatch` | `%LOCALAPPDATA%\Filamatch\Logs` |
 | Filamatch Library builds | `~/Documents/Filamatch` | `Documents\Filamatch` |
 | Bambuddy API key | Keychain, service "Filamatch" | Credential Manager, "Filamatch:bambuddy_api_key" |
+| Printer access codes | Keychain, service "Filamatch", account "bambu_lan:…" | Credential Manager, "Filamatch:bambu_lan:…" |
 
 Nothing is written inside the add-in folder.
 

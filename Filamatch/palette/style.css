@@ -1490,3 +1490,204 @@ h1[tabindex="-1"]:focus {
     max-width: 96px;
   }
 }
+
+/* Printer source ----------------------------------------------------------- */
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--input-bg);
+}
+
+.segmented__option {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.segmented__option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmented__option span {
+  display: block;
+  min-height: 28px;
+  padding: 5px 6px;
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.segmented__option input:checked + span {
+  background: var(--panel-alt);
+  color: var(--text);
+}
+
+.segmented__option input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.segmented__option input:disabled + span {
+  opacity: 0.6;
+}
+
+/* The group gap already separates cards; hidden siblings must not add more. */
+.group > .card + .card {
+  margin-top: 0;
+}
+
+.lan-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.lan-printer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.lan-printer + .lan-printer {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.lan-printer__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.lan-printer__name {
+  font-weight: 600;
+}
+
+.lan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.trust-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(227, 163, 58, 0.5);
+  border-radius: var(--radius);
+  background: rgba(227, 163, 58, 0.08);
+}
+
+.trust-box__text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.trust-box__fp {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.lan-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--input-bg);
+}
+
+.lan-unit__title {
+  margin: 0 0 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lan-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.lan-slot__label {
+  flex: 0 0 auto;
+  min-width: 28px;
+  color: var(--text-muted);
+}
+
+.lan-slot__filament {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lan-slot--empty .lan-slot__filament {
+  color: var(--text-faint);
+}
+
+/* Welcome choices ---------------------------------------------------------- */
+
+.welcome-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice:hover {
+  background: var(--panel-hover);
+  border-color: var(--border-strong);
+}
+
+.choice[aria-expanded="true"] {
+  border-color: var(--accent-border);
+}
+
+.choice__title {
+  font-weight: 600;
+}
+
+.choice__sub {
+  color: var(--text-muted);
+}
+
+.welcome-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

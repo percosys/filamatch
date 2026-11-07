@@ -18,7 +18,10 @@ Status: Phase 0 is done (in 0.2.0). Phases 1-6 are planned; see the
   map materials to slots -> export to Orca.
 
 Non-goals (for now): starting or controlling prints, camera, cloud accounts
-(Bambu cloud, Prusa Connect, Creality Cloud). We never ask for a cloud
+(Bambu cloud, Prusa Connect, Creality Cloud). Decided 2026-11-07: Bambu is
+LAN only; no Bambu cloud login (the API is not public, Bambu objects to
+clients that act like Bambu Studio, and accounts were blocked for many
+connections). We never ask for a cloud
 password.
 
 ## 2. Where the code is today
@@ -315,7 +318,7 @@ Neptune 4 run Klipper too, but they have one nozzle and no slot unit. [?]
 |---|---|---|
 | 0 | Neutral model + `SlotSource`. Bambuddy behind it. Keychain for the Bambuddy key. | **Done 2026-11-07.** All module self-tests and the 3 test suites pass. In Fusion, the new code read the same 6 slots and made the same mapping as the old code. |
 | 1 | Manual source. | A user with any printer can set up slots and export with the right presets. |
-| 2 | Bambu LAN direct. | On a test H2D the direct slot list equals the Bambuddy slot list (same printer, two sources). |
+| 2 | Bambu LAN direct. | **Built 2026-11-07** (`lib/bambu_lan.py`, `lib/mqtt_lite.py`). Live reads of an H2D and an X1C, both in LAN-only mode without developer mode: 11 and 5 slots, Bambu CA check passed, filament names from the installed presets. Still open: compare with the Bambuddy slot list on the same printer, and a printer in cloud mode. |
 | 3 | Klipper / Moonraker family (Section 4.2). | Fixture tests for each slot reader pass. One live printer test if one is available. |
 | 4 | Creality K1/K2 CFS, stock firmware (Section 4.3). | Fixture tests pass. Live test if a K1/K2 + CFS is available. |
 | 5 | OctoPrint + SpoolManager, Spoolman, Prusa status (Sections 4.4-4.6). | Slots read where the API has them. Prusa falls back to Manual. |

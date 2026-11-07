@@ -4,7 +4,8 @@ Bambuddy (https://github.com/maziggy/bambuddy) is a self-hosted Bambu Lab
 command center.  Its REST API exposes:
 
 * printers,
-* live AMS slot assignments (printer / AMS / tray -> spool),
+* the live printer status (every AMS tray and external spool),
+* AMS slot assignments (printer / AMS / tray -> inventory spool),
 * the inventory (spools, materials, colours, remaining weight),
 * the filament preset selected for each spool.
 
@@ -33,7 +34,7 @@ import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -461,31 +462,115 @@ class BambuddyClient:
             raise BambuddyResponseError("Bambuddy assignments response is not a list.")
         return [item for item in data if isinstance(item, Mapping)]
 
-    def fetch_context(self) -> BambuddyContext:
-        """Fetch printers, inventory and live slot assignments.
+    def get_printer_status(self, printer_id: int) -> Dict[str, Any]:
+        """Return the live status of one printer (AMS units, external spools)."""
+        data = self._get_json("{}/printers/{}/status".format(API_PREFIX, int(printer_id)))
+        if not isinstance(data, Mapping):
+            raise BambuddyResponseError("Bambuddy printer status response is not an object.")
+        return dict(data)
 
-        The requests run in order and the first failure (for example
-        :class:`BambuddyConnectionError` for an offline server) stops the
-        fetch, so the UI waits at most one timeout.
+    def fetch_context(self) -> BambuddyContext:
+        """Fetch printers, inventory, spool links and the live slots.
+
+        Every loaded slot comes from the printer's live status, so slots with
+        no inventory spool linked are listed too.  A slot with a linked spool
+        keeps that spool (grams left, preset).  When the live status of a
+        printer cannot be read, its linked spools are still listed and the
+        context carries a warning.
+
+        Printers, spools and links are read first; their first failure (for
+        example :class:`BambuddyConnectionError` for an offline server) stops
+        the fetch, so the UI waits at most one timeout.
         """
         printers = self.get_printers()
         spools = self.get_spools()
         assignments = self.get_assignments()
         printer_names = {printer.id: printer.name for printer in printers}
         spools_by_id = {spool.id: spool for spool in spools}
-        slots = [
-            parse_assignment(item, spools_by_id, printer_names)
-            for item in assignments
-        ]
-        slots.sort(key=lambda slot: (slot.printer_id, slot.ams_id, slot.tray_id))
+        linked = {
+            slot.key: slot
+            for slot in (
+                parse_assignment(item, spools_by_id, printer_names) for item in assignments
+            )
+        }
+        slots: List[SlotInfo] = []
+        live_spools: Dict[int, SpoolInfo] = {}
+        warnings: List[str] = []
+        for printer in printers:
+            if not printer.is_active:
+                continue
+            try:
+                status = self.get_printer_status(printer.id)
+            except (BambuddyConnectionError, BambuddyProxyError):
+                raise
+            except BambuddyError as exc:
+                logger.warning("No live slots for printer %s: %s", printer.id, exc)
+                warnings.append("{}: only linked spools are shown ({})".format(printer.name, exc))
+                continue
+            if status.get("connected") is False:
+                warnings.append(
+                    "{}: Bambuddy is not connected to the printer; only linked spools "
+                    "are shown.".format(printer.name)
+                )
+                continue
+            for slot in live_slots(printer, status):
+                link = linked.pop(slot.key, None)
+                if link is not None:
+                    slot = merge_linked_slot(slot, link)
+                elif slot.spool is not None:
+                    live_spools.setdefault(slot.spool.id, slot.spool)
+                slots.append(slot)
+        slots.extend(linked.values())
+        slots.sort(key=lambda slot: (slot.printer_id, slot.ams_id == 255, slot.ams_id, slot.tray_id))
         fetched_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         return BambuddyContext(
             printers=tuple(printers),
-            spools=tuple(spools),
+            spools=tuple(spools) + tuple(live_spools.values()),
             slots=tuple(slots),
             fetched_at=fetched_at,
             source=SOURCE_ID,
+            warnings=tuple(warnings),
         )
+
+
+def live_slots(printer: PrinterInfo, status: Mapping[str, Any]) -> List[SlotInfo]:
+    """Every AMS and external slot in a Bambuddy live printer status.
+
+    Uses the LAN reader's slot builder, so slot numbers, labels and filament
+    names are the same as with the direct connection.
+    """
+    from . import bambu_lan
+
+    extruders: Dict[int, int] = {}
+    raw_map = status.get("ams_extruder_map")
+    for key, value in (raw_map.items() if isinstance(raw_map, Mapping) else ()):
+        unit_id, extruder = _safe_int(key, -1), _safe_int(value, -1)
+        if unit_id >= 0 and extruder in (bambu_lan.EXTRUDER_RIGHT, bambu_lan.EXTRUDER_LEFT):
+            extruders[unit_id] = extruder
+    units = [unit for unit in status.get("ams") or [] if isinstance(unit, Mapping)]
+    externals = [tray for tray in status.get("vt_tray") or [] if isinstance(tray, Mapping)]
+    # Bambuddy lists two nozzles for single-nozzle printers too, so look at
+    # what only a dual-nozzle printer reports: a right external spool (255)
+    # or an AMS on the left nozzle.
+    dual = bambu_lan.EXTRUDER_LEFT in extruders.values() or any(
+        _safe_int(tray.get("id"), -1) == bambu_lan.VIRTUAL_MAIN_ID for tray in externals
+    )
+    return bambu_lan.build_slots(printer, units, externals, extruders, dual)
+
+
+def merge_linked_slot(live: SlotInfo, link: SlotInfo) -> SlotInfo:
+    """A live slot with the inventory spool Bambuddy links to it.
+
+    The inventory spool wins (it knows the grams left and the preset); the
+    live slot keeps its label, nozzle and printer filament id.
+    """
+    return replace(
+        live,
+        spool=link.spool,
+        filament_type=link.filament_type or live.filament_type,
+        color_hex=link.color_hex if link.spool is not None else live.color_hex,
+        loaded=link.loaded or live.loaded,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -637,6 +722,8 @@ def _check_context_fetch() -> None:
             ]
         ),
     }
+    for printer_id in (1, 2):  # printers Bambuddy is not connected to: links only
+        responses["/api/v1/printers/{}/status".format(printer_id)] = _json_response({"connected": False})
     transport = _FakeTransport(responses)
     client = BambuddyClient(BambuddyConfig("http://192.168.1.20:8000", "bb_test"), transport)
     identity = client.test_connection()
@@ -654,6 +741,71 @@ def _check_context_fetch() -> None:
         all(request[2].get("X-API-Key") == "bb_test" for request in transport.requests),
         "every request must carry the API key header",
     )
+
+
+def _check_live_slots() -> None:
+    """Live status lists every loaded slot; linked spools win; a lost printer warns."""
+    from pathlib import Path
+
+    from . import bambu_lan
+
+    fixtures = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
+    status = json.loads((fixtures / "bambuddy" / "h2d_status.json").read_text(encoding="utf-8"))
+    spool = {
+        "id": 8, "material": "ABS-GF", "brand": "Bambu Lab", "rgba": "C6C6C6FF",
+        "label_weight": 1000, "weight_used": 380,
+        "slicer_filament": "GFB50", "slicer_filament_name": "Bambu ABS-GF",
+    }
+    responses = {
+        "/api/v1/printers/": _json_response(
+            [
+                {"id": 1, "name": "Workshop H2D", "model": "H2D"},
+                {"id": 2, "name": "Studio P1S", "model": "P1S"},
+            ]
+        ),
+        "/api/v1/inventory/spools": _json_response([spool]),
+        "/api/v1/inventory/assignments": _json_response(
+            [
+                {"printer_id": 1, "ams_id": 0, "tray_id": 0, "fingerprint_type": "ABS-GF",
+                 "fingerprint_color": "C6C6C6FF", "spool": spool},
+                {"printer_id": 2, "ams_id": 0, "tray_id": 2, "spool": dict(spool, id=9)},
+            ]
+        ),
+        "/api/v1/printers/1/status": _json_response(status),
+        "/api/v1/printers/2/status": _json_response({"id": 2, "connected": False}),
+    }
+    bambu_lan._reset_presets([fixtures / "bambu_lan" / "presets"])
+    try:
+        client = BambuddyClient(BambuddyConfig("http://192.168.1.20:8000", "bb_test"), _FakeTransport(responses))
+        context = client.fetch_context()
+    finally:
+        bambu_lan._reset_presets()
+    h2d = context.slots_for_printer(1)
+    _expect(len(h2d) == 11 and sum(1 for slot in h2d if slot.loaded) == 9, [s.slot_label for s in h2d])
+    first = context.slot_by_key("1:0:0")
+    _expect(first.spool is not None and first.spool.id == 8, "the linked inventory spool wins")
+    _expect(first.slot_label == "AMS 1 - T1 (L)" and first.extruder == bambu_lan.EXTRUDER_LEFT, first)
+    unlinked = context.slot_by_key("1:1:0")
+    _expect(unlinked.loaded and unlinked.spool is not None and unlinked.slot_label == "AMS 2 - T1 (R)", unlinked)
+    _expect(unlinked.spool.slicer_filament == "GFB60", "an unlinked slot gets its filament from the printer")
+    _expect(context.slot_by_key("1:255:1").filament_type == "TPU", "right external spool is tray 1")
+    _expect(not context.slot_by_key("1:255:0").loaded, "empty left external spool")
+    _expect(not context.slot_by_key("1:128:0").loaded, "empty AMS HT")
+    single = live_slots(
+        PrinterInfo(id=3, name="Office X1C", model="X1C"),
+        {
+            "connected": True,
+            "nozzles": [{}, {}],
+            "ams_extruder_map": {"0": 0},
+            "ams": [{"id": 0, "tray": [{"id": 0, "tray_type": "PLA", "tray_color": "000000FF"}]}],
+            "vt_tray": [{"id": 254, "tray_type": "TPU", "tray_color": "161616FF"}],
+        },
+    )
+    _expect([slot.slot_label for slot in single] == ["AMS 1 - T1", "External"], [s.slot_label for s in single])
+    p1s = context.slots_for_printer(2)
+    _expect([slot.key for slot in p1s] == ["2:0:2"], "an offline printer still shows its linked spools")
+    _expect(len(context.warnings) == 1 and context.warnings[0].startswith("Studio P1S:"), context.warnings)
+    _expect(any(spool.id == unlinked.spool.id for spool in context.spools), "live spools are in the context")
 
 
 def _check_auth_proxy_errors() -> None:
@@ -802,6 +954,7 @@ def _selftest() -> int:
         ("configuration validation is actionable and secret-safe", _check_config),
         ("spool/printer/slot payloads normalise correctly", _check_parsing),
         ("printers, spools and assignments are fetched and joined", _check_context_fetch),
+        ("live slots list every loaded tray; linked spools win", _check_live_slots),
         ("SSO and rejected-key responses raise actionable errors", _check_auth_proxy_errors),
         ("unreachable Bambuddy raises a connection error", _check_connection_error),
         ("error messages strip user:password from URLs", _check_url_redaction),

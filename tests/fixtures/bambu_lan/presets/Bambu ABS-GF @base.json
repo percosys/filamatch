@@ -1,0 +1,9 @@
+{
+    "name": "Bambu ABS-GF @base",
+    "filament_id": "GFB50",
+    "inherits": "fdm_filament_common",
+    "instantiation": "false",
+    "filament_vendor": [
+        "Bambu Lab"
+    ]
+}

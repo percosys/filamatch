@@ -1,0 +1,6 @@
+{
+    "name": "Generic TPU @base",
+    "filament_id": "GFU99",
+    "inherits": "fdm_filament_common",
+    "instantiation": "false"
+}

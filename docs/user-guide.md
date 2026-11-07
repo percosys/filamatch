@@ -16,12 +16,40 @@ that fits its content; you can dock it like any Fusion palette.
 
 When nothing is set up yet, Filamatch shows a short welcome:
 
-1. **Connect Bambuddy.** Enter the address of your Bambuddy server (for
+1. **Connect a Bambu printer.** Filamatch reads the printer directly on your
+   network. See [Add a Bambu printer](#add-a-bambu-printer).
+2. **Or connect Bambuddy.** Enter the address of your Bambuddy server (for
    example `http://192.168.1.20:8000`) and an API key created in Bambuddy.
-   Filamatch then reads your printers and the spools in their AMS slots.
-2. **Or skip.** You can still add filaments from the catalog. Without a printer
+   Filamatch then reads your printers and every loaded slot. A slot with a
+   Bambuddy inventory spool linked also shows that spool (grams left,
+   preset).
+3. **Or skip.** You can still add filaments from the catalog. Without a printer
    connection, an export puts the filaments in slots 1, 2, 3… in the order
    they appear in the design. Connect later in Settings.
+
+### Add a Bambu printer
+
+You need two things from the printer screen: the **IP address** and the
+**access code**. Both are on the network page of the printer settings
+(**Network** or **WLAN**, depending on the model).
+
+The printer can be in LAN-only mode or in cloud mode. Developer mode is not
+needed. The computer must be on the same network as the printer.
+
+1. Open **Settings > Printer**, choose **Bambu printer (LAN)** and click
+   **Add printer**.
+2. Enter the IP address and the access code. Click **Test**. Filamatch shows
+   the model and what is loaded in each AMS.
+3. Give the printer a name (optional) and click **Save**. Add more printers
+   the same way.
+
+Filamatch checks that the printer has a certificate from Bambu Lab. If it
+does not, Filamatch shows the certificate fingerprint and asks you to trust
+it (**Trust this printer**). Trust it only if the IP address is your printer.
+
+Filamatch only reads from the printer. It asks for a full status at most
+every 20 seconds (every 5 minutes for P1 and A1 printers, which slow down when
+asked more often).
 
 ## Home
 
@@ -86,9 +114,13 @@ Select filaments and click **Add to Fusion**. You return to Home.
 
 ![Settings](images/settings.png)
 
-- **Bambuddy:** address and API key. **Edit** changes them; **Remove key**
-  deletes the saved key. Turn off **Verify the HTTPS certificate** only for a
-  Bambuddy on your own network with a self-signed certificate.
+- **Printer:** where the printer slots come from.
+  - **Bambu printer (LAN):** the printers you added, each with name, model
+    and IP address. **Add printer** adds one; **Remove** forgets a printer and
+    its access code.
+  - **Bambuddy:** address and API key. **Edit** changes them; **Remove key**
+    deletes the saved key. Turn off **Verify the HTTPS certificate** only for
+    a Bambuddy on your own network with a self-signed certificate.
 - **OrcaSlicer:** where the slicer is installed (found automatically when it
   is in the usual place).
 - **Export folder:** where **Send to Orca** saves files.
@@ -122,6 +154,10 @@ are not OK. Log files: see [file locations](how-it-works.md#file-locations).
 | No Filamatch button | Check the folder is named `Filamatch` and holds `Filamatch.py` and `Filamatch.manifest`. Restart Fusion. In **Scripts and Add-Ins** (Shift+S), Add-Ins tab, Filamatch should be running. |
 | The palette shows "No printer" or "0 bodies" and nothing loads | Close the palette and open it again from the button. If it stays empty, stop and run Filamatch in Scripts and Add-Ins, or restart Fusion. |
 | "Bambuddy not reachable" | Check the address in Settings (including `http://` or `https://` and the port) and that Bambuddy runs. Filamatch gives up after a few seconds, so Fusion does not freeze. |
+| "The printer at … did not answer" | Check the IP address on the printer screen (it can change after a restart; give the printer a fixed address in your router). Check that the computer and the printer are on the same network. |
+| "The printer refused the access code" | Read the access code again on the printer screen; it changes when it is refreshed there. Remove the printer and add it again. |
+| "… is another printer now" | Two printers swapped IP addresses. Remove the printer and add it again with the new address. |
+| One printer is missing slots, the others load | That printer did not answer. The log names it. The other printers still work. |
 | A filament shows **Not loaded** | No slot holds that filament. Load it, or click the slot chip and pick a slot by hand. |
 | Colours in the Material Browser look white or grey | Fusion draws the material preview once and cannot redraw it through its API. The model, the palette and the export use the right colour. Editing the appearance once in Fusion refreshes the preview. |
 | `Template material ... was not found` | Filamatch copies a stock Fusion material. Make sure the *Fusion Material Library* is available in the Material Browser. |
@@ -132,6 +168,9 @@ are not OK. Log files: see [file locations](how-it-works.md#file-locations).
 
 ## Known limits
 
+- Direct printer connections: Bambu Lab printers only, on the same network
+  as the computer. A printer that is only reachable through the Bambu cloud
+  is not supported.
 - One filament per body. Painting faces of one body in different colours is
   not supported.
 - Up to 16 different filaments in one design (the slicer's limit).

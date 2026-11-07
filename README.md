@@ -20,6 +20,10 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.4:** connect your Bambu Lab printers directly on your network,
+> without Bambuddy. Bambuddy users now see every loaded slot too. See the
+> [changelog](CHANGELOG.md).
+
 ## Why
 
 A multi-colour print usually goes like this: you design in Fusion, export a
@@ -52,9 +56,19 @@ by hand, every time. Filamatch keeps that information in the design:
   Fusion Favorites and in a "Filamatch Library" material library.
 
 **Printer and slicer**
-- Reads printers, AMS slots and spools (with grams left) from
-  [Bambuddy](https://github.com/maziggy/bambuddy), a self-hosted Bambu Lab
-  printer manager.
+- Reads the filaments loaded in your Bambu Lab printers: every AMS, AMS 2
+  Pro and AMS HT slot and the external spool, with the left and right nozzle
+  on an H2D. Several printers at once. Two ways to connect:
+  - **directly to the printer** on your network, with its IP address and
+    access code from the printer screen. Works in LAN-only mode and in cloud
+    mode; developer mode is not needed. Filamatch checks the printer's Bambu
+    Lab certificate.
+  - or through [Bambuddy](https://github.com/maziggy/bambuddy), a self-hosted
+    Bambu Lab printer manager. Slots with a Bambuddy inventory spool also
+    show grams left.
+- Filament names come from the filament id the printer reports, looked up
+  in your installed Bambu Studio and OrcaSlicer presets (your own presets
+  too).
 - Prepares a complete OrcaSlicer project: printer, process and filament
   presets from your installed OrcaSlicer (or Bambu Studio) or downloaded from
   OrcaSlicer's profile collection. Picks a build plate and wipe tower position
@@ -64,8 +78,11 @@ by hand, every time. Filamatch keeps that information in the design:
 **Under the hood**
 - Slow work (printer queries, profile downloads, the slicer run) happens in
   the background, so Fusion never freezes.
-- The Bambuddy API key is stored in the macOS Keychain or the Windows
-  Credential Manager, never in a plain settings file.
+- The Bambuddy API key and the printer access codes are stored in the
+  macOS Keychain or the Windows Credential Manager, never in a plain
+  settings file.
+- Printer connections only read. Filamatch never sends a command that moves,
+  heats or prints.
 - A standalone command-line tool adds slot metadata to any 3MF (see
   [How it works](docs/how-it-works.md#the-3mf-injector-command-line-tool)).
 
@@ -75,7 +92,7 @@ by hand, every time. Filamatch keeps that information in the design:
 |---|---|
 | **Autodesk Fusion** | Current release, macOS or Windows. Filamatch uses Fusion's built-in Python; nothing else to install. |
 | **OrcaSlicer** | For **Send to Orca**. Bambu Studio also works for project preparation. Without a slicer you can still export a tagged 3MF. |
-| **Bambuddy** (optional) | To read the filaments loaded on Bambu Lab printers. Without it, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. A manual printer setup and direct printer connections are on the [roadmap](docs/roadmap.md). |
+| **A Bambu Lab printer** (optional) | To read the filaments loaded in the printer. Connect it directly (IP address and access code from the printer screen) or through [Bambuddy](https://github.com/maziggy/bambuddy). Tested with an H2D and an X1C. Without a printer, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. Other printer brands are on the [roadmap](docs/roadmap.md). |
 
 Windows support is written but has been tested less than macOS.
 
@@ -97,7 +114,9 @@ From a clone of this repository you can run the installer instead:
 ## Quick start
 
 1. Open a design and click **Filamatch**.
-2. The first time, connect Bambuddy (address and API key) or skip.
+2. The first time, connect your Bambu printer (IP address and access code
+   from the printer's network settings), connect Bambuddy, or skip. You can
+   change it later in **Settings > Printer**.
 3. Click **+ Add filaments** and add the filaments you print with.
 4. In Fusion, give each body one of those materials (Physical Material,
    or **Open Material Browser** in the palette).
@@ -109,6 +128,7 @@ The [user guide](docs/user-guide.md) explains every screen.
 
 Filamatch has no account, no analytics and no telemetry. It only connects to:
 
+- **your printers**, at the IP addresses you enter (port 8883, encrypted);
 - **your Bambuddy server**, at the address you enter;
 - **raw.githubusercontent.com**, to download OrcaSlicer printer profiles you
   pick that are not installed locally;
@@ -142,6 +162,7 @@ Filamatch is released under the [MIT License](LICENSE). © 2026 Percosys.
 - Filament data from the [Open Filament Database](https://github.com/OpenFilamentCollective/open-filament-database) (MIT), downloaded when you search.
 - Printer profiles from [OrcaSlicer](https://github.com/OrcaSlicer/OrcaSlicer) (AGPL-3.0), downloaded when you pick a printer that is not installed; they are not part of this repository.
 - Printer data from [Bambuddy](https://github.com/maziggy/bambuddy), when you connect it.
+- Bambu Lab CA certificates (`Filamatch/data/bambu_ca.pem`) from [ha-bambulab](https://github.com/greghesp/ha-bambulab) (MIT), used to check that a printer is a real Bambu Lab printer.
 
 Filamatch is an independent project. It is not made, endorsed or supported by
 Autodesk, Bambu Lab or the OrcaSlicer project. Autodesk and Fusion are

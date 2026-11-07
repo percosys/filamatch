@@ -2,9 +2,10 @@
 
 A *slot source* reads printers and their loaded filament slots and returns a
 :class:`printer_model.PrinterContext`.  Bambuddy is the primary (default)
-source.  Direct printer connectors and a manual source register here in later
-phases (see ``docs/PRINTER_CONNECTIONS_PLAN.md``); the palette, the export
-slot manifest and the Fusion spool import only talk to this module.
+source; Bambu printers read directly over the LAN (``bambu_lan``) are the
+second.  More connectors register here later (see
+``docs/design/printer-connections.md``); the palette, the export slot
+manifest and the Fusion spool import only talk to this module.
 
 The palette setting ``printer_source`` selects the source.  An unknown or
 empty value falls back to Bambuddy, so settings written by older add-in
@@ -26,6 +27,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
+from . import bambu_lan
 from . import bambuddy
 from .printer_model import PrinterContext, PrinterInfo
 
@@ -179,6 +181,14 @@ register_source(
         label=BambuddySource.label,
         factory=BambuddySource.from_settings,
         is_configured=BambuddySource.is_configured,
+    )
+)
+register_source(
+    SourceInfo(
+        source_id=bambu_lan.SOURCE_ID,
+        label=bambu_lan.BambuLanSource.label,
+        factory=bambu_lan.BambuLanSource.from_settings,
+        is_configured=bambu_lan.BambuLanSource.is_configured,
     )
 )
 

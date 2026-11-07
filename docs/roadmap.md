@@ -5,15 +5,15 @@ welcome: see [CONTRIBUTING](../CONTRIBUTING.md).
 
 ## Printer connections
 
-Today Filamatch reads loaded filaments from Bambuddy (Bambu Lab printers).
-The plan is to read them from more places; the design is in
-[design/printer-connections.md](design/printer-connections.md). The shared
-printer, spool and slot model behind it is already in place.
+Today Filamatch reads loaded filaments from Bambu Lab printers, directly on
+the network or through Bambuddy. The plan is to read them from more places;
+the design is in [design/printer-connections.md](design/printer-connections.md).
+The shared printer, spool and slot model behind it is already in place.
 
 | Step | What you get |
 |---|---|
 | **Manual printer** | Set up your printer's slots by hand. Works with any printer. |
-| **Bambu Lab direct** | Read the AMS straight from the printer on your network (LAN access code), without Bambuddy. |
+| ~~Bambu Lab direct~~ | Done in 0.4: read the AMS straight from the printer on your network (IP address and access code), without Bambuddy. |
 | **Klipper / Moonraker** | Voron, QIDI, Snapmaker, Creality (Klipper), multi-material units such as Happy Hare and AFC. |
 | **Creality K1 / K2 with CFS** | The Creality Filament System on stock firmware. |
 | **OctoPrint, Spoolman, Prusa** | Slots where the API has them; spool inventory from Spoolman. Prusa printers fall back to Manual. |

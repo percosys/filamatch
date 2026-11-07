@@ -1,0 +1,201 @@
+{
+ "id": 1,
+ "name": "Workshop H2D",
+ "connected": true,
+ "state": "IDLE",
+ "ams": [
+  {
+   "id": 0,
+   "is_ams_ht": false,
+   "tray": [
+    {
+     "id": 0,
+     "tray_color": "C6C6C6FF",
+     "tray_type": "ABS-GF",
+     "tray_sub_brands": "ABS-GF",
+     "tray_id_name": "B50-D0",
+     "tray_info_idx": "GFB50",
+     "remain": 62,
+     "tag_uid": "00000000BEEF0002",
+     "tray_uuid": "000000000000000000000000F00D0001",
+     "nozzle_temp_min": 240,
+     "nozzle_temp_max": 270,
+     "state": 11
+    },
+    {
+     "id": 1,
+     "tray_color": "000000FF",
+     "tray_type": "PLA",
+     "tray_sub_brands": "PLA Matte",
+     "tray_id_name": "A01-K01",
+     "tray_info_idx": "GFA01",
+     "remain": 17,
+     "tag_uid": "00000000BEEF0004",
+     "tray_uuid": "000000000000000000000000F00D0003",
+     "nozzle_temp_min": 190,
+     "nozzle_temp_max": 230,
+     "state": 11
+    },
+    {
+     "id": 2,
+     "tray_color": "000000FF",
+     "tray_type": "PLA",
+     "tray_sub_brands": "PLA Matte",
+     "tray_id_name": "A01-K01",
+     "tray_info_idx": "GFA01",
+     "remain": 100,
+     "tag_uid": "00000000BEEF0006",
+     "tray_uuid": "000000000000000000000000F00D0005",
+     "nozzle_temp_min": 190,
+     "nozzle_temp_max": 230,
+     "state": 11
+    },
+    {
+     "id": 3,
+     "tray_color": "000000FF",
+     "tray_type": "PLA",
+     "tray_sub_brands": "PLA Matte",
+     "tray_id_name": "A01-K1",
+     "tray_info_idx": "GFA01",
+     "remain": 77,
+     "tag_uid": "00000000BEEF0008",
+     "tray_uuid": "000000000000000000000000F00D0007",
+     "nozzle_temp_min": 190,
+     "nozzle_temp_max": 230,
+     "state": 11
+    }
+   ],
+   "module_type": "n3f"
+  },
+  {
+   "id": 1,
+   "is_ams_ht": false,
+   "tray": [
+    {
+     "id": 0,
+     "tray_color": "0ACC38FF",
+     "tray_type": "ABS",
+     "tray_sub_brands": "",
+     "tray_id_name": "",
+     "tray_info_idx": "GFB60",
+     "remain": -1,
+     "tag_uid": null,
+     "tray_uuid": null,
+     "nozzle_temp_min": 240,
+     "nozzle_temp_max": 280,
+     "state": 11
+    },
+    {
+     "id": 1,
+     "tray_color": "898989FF",
+     "tray_type": "PPS",
+     "tray_sub_brands": "",
+     "tray_id_name": "",
+     "tray_info_idx": "P7bc2bae",
+     "remain": -1,
+     "tag_uid": null,
+     "tray_uuid": null,
+     "nozzle_temp_min": 300,
+     "nozzle_temp_max": 350,
+     "state": 11
+    },
+    {
+     "id": 2,
+     "tray_color": "5B6579FF",
+     "tray_type": "PLA",
+     "tray_sub_brands": "PLA Basic",
+     "tray_id_name": "A00-B1",
+     "tray_info_idx": "GFA00",
+     "remain": 44,
+     "tag_uid": "00000000BEEF000A",
+     "tray_uuid": "000000000000000000000000F00D0009",
+     "nozzle_temp_min": 190,
+     "nozzle_temp_max": 230,
+     "state": 11
+    },
+    {
+     "id": 3,
+     "tray_color": "000000FF",
+     "tray_type": "ABS-GF",
+     "tray_sub_brands": "ABS-GF",
+     "tray_id_name": "B50-K0",
+     "tray_info_idx": "GFB50",
+     "remain": 37,
+     "tag_uid": "00000000BEEF000C",
+     "tray_uuid": "000000000000000000000000F00D000B",
+     "nozzle_temp_min": 240,
+     "nozzle_temp_max": 270,
+     "state": 11
+    }
+   ],
+   "module_type": "n3f"
+  },
+  {
+   "id": 128,
+   "is_ams_ht": true,
+   "tray": [
+    {
+     "id": 0,
+     "tray_color": null,
+     "tray_type": null,
+     "tray_sub_brands": null,
+     "tray_id_name": null,
+     "tray_info_idx": null,
+     "remain": 0,
+     "tag_uid": null,
+     "tray_uuid": null,
+     "nozzle_temp_min": null,
+     "nozzle_temp_max": null,
+     "state": 0
+    }
+   ],
+   "module_type": "n3s"
+  }
+ ],
+ "ams_exists": true,
+ "vt_tray": [
+  {
+   "id": 254,
+   "tray_color": "00000000",
+   "tray_type": "",
+   "tray_sub_brands": "",
+   "tray_id_name": "",
+   "tray_info_idx": "",
+   "remain": 0,
+   "tag_uid": null,
+   "tray_uuid": null,
+   "nozzle_temp_min": 0,
+   "nozzle_temp_max": 0,
+   "state": null
+  },
+  {
+   "id": 255,
+   "tray_color": "898989FF",
+   "tray_type": "TPU",
+   "tray_sub_brands": "",
+   "tray_id_name": "",
+   "tray_info_idx": "GFU00",
+   "remain": 0,
+   "tag_uid": null,
+   "tray_uuid": null,
+   "nozzle_temp_min": 200,
+   "nozzle_temp_max": 250,
+   "state": null
+  }
+ ],
+ "nozzles": [
+  {
+   "nozzle_type": "hardened_steel",
+   "nozzle_diameter": "0.4"
+  },
+  {
+   "nozzle_type": "hardened_steel",
+   "nozzle_diameter": "0.4"
+  }
+ ],
+ "ams_extruder_map": {
+  "0": 1,
+  "1": 0,
+  "128": 1
+ }
+}

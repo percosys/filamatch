@@ -1,0 +1,9 @@
+{
+    "name": "Bambu TPU 95A HF @base",
+    "filament_id": "GFU00",
+    "inherits": "fdm_filament_common",
+    "instantiation": "false",
+    "filament_vendor": [
+        "Bambu Lab"
+    ]
+}

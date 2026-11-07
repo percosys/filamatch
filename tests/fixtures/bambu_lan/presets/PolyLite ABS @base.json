@@ -1,0 +1,9 @@
+{
+    "name": "PolyLite ABS @base",
+    "filament_id": "GFB60",
+    "inherits": "fdm_filament_common",
+    "instantiation": "false",
+    "filament_vendor": [
+        "Polymaker"
+    ]
+}

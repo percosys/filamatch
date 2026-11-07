@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.4.0 – direct Bambu printer connection
+
+**New**
+- Read Bambu Lab printers directly on your network, without Bambuddy:
+  Settings > Printer > **Bambu printer (LAN)**, with the IP address and the
+  access code from the printer screen. Works in LAN-only mode and in cloud
+  mode; developer mode is not needed.
+  - AMS, AMS 2 Pro, AMS HT and the external spool. On an H2D the slot labels
+    show the nozzle: "AMS 1 - T1 (L)", "External (R)".
+  - Filament names come from the installed Bambu Studio and OrcaSlicer
+    presets, your own presets included.
+  - Several printers at once; one printer that does not answer is a warning.
+  - The printer certificate is checked against Bambu Lab's CAs. A printer
+    with another certificate can be trusted once (its fingerprint is pinned).
+  - Access codes are stored in the Keychain or the Credential Manager.
+  - Read-only: Filamatch sends only "send your status" and "list your
+    modules".
+- The welcome screen offers "Connect a Bambu printer".
+- Bambuddy: every loaded slot is listed, read from the printer's live
+  status. Before, only slots with a Bambuddy inventory spool linked were
+  listed, so loaded slots were missing. A linked spool still adds grams left
+  and the preset. Bambuddy and the direct connection now show the same slots.
+- Diagnostics show the number of LAN printers and whether the Bambu CA file
+  is there.
+- User guide: how to add a Bambu printer, and troubleshooting for printer
+  connections.
+
+**Fixed**
+- A wrong access code or an offline server wrote a long error trace in the
+  log. It is now one line.
+- Settings > Advanced showed an old "Library … not loaded" warning from
+  version 0.1. It was wrong: Filamatch builds the Filamatch Library itself.
+  The real library and Favorites status stays in Settings.
+
 ## 0.3.0 – first public release
 
 **New**

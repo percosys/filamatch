@@ -446,10 +446,9 @@ def main() -> int:
             isinstance(init_data.get("materials"), list) and init_data["materials"] == [],
             "initData reports no assembly materials when no design is active",
         )
-        library = init_data.get("library") or {}
         check(
-            library.get("writable") is False and bool(library.get("message")),
-            "initData explains the material-library limitation",
+            "library" not in init_data,
+            "initData has no stale material-library message (custom_library reports the library)",
         )
         favorites = init_data.get("favorites") or {}
         check(

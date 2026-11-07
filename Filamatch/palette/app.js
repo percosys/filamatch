@@ -41,8 +41,20 @@
  *   create_library       {}                                  -> libraryCreated
  *   bambuddy_context     { bambuddy_url?, bambuddy_api_key?, bambuddy_verify_tls?,
  *                          bambuddy_printer_id, bambuddy_slot_map } -> bambuddyContextData
- *                        (URL, key and TLS flag only on an explicit Connect)
+ *                        Reads whichever printer source is selected (Bambuddy
+ *                        or Bambu printers on the LAN); bambuddy_printer_id is
+ *                        the selected printer id of that source (number or
+ *                        string). URL, key and TLS flag only on an explicit
+ *                        Bambuddy Connect, never while the source is bambu_lan.
  *   bambuddy_import      { slot_keys[], bambuddy_printer_id } -> bambuddyImportResult
+ *   set_printer_source   { source: "bambuddy"|"bambu_lan" }  -> settingsSaved
+ *                        (+ printer_configured; the palette then re-reads the
+ *                        printer with bambuddy_context when it is configured)
+ *   bambu_lan_test       { ip, access_code, trust_fingerprint? } -> bambuLanTestResult
+ *   bambu_lan_save       { ip, access_code, name, trust_fingerprint? } -> bambuLanPrinters
+ *   bambu_lan_remove     { id }                              -> bambuLanPrinters
+ *                        The access code is sent only by bambu_lan_test and
+ *                        bambu_lan_save (Python keeps it in the keychain).
  * Fire-and-forget requests (no pending state, no timeout):
  *   open_material_browser {}   Fusion opens its Physical Material browser and
  *                              replies materialBrowserData only on failure.
@@ -55,18 +67,23 @@
  *                    materials[{material_id, material_name, display_name,
  *                               color_hex, filament_type, density_g_cm3,
  *                               category, body_count, bodies[], slot}],
- *                    settings{}, library{path, loaded, writable, message},
+ *                    settings{},
  *                    favorites{count, names[]},
  *                    profiles{slicers[], vendors[], printers[], processes[],
  *                             imported{}, selected{}},
  *                    openfilament{cached, version, generated_at, counts},
  *                    custom_library{ok, path, exists, loaded, material_count, message},
  *                    bambuddy{configured, key_set, url, printer_id, slot_map},
+ *                    printer_source ("bambuddy"|"bambu_lan"),
+ *                    printer_configured (the selected source is set up),
+ *                    bambu_lan{printers[{id, name, model, ip, serial_tail,
+ *                                        certificate ("bambu"|"pinned")}]},
+ *                    sources[{id, label}],
  *                    log[] }
  *   importResult   { ok, imported[{id, fusion_name, appearance_name,
  *                                  favorite_name, favorite_appearance_name,
  *                                  color_hex, replaced, relinked_bodies}],
- *                    errors[], materials[], library{}, favorites{},
+ *                    errors[], materials[], favorites{},
  *                    custom_library{}, log[] }
  *   materialsData  { ok, design_name, materials[], favorites?, library?, log[] }
  *                  (also pushed unasked after the design's materials changed)
@@ -77,7 +94,7 @@
  *                    project_settings_written, orca_launched,
  *                    error, log[], log_tail[] }
  *   diagnosticsResult { ok, text }
- *   settingsSaved  { ok, settings, log[] }
+ *   settingsSaved  { ok, settings{..., printer_source}, printer_configured?, log[] }
  *   logData        { log[] }
  *   exportPathData { ok, path, error?, cancelled? }
  *   slicerPathData { ok, path, error?, cancelled? }
@@ -103,6 +120,13 @@
  *   bambuddyImportResult { ok, imported[], favorites{}, catalog[],
  *                      categories[], custom_library{}, materials[], log[], error }
  *   materialBrowserData { ok, error }
+ *   bambuLanTestResult { ok: true, serial_tail, model, name_suggestion, certificate,
+ *                      units[{label, slots[{label, filament, color_hex, loaded}]}],
+ *                      slot_count, loaded_count }
+ *                    | { ok: false, needs_trust: true, fingerprint, error }
+ *                    | { ok: false, error }
+ *   bambuLanPrinters { ok, printers[] (as initData.bambu_lan.printers), settings,
+ *                      printer_configured, error? }
  *
  * Reply payloads may carry `ok: false` and an `error` string; every handler
  * surfaces that instead of swallowing it. A cancelled native file dialog comes
@@ -149,7 +173,11 @@
     openfilament_import: 'openFilamentImportResult',
     create_library: 'libraryCreated',
     bambuddy_context: 'bambuddyContextData',
-    bambuddy_import: 'bambuddyImportResult'
+    bambuddy_import: 'bambuddyImportResult',
+    set_printer_source: 'settingsSaved',
+    bambu_lan_test: 'bambuLanTestResult',
+    bambu_lan_save: 'bambuLanPrinters',
+    bambu_lan_remove: 'bambuLanPrinters'
   };
 
   /** Human-readable action names used in timeout/error messages. */
@@ -169,8 +197,12 @@
     openfilament_search: 'search the Open Filament Database',
     openfilament_import: 'import Open Filament Database filaments',
     create_library: 'create the Filamatch material library',
-    bambuddy_context: 'load Bambuddy printers and AMS slots',
-    bambuddy_import: 'import Bambuddy spool materials'
+    bambuddy_context: 'read the printer and its AMS slots',
+    bambuddy_import: 'import the printer filaments',
+    set_printer_source: 'switch the printer source',
+    bambu_lan_test: 'test the Bambu printer',
+    bambu_lan_save: 'save the Bambu printer',
+    bambu_lan_remove: 'remove the Bambu printer'
   };
 
   /** Milliseconds before an unanswered request is reported as a timeout. */
@@ -203,6 +235,18 @@
 
   /** Bambuddy context/import read the printers/inventory/assignments endpoints. */
   var BAMBUDDY_TIMEOUT_MS = 45000;
+
+  /**
+   * Testing or saving a Bambu printer on the LAN runs in the background in
+   * Python, which gives the printer up to 30 s; wait a little longer here.
+   */
+  var BAMBU_LAN_TIMEOUT_MS = 35000;
+
+  /** Printer sources offered when initData does not list them. */
+  var DEFAULT_PRINTER_SOURCES = [
+    { id: 'bambuddy', label: 'Bambuddy' },
+    { id: 'bambu_lan', label: 'Bambu printer on your network' }
+  ];
 
   /** Quiet period before a design change refreshes the Bambuddy slot mapping. */
   var BAMBUDDY_REFRESH_DEBOUNCE_MS = 1500;
@@ -435,13 +479,8 @@
       bambuddy_url: 'http://192.168.1.20:8000',
       bambuddy_printer_id: 1,
       bambuddy_api_key_set: true,
-      bambuddy_verify_tls: true
-    },
-    library: {
-      path: '/Users/demo/Library/Application Support/Autodesk/Autodesk Fusion 360/API/Material Libraries/Fusion Material Library',
-      loaded: true,
-      writable: false,
-      message: 'Stock Fusion library is read-only; imported filaments are copied into the active design.'
+      bambuddy_verify_tls: true,
+      printer_source: 'bambuddy'
     },
     favorites: {
       count: 5,
@@ -455,6 +494,10 @@
     },
     profiles: DEMO_PROFILES,
     bambuddy: { configured: true, key_set: true, url: 'http://192.168.1.20:8000', printer_id: 1, slot_map: {} },
+    printer_source: 'bambuddy',
+    printer_configured: true,
+    bambu_lan: { printers: [] },
+    sources: DEFAULT_PRINTER_SOURCES,
     openfilament: {
       cached: true,
       version: 'demo-2026.02',
@@ -497,6 +540,44 @@
     ]
   };
 
+  /** Demo Bambu printers saved for the direct LAN connection (fake data). */
+  var DEMO_LAN_PRINTERS = [
+    { id: 'demo-lan-1', name: 'Workshop H2D', model: 'H2D', ip: '192.168.1.20', serial_tail: '0001', certificate: 'bambu' },
+    { id: 'demo-lan-2', name: 'Studio X1C', model: 'X1C', ip: '192.168.1.21', serial_tail: '0002', certificate: 'pinned' }
+  ];
+
+  /** Demo certificate fingerprint for the "trust this printer" flow (fake). */
+  var DEMO_LAN_FINGERPRINT = 'SHA256:3F:9A:12:C4:7E:05:B8:61:D2:0F:44:9C:AB:E7:13:58';
+
+  /** Demo LAN test result: two AMS units and the external spool holders. */
+  var DEMO_LAN_UNITS = [
+    {
+      label: 'AMS 1',
+      slots: [
+        { label: 'A1', filament: 'Bambu PLA Basic', color_hex: '#161616', loaded: true },
+        { label: 'A2', filament: 'Bambu PLA Matte', color_hex: '#333333', loaded: true },
+        { label: 'A3', filament: 'Bambu PLA Matte', color_hex: '#333333', loaded: true },
+        { label: 'A4', filament: 'Bambu PETG HF', color_hex: '#FFFFFF', loaded: true }
+      ]
+    },
+    {
+      label: 'AMS 2',
+      slots: [
+        { label: 'B1', filament: '', color_hex: '', loaded: false },
+        { label: 'B2', filament: 'Bambu PLA Basic', color_hex: '#5B6579', loaded: true },
+        { label: 'B3', filament: 'Bambu ABS', color_hex: '#4D4D4D', loaded: true },
+        { label: 'B4', filament: 'Generic PETG', color_hex: '#1B4F9C', loaded: true }
+      ]
+    },
+    {
+      label: 'External',
+      slots: [
+        { label: 'Left', filament: 'Generic TPU', color_hex: '#E8E8E8', loaded: true },
+        { label: 'Right', filament: '', color_hex: '', loaded: false }
+      ]
+    }
+  ];
+
   /* =========================================================================
    * Application state
    * ======================================================================= */
@@ -536,6 +617,31 @@
       /** Loaded-filament groups ticked for "Add to Fusion" (by slot key). */
       importKeys: new Set()
     },
+    /**
+     * Selected printer source. `state.bambuddy` above holds the printer data
+     * of whichever source is selected; `configured` there mirrors
+     * initData.printer_configured.
+     */
+    printer: {
+      source: 'bambuddy',
+      /** Source requested with set_printer_source, shown until Fusion answers. */
+      pendingSource: '',
+      /** initData.printer_configured, or null when Fusion did not report it. */
+      configured: null,
+      sources: DEFAULT_PRINTER_SOURCES.slice(),
+      lan: {
+        printers: [],
+        /** {fingerprint, action, ip} offered by a needs_trust reply. */
+        pendingTrust: null,
+        /** {ip, fingerprint} the user chose to trust for the next test/save. */
+        trust: null,
+        /** Name suggested by the last successful test. */
+        nameSuggestion: ''
+      }
+    },
+    /** Demo-mode printer source and saved LAN printers. */
+    demoPrinterSource: 'bambuddy',
+    demoLanPrinters: [],
     /** Currently active category chip (null = "All"). */
     activeCategory: null,
     selectedIds: new Set(),
@@ -732,12 +838,39 @@
       auto_library_update: settings.auto_library_update !== false,
       custom_library_path: asString(settings.custom_library_path),
       bambuddy_url: asString(settings.bambuddy_url),
-      bambuddy_printer_id: Number(settings.bambuddy_printer_id) || 0,
+      bambuddy_printer_id: printerIdValue(settings.bambuddy_printer_id),
       bambuddy_slot_map: (settings.bambuddy_slot_map && typeof settings.bambuddy_slot_map === 'object')
         ? settings.bambuddy_slot_map : {},
       bambuddy_api_key_set: settings.bambuddy_api_key_set === true,
-      bambuddy_verify_tls: settings.bambuddy_verify_tls !== false
+      bambuddy_verify_tls: settings.bambuddy_verify_tls !== false,
+      printer_source: asString(settings.printer_source) === 'bambu_lan' ? 'bambu_lan' : 'bambuddy'
     };
+  }
+
+  /**
+   * Normalise a printer id: Bambuddy uses numbers, the LAN source strings.
+   * @param {*} value
+   * @returns {number|string} 0 when there is no id
+   */
+  function printerIdValue(value) {
+    if (typeof value === 'number') {
+      return isFinite(value) ? value : 0;
+    }
+    var text = asString(value).trim();
+    if (!text) {
+      return 0;
+    }
+    return /^\d+$/.test(text) ? Number(text) : text;
+  }
+
+  /**
+   * @param {*} a
+   * @param {*} b
+   * @returns {boolean} true when both are the same, non-empty printer id.
+   */
+  function samePrinterId(a, b) {
+    var x = asString(printerIdValue(a));
+    return x !== '0' && x === asString(printerIdValue(b));
   }
 
   /**
@@ -1526,6 +1659,12 @@
         case 'materialBrowserData':
           handleMaterialBrowserData(payload);
           break;
+        case 'bambuLanTestResult':
+          handleBambuLanTestResult(payload, entry);
+          break;
+        case 'bambuLanPrinters':
+          handleBambuLanPrinters(payload, entry);
+          break;
         case 'response':
           /* Fusion echoes every sendInfoToHTML return value back as a
              "response" event. Ignore it silently: replying would create an
@@ -1613,7 +1752,6 @@
     renderCatalog();
     renderMaterials(Array.isArray(payload.materials) ? payload.materials : []);
     renderSettings(state.settings);
-    updateLibraryStatus(payload.library);
     state.favorites = normalizeFavorites(payload.favorites) || { count: 0, names: [] };
     renderFavoritesStatus(payload.favorites);
     renderCustomLibrary(payload.custom_library);
@@ -1626,6 +1764,7 @@
     }
     renderOpenFilamentSummary(payload.openfilament);
     state.ui.designName = asString(payload.design_name);
+    applyPrinterSourceState(payload);
     applyBambuddyState(payload.bambuddy);
     renderExportDetails(null);
     renderSlicerSummary();
@@ -1696,9 +1835,6 @@
 
     if (Array.isArray(payload.materials)) {
       renderMaterials(payload.materials);
-    }
-    if (payload.library) {
-      updateLibraryStatus(payload.library);
     }
 
     var status = byId('catalog-status');
@@ -1803,9 +1939,6 @@
   function handleMaterialsData(payload) {
     ingestLogSnapshot(payload.log);
 
-    if (payload.library) {
-      updateLibraryStatus(payload.library);
-    }
     if (payload.favorites) {
       state.favorites = normalizeFavorites(payload.favorites) || state.favorites;
       renderFavoritesStatus(payload.favorites);
@@ -1984,16 +2117,21 @@
     var slotMap = (data.slot_map && typeof data.slot_map === 'object')
       ? data.slot_map
       : (settings.bambuddy_slot_map || {});
-    state.bambuddy.configured = data.configured === true ||
+    var bambuddyConfigured = data.configured === true ||
       (typeof data.url === 'string' && data.url.trim() !== '');
+    /* "Configured" means the selected printer source is set up; older add-ins
+       without printer_configured only know Bambuddy. */
+    state.bambuddy.configured = state.printer.configured === null
+      ? bambuddyConfigured : state.printer.configured;
     state.bambuddy.keySet = data.key_set === true || settings.bambuddy_api_key_set === true;
     state.settings.bambuddy_api_key_set = state.bambuddy.keySet;
     state.bambuddy.url = asString(data.url) || asString(settings.bambuddy_url);
-    state.bambuddy.selectedPrinterId = Number(data.printer_id) || Number(settings.bambuddy_printer_id) || 0;
+    state.bambuddy.selectedPrinterId = printerIdValue(data.printer_id) || printerIdValue(settings.bambuddy_printer_id);
     state.bambuddy.slotMap = slotMap;
     renderBambuddySettings();
     renderBambuddySlots();
-    if (state.bambuddy.configured && (state.bambuddy.keySet || state.demoMode)) {
+    if (state.bambuddy.configured &&
+        (state.printer.source === 'bambu_lan' || state.bambuddy.keySet || state.demoMode)) {
       window.setTimeout(function () {
         requestBambuddyContext({ silent: true });
       }, 80);
@@ -2027,7 +2165,7 @@
     if (!printers.length) {
       var placeholder = document.createElement('option');
       placeholder.value = '';
-      placeholder.textContent = state.bambuddy.configured ? 'Reading printers…' : 'Connect Bambuddy first';
+      placeholder.textContent = state.bambuddy.configured ? 'Reading printers…' : 'Set up a printer first';
       select.appendChild(placeholder);
       select.disabled = true;
       return;
@@ -2037,7 +2175,7 @@
       var option = document.createElement('option');
       option.value = String(printer.id || '');
       option.textContent = asString(printer.label) || asString(printer.name) || ('Printer ' + printer.id);
-      if (Number(printer.id) === Number(state.bambuddy.selectedPrinterId)) {
+      if (samePrinterId(printer.id, state.bambuddy.selectedPrinterId)) {
         option.selected = true;
       }
       select.appendChild(option);
@@ -2054,8 +2192,18 @@
     var favorites = (state.favorites && state.favorites.names) || [];
     var groups = [];
     var byName = {};
+    /* Bambuddy reports assigned spools (spool_id); the LAN source reports
+       what the printer says is loaded, without inventory spools. */
+    var lan = state.printer.source === 'bambu_lan';
     var slots = (state.bambuddy.slots || []).filter(function (slot) {
-      return Number(slot && slot.spool_id) > 0;
+      if (!slot) {
+        return false;
+      }
+      if (Number(slot.spool_id) > 0) {
+        return true;
+      }
+      return lan && slot.loaded !== false &&
+        !!(asString(slot.display_name) || asString(slot.filament_type));
     });
     for (var i = 0; i < slots.length; i += 1) {
       var slot = slots[i];
@@ -2162,7 +2310,9 @@
     }
     var status = byId('bambuddy-status');
     if (state.bambuddy.loaded && groups.length === 0) {
-      setStatus(status, 'No spools are assigned to slots on this printer in Bambuddy.', 'warning');
+      setStatus(status, state.printer.source === 'bambu_lan'
+        ? 'No filament is loaded on this printer.'
+        : 'No spools are assigned to slots on this printer in Bambuddy.', 'warning');
     } else if (groups.length > 0 && groups.every(function (group) { return group.inFusion; })) {
       setStatus(status, 'Everything loaded on this printer is already in Fusion.', 'success');
     } else if (state.bambuddy.loaded && !state.bambuddy.error) {
@@ -2232,6 +2382,15 @@
           urlInput.value = url;
         }
       }
+      if (state.printer.source !== 'bambuddy') {
+        /* Connecting Bambuddy selects it as the printer source first, so the
+           address and key are never sent while the LAN source is selected. */
+        setPrinterSource('bambuddy', {
+          statusEl: statusEl,
+          after: function () { requestBambuddyContext(opts); }
+        });
+        return;
+      }
       payload.bambuddy_url = url;
       payload.bambuddy_verify_tls = verifyInput ? verifyInput.checked : true;
       if (keyInput && keyInput.value.trim()) {
@@ -2241,14 +2400,15 @@
       context.url = url;
     } else if (!state.bambuddy.configured) {
       if (!opts.silent) {
-        setStatus(statusEl, 'Connect Bambuddy in Settings first.', 'warning');
+        setStatus(statusEl, 'Set up the printer in Settings first.', 'warning');
       }
       return;
     }
     state.bambuddy.mappedMaterialsKey = materialIdsKey();
     request('bambuddy_context', payload, {
       statusEl: opts.silent ? null : statusEl,
-      pendingText: opts.silent ? '' : 'Reading the printer from Bambuddy...',
+      pendingText: opts.silent ? '' : (state.printer.source === 'bambu_lan'
+        ? 'Reading the printer...' : 'Reading the printer from Bambuddy...'),
       button: opts.button || (context.explicit ? byId('bambuddy-connect-btn') : null),
       timeoutMs: BAMBUDDY_TIMEOUT_MS,
       context: context
@@ -2264,13 +2424,15 @@
    */
   function handleBambuddyContextData(payload, entry) {
     var context = (entry && entry.context) || {};
-    var statusLines = [byId('bambuddy-status'), byId('setup-bambuddy-status'), byId('welcome-status')];
+    var lan = state.printer.source === 'bambu_lan';
+    var cardStatus = byId(lan ? 'bambu-lan-list-status' : 'setup-bambuddy-status');
+    var statusLines = [byId('bambuddy-status'), cardStatus, byId('welcome-status'), byId('printer-source-status')];
     if (payload.ok === false) {
       state.bambuddy.error = replyError(payload);
       for (var e = 0; e < statusLines.length; e += 1) {
-        setStatus(statusLines[e], 'Bambuddy: ' + state.bambuddy.error, 'error');
+        setStatus(statusLines[e], (lan ? 'Printer: ' : 'Bambuddy: ') + state.bambuddy.error, 'error');
       }
-      appendLog('Bambuddy context failed: ' + state.bambuddy.error, 'error');
+      appendLog((lan ? 'Printer' : 'Bambuddy') + ' context failed: ' + state.bambuddy.error, 'error');
       renderHome();
       return;
     }
@@ -2292,7 +2454,7 @@
     state.bambuddy.printers = Array.isArray(payload.printers) ? payload.printers : [];
     state.bambuddy.slots = Array.isArray(payload.slots) ? payload.slots : [];
     state.bambuddy.mapping = Array.isArray(payload.mapping) ? payload.mapping : [];
-    state.bambuddy.selectedPrinterId = Number(payload.selected_printer_id) || state.bambuddy.selectedPrinterId;
+    state.bambuddy.selectedPrinterId = printerIdValue(payload.selected_printer_id) || state.bambuddy.selectedPrinterId;
     state.settings.bambuddy_url = state.bambuddy.url;
     if (firstLoad || state.bambuddy.importKeys.size === 0) {
       state.bambuddy.importKeys = new Set(loadedSlotGroups().filter(function (group) {
@@ -2302,10 +2464,19 @@
     renderBambuddySettings();
     renderBambuddySlots();
     var connected = 'Connected · ' + pluralize(state.bambuddy.slots.length, 'loaded slot') + '.';
-    setStatus(byId('setup-bambuddy-status'), connected, 'success');
+    setStatus(cardStatus, connected, 'success');
     setStatus(byId('welcome-status'), connected, 'success');
-    appendLog('Loaded Bambuddy context: ' + state.bambuddy.printers.length + ' printer(s), ' +
+    setStatus(byId('printer-source-status'), '', 'muted');
+    appendLog('Loaded ' + (lan ? 'printer' : 'Bambuddy') + ' context: ' + state.bambuddy.printers.length + ' printer(s), ' +
       state.bambuddy.slots.length + ' slot(s).', 'info');
+    // A printer that did not answer: the others still load (LAN source).
+    var warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+    warnings.forEach(function (warning) {
+      appendLog(asString(warning), 'warning');
+    });
+    if (warnings.length) {
+      setStatus(byId('printer-source-status'), asString(warnings[0]), 'warning');
+    }
     if (state.ui.screen === 'welcome') {
       dismissWelcome();
       showScreen('home');
@@ -2348,11 +2519,11 @@
     var status = byId('bambuddy-import-status');
     if (payload.ok === false) {
       setStatus(status, 'Could not add the filaments: ' + replyError(payload), 'error');
-      appendLog('Bambuddy import failed: ' + replyError(payload), 'error');
+      appendLog('Printer filament import failed: ' + replyError(payload), 'error');
       return;
     }
     var imported = Array.isArray(payload.imported) ? payload.imported : [];
-    appendLog('Bambuddy import: ' + imported.length + ' spool(s) added to Favorites.', 'info');
+    appendLog('Printer import: ' + imported.length + ' filament(s) added to Favorites.', 'info');
     state.bambuddy.importKeys = new Set();
     applyLibraryRefresh(payload);
     renderBambuddySlots();
@@ -2364,6 +2535,683 @@
       showScreen('home');
     } else {
       setStatus(status, 'Nothing was added.', 'warning');
+    }
+  }
+
+  /* =========================================================================
+   * Printer source + Bambu printers on the network (direct LAN, read-only)
+   * ======================================================================= */
+
+  /**
+   * @param {string} source
+   * @returns {string} the label of a printer source ("Bambuddy", ...)
+   */
+  function printerSourceLabel(source) {
+    var sources = state.printer.sources || DEFAULT_PRINTER_SOURCES;
+    for (var i = 0; i < sources.length; i += 1) {
+      if (sources[i] && sources[i].id === source && asString(sources[i].label)) {
+        return asString(sources[i].label);
+      }
+    }
+    return source === 'bambu_lan' ? 'Bambu printer on your network' : 'Bambuddy';
+  }
+
+  /**
+   * Normalise saved LAN printers from initData.bambu_lan / bambuLanPrinters.
+   * @param {*} raw
+   * @returns {{id: string, name: string, model: string, ip: string,
+   *            serial_tail: string, certificate: string}[]}
+   */
+  function normalizeLanPrinters(raw) {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter(function (printer) {
+      return printer && typeof printer === 'object' && asString(printer.id) !== '';
+    }).map(function (printer) {
+      return {
+        id: asString(printer.id),
+        name: asString(printer.name),
+        model: asString(printer.model),
+        ip: asString(printer.ip),
+        serial_tail: asString(printer.serial_tail),
+        certificate: asString(printer.certificate)
+      };
+    });
+  }
+
+  /**
+   * Apply the printer-source fields of initData.
+   * @param {object} payload
+   */
+  function applyPrinterSourceState(payload) {
+    var sources = Array.isArray(payload.sources) ? payload.sources.filter(function (source) {
+      return source && (source.id === 'bambuddy' || source.id === 'bambu_lan');
+    }) : [];
+    state.printer.sources = sources.length ? sources : DEFAULT_PRINTER_SOURCES.slice();
+    var source = asString(payload.printer_source) || state.settings.printer_source;
+    state.printer.source = source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+    state.settings.printer_source = state.printer.source;
+    state.printer.pendingSource = '';
+    state.printer.configured = typeof payload.printer_configured === 'boolean'
+      ? payload.printer_configured : null;
+    var lan = (payload.bambu_lan && typeof payload.bambu_lan === 'object') ? payload.bambu_lan : {};
+    state.printer.lan.printers = normalizeLanPrinters(lan.printers);
+    renderPrinterSource();
+  }
+
+  /** Forget the printers/slots/mapping read from the previous source. */
+  function resetPrinterData() {
+    state.bambuddy.printers = [];
+    state.bambuddy.slots = [];
+    state.bambuddy.mapping = [];
+    state.bambuddy.loaded = false;
+    state.bambuddy.error = '';
+    state.bambuddy.selectedPrinterId = 0;
+    state.bambuddy.mappedMaterialsKey = '';
+    state.bambuddy.importKeys = new Set();
+  }
+
+  /** Source radios and which connection card (Bambuddy or LAN) is shown. */
+  function renderPrinterSource() {
+    var shown = state.printer.pendingSource || state.printer.source;
+    var busy = isActionPending('set_printer_source');
+    var radios = document.querySelectorAll('input[name="printer-source"]');
+    for (var i = 0; i < radios.length; i += 1) {
+      radios[i].checked = radios[i].value === shown;
+      radios[i].disabled = busy;
+    }
+    var bambuddyCard = byId('bambuddy-card');
+    if (bambuddyCard) {
+      bambuddyCard.hidden = shown !== 'bambuddy';
+    }
+    var lanCard = byId('bambu-lan-card');
+    if (lanCard) {
+      lanCard.hidden = shown !== 'bambu_lan';
+    }
+    renderLanPrinters();
+  }
+
+  /**
+   * Select a printer source (`set_printer_source`).
+   * @param {string} source
+   * @param {{statusEl?: HTMLElement|null, after?: function()}} [options]
+   *   `after` runs once Fusion confirmed the switch
+   */
+  function setPrinterSource(source, options) {
+    var opts = options || {};
+    if (isActionPending('set_printer_source')) {
+      renderPrinterSource();
+      return;
+    }
+    state.printer.pendingSource = source;
+    request('set_printer_source', { source: source }, {
+      statusEl: opts.statusEl || byId('printer-source-status'),
+      pendingText: 'Switching to ' + printerSourceLabel(source) + '...',
+      context: { source: source, after: opts.after || null, statusEl: opts.statusEl || null },
+      onFail: function () {
+        state.printer.pendingSource = '';
+        renderPrinterSource();
+      }
+    });
+    renderPrinterSource();
+  }
+
+  /** A source radio changed. */
+  function onPrinterSourceChange(event) {
+    var target = event && event.target;
+    if (!target || target.name !== 'printer-source' || !target.checked) {
+      return;
+    }
+    if (target.value === state.printer.source && !state.printer.pendingSource) {
+      return;
+    }
+    setPrinterSource(target.value === 'bambu_lan' ? 'bambu_lan' : 'bambuddy');
+    if (target.value === 'bambu_lan' && state.printer.lan.printers.length === 0) {
+      openLanForm(true);
+    }
+  }
+
+  /**
+   * `settingsSaved` for `set_printer_source`: switch the cards, drop the old
+   * source's printer data and read the new source when it is set up.
+   * @param {object} payload
+   * @param {object} entry
+   */
+  function handlePrinterSourceSaved(payload, entry) {
+    var context = entry.context || {};
+    var status = context.statusEl || byId('printer-source-status');
+    state.printer.pendingSource = '';
+    if (payload.ok === false) {
+      var failure = 'Could not switch the printer source: ' + replyError(payload);
+      setStatus(status, demoSuffix(failure), 'error');
+      appendLog(failure, 'error');
+      renderPrinterSource();
+      return;
+    }
+    var rawSettings = (payload.settings && typeof payload.settings === 'object') ? payload.settings : null;
+    var source = asString(rawSettings && rawSettings.printer_source) || context.source;
+    source = source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+    if (rawSettings) {
+      state.settings = normalizeSettings(rawSettings);
+      state.bambuddy.keySet = state.settings.bambuddy_api_key_set;
+      state.bambuddy.slotMap = state.settings.bambuddy_slot_map || {};
+    }
+    state.settings.printer_source = source;
+    if (source !== state.printer.source) {
+      resetPrinterData();
+    }
+    state.printer.source = source;
+    state.printer.configured = payload.printer_configured === true;
+    state.bambuddy.configured = state.printer.configured;
+    appendLog('Printer source: ' + printerSourceLabel(source) + '.', 'info');
+    renderPrinterSource();
+    renderBambuddySettings();
+    renderBambuddySlots();
+    renderHome();
+    if (context.after) {
+      setStatus(status, '', 'muted');
+      context.after();
+      return;
+    }
+    if (state.printer.configured) {
+      requestBambuddyContext({ silent: false, statusEl: byId('printer-source-status') });
+    } else {
+      setStatus(status, demoSuffix(source === 'bambu_lan'
+        ? 'Add a printer below to read its AMS slots.'
+        : 'Connect Bambuddy below to read your printers.'), 'info');
+    }
+  }
+
+  /** Saved LAN printers: "name · model · IP" rows with a Remove button. */
+  function renderLanPrinters() {
+    var list = byId('bambu-lan-list');
+    var empty = byId('bambu-lan-empty');
+    var printers = state.printer.lan.printers;
+    if (empty) {
+      empty.hidden = printers.length > 0;
+    }
+    if (list) {
+      list.hidden = printers.length === 0;
+      list.textContent = '';
+      for (var i = 0; i < printers.length; i += 1) {
+        list.appendChild(createLanPrinterRow(printers[i]));
+      }
+    }
+    renderLanSummary();
+  }
+
+  /**
+   * One saved LAN printer row.
+   * @param {object} printer
+   * @returns {HTMLElement}
+   */
+  function createLanPrinterRow(printer) {
+    var row = document.createElement('div');
+    row.className = 'lan-printer';
+    row.setAttribute('role', 'listitem');
+    var text = document.createElement('span');
+    text.className = 'lan-printer__text';
+    var name = document.createElement('span');
+    name.className = 'lan-printer__name';
+    name.textContent = printer.name || printer.model || 'Bambu printer';
+    text.appendChild(name);
+    var details = [printer.model, printer.ip].filter(Boolean);
+    if (details.length) {
+      var faint = document.createElement('span');
+      faint.className = 'faint';
+      faint.textContent = ' · ' + details.join(' · ');
+      text.appendChild(faint);
+    }
+    var tip = [];
+    if (printer.serial_tail) {
+      tip.push('Serial ends in ' + printer.serial_tail);
+    }
+    if (printer.certificate === 'pinned') {
+      tip.push('certificate trusted by you (pinned)');
+    } else if (printer.certificate === 'bambu') {
+      tip.push('Bambu-signed certificate');
+    }
+    if (tip.length) {
+      text.title = tip.join(' · ');
+    }
+    row.appendChild(text);
+
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'link link--small';
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', 'Remove ' + name.textContent);
+    remove.disabled = isActionPending('bambu_lan_remove');
+    var revertTimer = null;
+    remove.addEventListener('click', function () {
+      /* Two clicks: the first asks, the second removes. */
+      if (remove.getAttribute('data-confirm') !== '1') {
+        remove.setAttribute('data-confirm', '1');
+        remove.textContent = 'Remove?';
+        revertTimer = window.setTimeout(function () {
+          remove.removeAttribute('data-confirm');
+          remove.textContent = 'Remove';
+        }, 4000);
+        return;
+      }
+      if (revertTimer !== null) {
+        window.clearTimeout(revertTimer);
+      }
+      removeLanPrinter(printer, remove);
+    });
+    row.appendChild(remove);
+    return row;
+  }
+
+  /** LAN card header: status dot and one summary line. */
+  function renderLanSummary() {
+    var dot = byId('bambu-lan-dot');
+    var summary = byId('bambu-lan-summary');
+    if (!dot || !summary) {
+      return;
+    }
+    var count = state.printer.lan.printers.length;
+    var active = state.printer.source === 'bambu_lan';
+    var kind = 'off';
+    var text = count ? pluralize(count, 'printer') + ' saved' : 'No printer saved';
+    if (active && count && state.bambuddy.error) {
+      kind = 'error';
+      text = 'Not reachable: ' + state.bambuddy.error;
+    } else if (active && count && state.bambuddy.loaded) {
+      kind = 'ok';
+      text = pluralize(count, 'printer') + ' · ' + pluralize(state.bambuddy.slots.length, 'loaded slot');
+    } else if (active && count && state.bambuddy.configured) {
+      kind = 'warn';
+      text = pluralize(count, 'printer') + ' · connecting…';
+    }
+    summary.textContent = text;
+    dot.className = 'dot' + (kind === 'ok' ? '' : ' dot--' + kind);
+  }
+
+  /**
+   * Show or hide the "Add printer" form.
+   * @param {boolean} [open] force a state; toggles when omitted
+   */
+  function openLanForm(open) {
+    var toggle = byId('bambu-lan-add-toggle');
+    var form = byId('bambu-lan-form');
+    if (!toggle || !form) {
+      return;
+    }
+    var show = open === undefined ? form.hidden : open;
+    form.hidden = !show;
+    toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
+    toggle.textContent = show ? 'Close' : 'Add printer';
+    var ip = byId('bambu-lan-ip');
+    if (show && ip && !ip.value) {
+      ip.focus();
+    }
+  }
+
+  /** Disable Test/Save/Trust while a LAN test or save is running. */
+  function syncLanButtons() {
+    var busy = isActionPending('bambu_lan_test') || isActionPending('bambu_lan_save');
+    ['bambu-lan-test-btn', 'bambu-lan-save-btn', 'bambu-lan-trust-btn'].forEach(function (id) {
+      var button = byId(id);
+      if (button) {
+        button.disabled = busy;
+      }
+    });
+  }
+
+  /**
+   * Read and check the Add-printer form.
+   * @returns {{ip: string, code: string, name: string}|null} null when invalid
+   */
+  function readLanForm() {
+    var status = byId('bambu-lan-status');
+    var ip = byId('bambu-lan-ip');
+    var code = byId('bambu-lan-code');
+    var name = byId('bambu-lan-name');
+    var form = {
+      ip: ip ? ip.value.trim() : '',
+      code: code ? code.value.trim() : '',
+      name: name ? name.value.trim() : ''
+    };
+    if (!form.ip) {
+      setStatus(status, 'Enter the printer’s IP address.', 'warning');
+      if (ip) {
+        ip.focus();
+      }
+      return null;
+    }
+    if (!/^[0-9A-Za-z.:\-\[\]]+$/.test(form.ip)) {
+      setStatus(status, 'Enter the IP address as shown on the printer, e.g. 192.168.1.20.', 'warning');
+      if (ip) {
+        ip.focus();
+      }
+      return null;
+    }
+    if (!form.code) {
+      setStatus(status, 'Enter the access code from the printer screen.', 'warning');
+      if (code) {
+        code.focus();
+      }
+      return null;
+    }
+    return form;
+  }
+
+  /**
+   * @param {string} ip
+   * @returns {string} the fingerprint the user trusted for this IP, or ''
+   */
+  function trustedFingerprintFor(ip) {
+    var trust = state.printer.lan.trust;
+    return trust && trust.ip === ip ? trust.fingerprint : '';
+  }
+
+  /** Hide the "certificate not known" box. */
+  function hideLanTrust() {
+    state.printer.lan.pendingTrust = null;
+    var box = byId('bambu-lan-trust');
+    if (box) {
+      box.hidden = true;
+    }
+  }
+
+  /**
+   * Show the "certificate not known" box with the fingerprint to trust.
+   * @param {string} fingerprint
+   * @param {'test'|'save'} action the request to repeat after trusting
+   * @param {string} ip
+   */
+  function showLanTrust(fingerprint, action, ip) {
+    state.printer.lan.pendingTrust = { fingerprint: fingerprint, action: action, ip: ip };
+    var text = byId('bambu-lan-trust-text');
+    if (text) {
+      text.textContent = '';
+      text.appendChild(document.createTextNode(
+        'This printer’s certificate is not signed by a Bambu certificate we know. Fingerprint: '));
+      var fp = document.createElement('span');
+      fp.className = 'trust-box__fp';
+      fp.textContent = fingerprint;
+      text.appendChild(fp);
+      text.appendChild(document.createTextNode('. Only trust it if this is your printer.'));
+    }
+    var box = byId('bambu-lan-trust');
+    if (box) {
+      box.hidden = false;
+    }
+  }
+
+  /** "Trust this printer": repeat the test or save with the fingerprint. */
+  function onLanTrustClick() {
+    var pending = state.printer.lan.pendingTrust;
+    if (!pending) {
+      return;
+    }
+    state.printer.lan.trust = { ip: pending.ip, fingerprint: pending.fingerprint };
+    hideLanTrust();
+    if (pending.action === 'save') {
+      onLanSaveClick();
+    } else {
+      onLanTestClick();
+    }
+  }
+
+  /** Clear the last test result and trust prompt (the IP changed). */
+  function clearLanResult() {
+    hideLanTrust();
+    var result = byId('bambu-lan-result');
+    if (result) {
+      result.hidden = true;
+      result.textContent = '';
+    }
+  }
+
+  /** "Test": connect to the printer and show what is loaded. */
+  function onLanTestClick() {
+    if (isActionPending('bambu_lan_test') || isActionPending('bambu_lan_save')) {
+      return;
+    }
+    var form = readLanForm();
+    if (!form) {
+      return;
+    }
+    var payload = { ip: form.ip, access_code: form.code };
+    var fingerprint = trustedFingerprintFor(form.ip);
+    if (fingerprint) {
+      payload.trust_fingerprint = fingerprint;
+    }
+    clearLanResult();
+    request('bambu_lan_test', payload, {
+      statusEl: byId('bambu-lan-status'),
+      pendingText: 'Connecting to the printer at ' + form.ip + '...',
+      timeoutMs: BAMBU_LAN_TIMEOUT_MS,
+      context: { ip: form.ip },
+      onFail: syncLanButtons
+    });
+    syncLanButtons();
+  }
+
+  /** "Save": Fusion tests the printer again and stores it. */
+  function onLanSaveClick() {
+    if (isActionPending('bambu_lan_test') || isActionPending('bambu_lan_save')) {
+      return;
+    }
+    var form = readLanForm();
+    if (!form) {
+      return;
+    }
+    var payload = { ip: form.ip, access_code: form.code, name: form.name };
+    var fingerprint = trustedFingerprintFor(form.ip);
+    if (fingerprint) {
+      payload.trust_fingerprint = fingerprint;
+    }
+    hideLanTrust();
+    request('bambu_lan_save', payload, {
+      statusEl: byId('bambu-lan-status'),
+      pendingText: 'Checking and saving the printer...',
+      timeoutMs: BAMBU_LAN_TIMEOUT_MS,
+      context: { ip: form.ip, name: form.name },
+      onFail: syncLanButtons
+    });
+    syncLanButtons();
+  }
+
+  /**
+   * Remove one saved LAN printer.
+   * @param {object} printer
+   * @param {HTMLElement} button
+   */
+  function removeLanPrinter(printer, button) {
+    if (isActionPending('bambu_lan_remove')) {
+      return;
+    }
+    request('bambu_lan_remove', { id: printer.id }, {
+      statusEl: byId('bambu-lan-list-status'),
+      pendingText: 'Removing ' + (printer.name || 'the printer') + '...',
+      button: button,
+      context: { id: printer.id, name: printer.name }
+    });
+  }
+
+  /**
+   * "H2D found: 2 AMS units, 9 of 11 slots loaded".
+   * @param {object} payload a successful bambuLanTestResult
+   * @returns {string}
+   */
+  function lanFoundText(payload) {
+    var units = Array.isArray(payload.units) ? payload.units : [];
+    var slotCount = Number(payload.slot_count);
+    var loadedCount = Number(payload.loaded_count);
+    if (!isFinite(slotCount) || !isFinite(loadedCount)) {
+      slotCount = 0;
+      loadedCount = 0;
+      units.forEach(function (unit) {
+        (Array.isArray(unit && unit.slots) ? unit.slots : []).forEach(function (slot) {
+          slotCount += 1;
+          loadedCount += slot && slot.loaded === true ? 1 : 0;
+        });
+      });
+    }
+    var amsCount = units.filter(function (unit) {
+      return /^ams\b/i.test(asString(unit && unit.label));
+    }).length;
+    return (asString(payload.model) || 'Printer') + ' found: ' +
+      (amsCount ? pluralize(amsCount, 'AMS unit') : 'no AMS') + ', ' +
+      loadedCount + ' of ' + pluralize(slotCount, 'slot') + ' loaded';
+  }
+
+  /**
+   * Compact list of units and slots from a successful test.
+   * @param {object} payload
+   */
+  function renderLanTestResult(payload) {
+    var container = byId('bambu-lan-result');
+    if (!container) {
+      return;
+    }
+    container.textContent = '';
+    var units = Array.isArray(payload.units) ? payload.units : [];
+    for (var i = 0; i < units.length; i += 1) {
+      var unit = units[i] || {};
+      var group = document.createElement('div');
+      group.className = 'lan-unit';
+      var title = document.createElement('p');
+      title.className = 'lan-unit__title';
+      title.textContent = asString(unit.label) || 'Unit ' + (i + 1);
+      group.appendChild(title);
+      var slots = Array.isArray(unit.slots) ? unit.slots : [];
+      for (var j = 0; j < slots.length; j += 1) {
+        var slot = slots[j] || {};
+        var loaded = slot.loaded === true;
+        var row = document.createElement('div');
+        row.className = 'lan-slot' + (loaded ? '' : ' lan-slot--empty');
+        var filament = asString(slot.filament);
+        row.appendChild(createSwatch(loaded ? slot.color_hex : '', loaded ? filament : 'Empty', 'swatch--chip'));
+        var label = document.createElement('span');
+        label.className = 'lan-slot__label';
+        label.textContent = asString(slot.label) || String(j + 1);
+        row.appendChild(label);
+        var name = document.createElement('span');
+        name.className = 'lan-slot__filament';
+        name.textContent = loaded ? (filament || 'Loaded (unknown filament)') : 'Empty';
+        name.title = name.textContent;
+        row.appendChild(name);
+        group.appendChild(row);
+      }
+      container.appendChild(group);
+    }
+    container.hidden = units.length === 0;
+  }
+
+  /**
+   * `bambuLanTestResult`: show what the printer reported, or offer to trust
+   * an unknown certificate.
+   * @param {object} payload
+   * @param {object|null} entry
+   */
+  function handleBambuLanTestResult(payload, entry) {
+    syncLanButtons();
+    var context = (entry && entry.context) || {};
+    var status = byId('bambu-lan-status');
+    ingestLogSnapshot(payload.log);
+    if (payload.ok === false) {
+      if (payload.needs_trust === true && asString(payload.fingerprint)) {
+        setStatus(status, 'Check the printer’s certificate below.', 'warning');
+        appendLog('Bambu printer certificate needs trust: ' + replyError(payload), 'warning');
+        showLanTrust(asString(payload.fingerprint), 'test', asString(context.ip));
+        return;
+      }
+      setStatus(status, demoSuffix('Test failed: ' + replyError(payload)), 'error');
+      appendLog('Bambu printer test failed: ' + replyError(payload), 'error');
+      return;
+    }
+    var nameInput = byId('bambu-lan-name');
+    var suggestion = asString(payload.name_suggestion);
+    if (nameInput && suggestion &&
+        (!nameInput.value.trim() || nameInput.value.trim() === state.printer.lan.nameSuggestion)) {
+      nameInput.value = suggestion;
+    }
+    state.printer.lan.nameSuggestion = suggestion;
+    var found = lanFoundText(payload);
+    setStatus(status, demoSuffix(found + '.'), 'success');
+    appendLog('Bambu printer test: ' + found + '.', 'info');
+    renderLanTestResult(payload);
+  }
+
+  /**
+   * `bambuLanPrinters`: the saved LAN printers after a save or remove.
+   * @param {object} payload
+   * @param {object|null} entry
+   */
+  function handleBambuLanPrinters(payload, entry) {
+    syncLanButtons();
+    ingestLogSnapshot(payload.log);
+    var context = (entry && entry.context) || {};
+    var saving = !!(entry && entry.requestAction === 'bambu_lan_save');
+    var status = byId(saving ? 'bambu-lan-status' : 'bambu-lan-list-status');
+    if (payload.ok === false) {
+      if (saving && payload.needs_trust === true && asString(payload.fingerprint)) {
+        setStatus(status, 'Check the printer’s certificate below.', 'warning');
+        appendLog('Bambu printer certificate needs trust: ' + replyError(payload), 'warning');
+        showLanTrust(asString(payload.fingerprint), 'save', asString(context.ip));
+        return;
+      }
+      var failure = (saving ? 'Could not save the printer: ' : 'Could not remove the printer: ') + replyError(payload);
+      setStatus(status, demoSuffix(failure), 'error');
+      appendLog(failure, 'error');
+      renderLanPrinters();
+      return;
+    }
+    if (Array.isArray(payload.printers)) {
+      state.printer.lan.printers = normalizeLanPrinters(payload.printers);
+    }
+    var rawSettings = (payload.settings && typeof payload.settings === 'object') ? payload.settings : null;
+    if (rawSettings) {
+      state.settings = normalizeSettings(rawSettings);
+      state.bambuddy.keySet = state.settings.bambuddy_api_key_set;
+    }
+    var source = asString(rawSettings && rawSettings.printer_source) || (saving ? 'bambu_lan' : state.printer.source);
+    source = source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+    state.settings.printer_source = source;
+    var sourceChanged = source !== state.printer.source;
+    state.printer.source = source;
+    if (typeof payload.printer_configured === 'boolean') {
+      state.printer.configured = payload.printer_configured;
+      state.bambuddy.configured = payload.printer_configured;
+    }
+    if (sourceChanged || !state.bambuddy.configured) {
+      resetPrinterData();
+    } else if (!saving && samePrinterId(context.id, state.bambuddy.selectedPrinterId)) {
+      state.bambuddy.selectedPrinterId = 0;
+    }
+
+    if (saving) {
+      /* The access code now lives in the keychain: never keep it in the form. */
+      ['bambu-lan-code', 'bambu-lan-ip', 'bambu-lan-name'].forEach(function (id) {
+        var input = byId(id);
+        if (input) {
+          input.value = '';
+        }
+      });
+      state.printer.lan.trust = null;
+      state.printer.lan.nameSuggestion = '';
+      clearLanResult();
+      setStatus(byId('bambu-lan-status'), '', 'muted');
+      openLanForm(false);
+      var savedName = context.name || 'the printer';
+      setStatus(byId('bambu-lan-list-status'), demoSuffix('Saved ' + savedName + '.'), 'success');
+      appendLog('Saved Bambu printer ' + savedName + '.', 'info');
+      dismissWelcome();
+    } else {
+      setStatus(status, demoSuffix('Removed ' + (context.name || 'the printer') + '.'), 'success');
+      appendLog('Removed Bambu printer ' + (context.name || '') + '.', 'info');
+    }
+    renderPrinterSource();
+    renderBambuddySettings();
+    renderBambuddySlots();
+    renderHome();
+    if (state.bambuddy.configured && state.printer.source === 'bambu_lan') {
+      requestBambuddyContext({ silent: false, statusEl: byId('bambu-lan-list-status') });
     }
   }
 
@@ -2410,6 +3258,10 @@
    */
   function handleSettingsSaved(payload, entry) {
     ingestLogSnapshot(payload.log);
+    if (entry && entry.requestAction === 'set_printer_source') {
+      handlePrinterSourceSaved(payload, entry);
+      return;
+    }
     var clearingKey = !!(entry && entry.requestAction === 'clear_bambuddy_key');
     var status = clearingKey ? byId('setup-bambuddy-status') : byId('settings-status');
     if (payload.ok === false) {
@@ -3041,43 +3893,6 @@
   function renderMaterials(materials) {
     state.materials = Array.isArray(materials) ? materials.slice() : [];
     renderHome();
-  }
-
-  /**
-   * Show the Fusion material-library status as an informational line.
-   * @param {object|null|undefined} library
-   */
-  function updateLibraryStatus(library) {
-    var element = byId('library-status');
-    if (!element) {
-      return;
-    }
-    if (!library || typeof library !== 'object') {
-      setStatus(element, 'Library: status not reported by Fusion.', 'muted');
-      element.removeAttribute('title');
-      return;
-    }
-
-    var path = asString(library.path).trim();
-    var loaded = library.loaded === true;
-    var writable = library.writable === true;
-    var message = asString(library.message).trim();
-
-    var statusText = 'Library: ' + (path || '(no library path reported)');
-    if (loaded) {
-      statusText += ' - loaded' + (writable ? ', writable' : ', read-only');
-    } else {
-      statusText += ' - not loaded';
-    }
-    if (message) {
-      statusText += '. ' + message;
-    }
-    setStatus(element, statusText, loaded ? 'muted' : 'warning');
-    if (message || path) {
-      element.title = message || path;
-    } else {
-      element.removeAttribute('title');
-    }
   }
 
   /**
@@ -4158,6 +4973,10 @@
     state.demoMode = true;
     state.demoLog = DEMO_INIT.log.slice();
     state.demoFavoriteNames = DEMO_INIT.favorites.names.slice();
+    state.demoPrinterSource = 'bambuddy';
+    state.demoLanPrinters = DEMO_LAN_PRINTERS.map(function (printer) {
+      return Object.assign({}, printer);
+    });
     showDemoBanner(true);
     setConnectionState('warning', 'Preview mode - open this palette from Fusion to connect. Showing demo data.');
   }
@@ -4329,6 +5148,10 @@
    */
   var DEMO_RESPONSE_BUILDERS = {
     init: function () {
+      DEMO_INIT.printer_source = state.demoPrinterSource;
+      DEMO_INIT.settings.printer_source = state.demoPrinterSource;
+      DEMO_INIT.printer_configured = demoPrinterConfigured();
+      DEMO_INIT.bambu_lan = { printers: state.demoLanPrinters.slice() };
       return DEMO_INIT;
     },
 
@@ -4373,7 +5196,6 @@
         imported: imported,
         errors: errors,
         materials: state.materials,
-        library: DEMO_INIT.library,
         favorites: demoFavoritesPayload(),
         custom_library: demoCustomLibraryPayload(
           imported.length > 0 ? 'Updated automatically after import (demo).' : undefined
@@ -4595,6 +5417,9 @@
     },
 
     bambuddy_context: function (payload) {
+      if (state.demoPrinterSource === 'bambu_lan') {
+        return demoLanContext(payload);
+      }
       /* The second demo printer has nothing loaded. */
       var printerId = Number(payload.bambuddy_printer_id) === 2 ? 2 : 1;
       return {
@@ -4633,8 +5458,172 @@
 
     get_log: function () {
       return { log: state.demoLog.slice() };
+    },
+
+    set_printer_source: function (payload) {
+      state.demoPrinterSource = payload.source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+      state.demoLog.push('Printer source set to ' + state.demoPrinterSource + ' (demo).');
+      return {
+        ok: true,
+        settings: demoSettingsPayload(),
+        printer_configured: demoPrinterConfigured(),
+        log: state.demoLog.slice()
+      };
+    },
+
+    bambu_lan_test: function (payload) {
+      return demoLanTest(payload);
+    },
+
+    bambu_lan_save: function (payload) {
+      var test = demoLanTest(payload);
+      if (!test.ok) {
+        return {
+          ok: false,
+          needs_trust: test.needs_trust === true,
+          fingerprint: test.fingerprint || '',
+          error: test.error,
+          printers: state.demoLanPrinters.slice()
+        };
+      }
+      var ip = asString(payload.ip).trim();
+      state.demoLanPrinters = state.demoLanPrinters.filter(function (printer) {
+        return printer.ip !== ip;
+      });
+      state.demoLanPrinters.push({
+        id: 'demo-lan-' + Date.now(),
+        name: asString(payload.name).trim() || test.name_suggestion,
+        model: test.model,
+        ip: ip,
+        serial_tail: test.serial_tail,
+        certificate: test.certificate
+      });
+      state.demoPrinterSource = 'bambu_lan';
+      state.demoLog.push('Saved Bambu printer at ' + ip + ' (demo; the access code is not stored).');
+      return {
+        ok: true,
+        printers: state.demoLanPrinters.slice(),
+        settings: demoSettingsPayload(),
+        printer_configured: true,
+        log: state.demoLog.slice()
+      };
+    },
+
+    bambu_lan_remove: function (payload) {
+      var id = asString(payload.id);
+      state.demoLanPrinters = state.demoLanPrinters.filter(function (printer) {
+        return printer.id !== id;
+      });
+      state.demoLog.push('Removed a Bambu printer (demo).');
+      return {
+        ok: true,
+        printers: state.demoLanPrinters.slice(),
+        settings: demoSettingsPayload(),
+        printer_configured: demoPrinterConfigured(),
+        log: state.demoLog.slice()
+      };
     }
   };
+
+  /** @returns {boolean} demo: the selected printer source is set up. */
+  function demoPrinterConfigured() {
+    return state.demoPrinterSource === 'bambu_lan' ? state.demoLanPrinters.length > 0 : true;
+  }
+
+  /** @returns {object} demo settings reply with the demo printer source. */
+  function demoSettingsPayload() {
+    var saved = normalizeSettings(state.settings);
+    saved.bambuddy_url = state.bambuddy.url;
+    saved.printer_source = state.demoPrinterSource;
+    return saved;
+  }
+
+  /**
+   * Demo `bambu_lan_test`: any IPv4 address answers; 192.168.1.30 has a
+   * certificate that must be trusted first; .21 is an X1C with one AMS.
+   * @param {object} payload
+   * @returns {object}
+   */
+  function demoLanTest(payload) {
+    var ip = asString(payload.ip).trim();
+    if (!asString(payload.access_code).trim()) {
+      return { ok: false, error: 'Enter the access code from the printer screen.' };
+    }
+    if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+      return { ok: false, error: 'No printer answered at ' + ip + ' (demo).' };
+    }
+    var pinned = ip === '192.168.1.30';
+    if (pinned && asString(payload.trust_fingerprint) !== DEMO_LAN_FINGERPRINT) {
+      return {
+        ok: false,
+        needs_trust: true,
+        fingerprint: DEMO_LAN_FINGERPRINT,
+        error: 'The printer\u2019s certificate is not signed by a known Bambu certificate.'
+      };
+    }
+    var x1c = /\.21$/.test(ip);
+    var units = x1c ? DEMO_LAN_UNITS.slice(0, 1) : DEMO_LAN_UNITS;
+    var slotCount = 0;
+    var loadedCount = 0;
+    units.forEach(function (unit) {
+      unit.slots.forEach(function (slot) {
+        slotCount += 1;
+        loadedCount += slot.loaded ? 1 : 0;
+      });
+    });
+    var model = x1c ? 'X1C' : 'H2D';
+    var serialTail = x1c ? '0002' : (pinned ? '0003' : '0001');
+    state.demoLog.push('Tested Bambu printer at ' + ip + ' (demo).');
+    return {
+      ok: true,
+      serial_tail: serialTail,
+      model: model,
+      name_suggestion: model + ' ' + serialTail,
+      certificate: pinned ? 'pinned' : 'bambu',
+      units: units,
+      slot_count: slotCount,
+      loaded_count: loadedCount,
+      log: state.demoLog.slice()
+    };
+  }
+
+  /**
+   * Demo `bambuddy_context` while the LAN source is selected: the first saved
+   * printer reports the demo AMS slots, others nothing.
+   * @param {object} payload
+   * @returns {object}
+   */
+  function demoLanContext(payload) {
+    var printers = state.demoLanPrinters;
+    if (!printers.length) {
+      return { ok: false, configured: false, source: 'bambu_lan', error: 'No Bambu printer is saved.' };
+    }
+    var selected = printers.filter(function (printer) {
+      return printer.id === asString(payload.bambuddy_printer_id);
+    })[0] || printers[0];
+    var first = selected === printers[0];
+    return {
+      ok: true,
+      configured: true,
+      source: 'bambu_lan',
+      selected_printer_id: selected.id,
+      printers: printers.map(function (printer) {
+        return { id: printer.id, name: printer.name, model: printer.model, label: printer.name + ' - ' + printer.model };
+      }),
+      slots: first ? DEMO_BAMBUDDY.slots.map(function (slot) {
+        return {
+          key: slot.key,
+          label: slot.label,
+          display_name: slot.display_name,
+          filament_type: slot.filament_type,
+          color_hex: slot.color_hex,
+          spool_id: 0,
+          loaded: true
+        };
+      }) : [],
+      mapping: first ? demoMapping() : []
+    };
+  }
 
   /**
    * Look up a catalog entry by id.
@@ -4827,6 +5816,27 @@
     toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
   }
 
+  /** Open Settings on the card of the selected printer source. */
+  function openPrinterSetup() {
+    if ((state.printer.pendingSource || state.printer.source) === 'bambu_lan') {
+      showScreen('settings');
+      if (state.printer.lan.printers.length === 0) {
+        openLanForm(true);
+      }
+      return;
+    }
+    openBambuddySetup();
+  }
+
+  /** Select the LAN source and open Settings on its Add-printer form. */
+  function openLanSetup() {
+    if ((state.printer.pendingSource || state.printer.source) !== 'bambu_lan') {
+      setPrinterSource('bambu_lan');
+    }
+    showScreen('settings');
+    openLanForm(true);
+  }
+
   /** Open Settings with the Bambuddy fields shown. */
   function openBambuddySetup() {
     showScreen('settings');
@@ -4881,11 +5891,11 @@
     return asString(label).replace(/ - /g, ' · ');
   }
 
-  /** @returns {object|null} the selected Bambuddy printer. */
+  /** @returns {object|null} the selected printer of the selected source. */
   function selectedPrinter() {
-    var id = Number(state.bambuddy.selectedPrinterId);
+    var id = state.bambuddy.selectedPrinterId;
     return (state.bambuddy.printers || []).filter(function (printer) {
-      return Number(printer.id) === id;
+      return samePrinterId(printer && printer.id, id);
     })[0] || null;
   }
 
@@ -4945,6 +5955,7 @@
     renderExportButton();
     renderReadiness();
     renderBambuddySummary();
+    renderLanSummary();
   }
 
   /** Design name and "N bodies · M filaments". */
@@ -5175,6 +6186,12 @@
     }
     label.textContent = text;
     dot.className = 'dot' + (kind === 'ok' ? '' : ' dot--' + kind);
+    var pill = byId('printer-pill');
+    if (pill) {
+      pill.title = state.bambuddy.configured
+        ? 'Printer used for slot matching (' + printerSourceLabel(state.printer.source) + ')'
+        : 'Set up the printer used for slot matching';
+    }
   }
 
   /** One-line summary of the Orca printer and process. */
@@ -5264,7 +6281,7 @@
     }
     if (state.bambuddy.error) {
       fixes.push({
-        text: 'Bambuddy did not answer.',
+        text: state.printer.source === 'bambu_lan' ? 'The printer did not answer.' : 'Bambuddy did not answer.',
         action: 'Retry',
         run: function () { requestBambuddyContext({ silent: false }); }
       });
@@ -5315,7 +6332,7 @@
         connect.type = 'button';
         connect.className = 'link link--small';
         connect.textContent = 'Connect printer';
-        connect.addEventListener('click', openBambuddySetup);
+        connect.addEventListener('click', openPrinterSetup);
         hint.appendChild(connect);
         container.appendChild(hint);
       }
@@ -5468,14 +6485,32 @@
           setAddTab('printer');
           showScreen('add');
         } else {
-          openBambuddySetup();
+          openPrinterSetup();
         }
       },
-      'bambuddy-setup-btn': openBambuddySetup,
+      'bambuddy-setup-btn': openPrinterSetup,
       'print-settings-toggle': function () { toggleCardBody('print-settings-toggle'); },
       'bambuddy-edit-toggle': function () { toggleCardBody('bambuddy-edit-toggle'); },
       'slicer-edit-toggle': function () { toggleCardBody('slicer-edit-toggle'); },
       'welcome-connect-btn': onWelcomeConnect,
+      'welcome-lan-btn': openLanSetup,
+      'welcome-bambuddy-btn': function () {
+        var toggle = byId('welcome-bambuddy-btn');
+        var form = byId('welcome-bambuddy-form');
+        if (!toggle || !form) {
+          return;
+        }
+        form.hidden = !form.hidden;
+        toggle.setAttribute('aria-expanded', form.hidden ? 'false' : 'true');
+        var url = byId('welcome-url');
+        if (!form.hidden && url) {
+          url.focus();
+        }
+      },
+      'bambu-lan-add-toggle': function () { openLanForm(); },
+      'bambu-lan-test-btn': function () { onLanTestClick(); },
+      'bambu-lan-save-btn': function () { onLanSaveClick(); },
+      'bambu-lan-trust-btn': onLanTrustClick,
       'welcome-skip-btn': function () {
         dismissWelcome();
         showScreen('home');
@@ -5485,6 +6520,32 @@
       var element = byId(id);
       if (element) {
         element.addEventListener('click', clicks[id]);
+      }
+    });
+    var sourcePicker = byId('printer-source');
+    if (sourcePicker) {
+      sourcePicker.addEventListener('change', onPrinterSourceChange);
+    }
+    var lanIp = byId('bambu-lan-ip');
+    if (lanIp) {
+      /* A different address is a different printer: drop the old result. */
+      lanIp.addEventListener('input', function () {
+        var trust = state.printer.lan.trust;
+        if (trust && trust.ip !== lanIp.value.trim()) {
+          state.printer.lan.trust = null;
+        }
+        clearLanResult();
+      });
+    }
+    ['bambu-lan-ip', 'bambu-lan-code', 'bambu-lan-name'].forEach(function (id) {
+      var input = byId(id);
+      if (input) {
+        input.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            onLanTestClick();
+          }
+        });
       }
     });
     var browserButton = byId('open-material-browser-btn');
@@ -5794,7 +6855,7 @@
     var bambuddyPrinter = byId('bambuddy-printer');
     if (bambuddyPrinter) {
       bambuddyPrinter.addEventListener('change', function () {
-        state.bambuddy.selectedPrinterId = Number(bambuddyPrinter.value) || 0;
+        state.bambuddy.selectedPrinterId = printerIdValue(bambuddyPrinter.value);
         requestBambuddyContext({ silent: false });
         scheduleSettingsSave();
       });

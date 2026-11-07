@@ -1,0 +1,9 @@
+{
+    "name": "Bambu PLA Matte @base",
+    "filament_id": "GFA01",
+    "inherits": "fdm_filament_common",
+    "instantiation": "false",
+    "filament_vendor": [
+        "Bambu Lab"
+    ]
+}

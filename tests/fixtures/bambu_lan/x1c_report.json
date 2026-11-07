@@ -1,0 +1,149 @@
+{
+ "print": {
+  "ams": {
+   "ams": [
+    {
+     "humidity": "5",
+     "id": "0",
+     "temp": "-41.5",
+     "tray": [
+      {
+       "id": "0"
+      },
+      {
+       "bed_temp": "0",
+       "bed_temp_type": "0",
+       "cali_idx": -1,
+       "cols": [
+        "F48438FF"
+       ],
+       "ctype": 0,
+       "drying_temp": "80",
+       "drying_time": "8",
+       "id": "1",
+       "nozzle_temp_max": "270",
+       "nozzle_temp_min": "240",
+       "remain": 48,
+       "tag_uid": "00000000BEEF000E",
+       "tray_color": "F48438FF",
+       "tray_diameter": "1.75",
+       "tray_id_name": "B50-A0",
+       "tray_info_idx": "GFB50",
+       "tray_sub_brands": "ABS-GF",
+       "tray_type": "ABS-GF",
+       "tray_uuid": "000000000000000000000000F00D000D",
+       "tray_weight": "1000"
+      },
+      {
+       "bed_temp": "0",
+       "bed_temp_type": "0",
+       "cali_idx": -1,
+       "cols": [
+        "000000FF"
+       ],
+       "ctype": 0,
+       "drying_temp": "55",
+       "drying_time": "8",
+       "id": "2",
+       "nozzle_temp_max": "230",
+       "nozzle_temp_min": "190",
+       "remain": 21,
+       "tag_uid": "00000000BEEF0010",
+       "tray_color": "000000FF",
+       "tray_diameter": "1.75",
+       "tray_id_name": "A01-K1",
+       "tray_info_idx": "GFA01",
+       "tray_sub_brands": "PLA Matte",
+       "tray_type": "PLA",
+       "tray_uuid": "000000000000000000000000F00D000F",
+       "tray_weight": "1000"
+      },
+      {
+       "bed_temp": "0",
+       "bed_temp_type": "0",
+       "cali_idx": -1,
+       "cols": [
+        "5B6579FF"
+       ],
+       "ctype": 0,
+       "drying_temp": "55",
+       "drying_time": "8",
+       "id": "3",
+       "nozzle_temp_max": "230",
+       "nozzle_temp_min": "190",
+       "remain": 100,
+       "tag_uid": "00000000BEEF0012",
+       "tray_color": "5B6579FF",
+       "tray_diameter": "1.75",
+       "tray_id_name": "A00-B01",
+       "tray_info_idx": "GFA00",
+       "tray_sub_brands": "PLA Basic",
+       "tray_type": "PLA",
+       "tray_uuid": "000000000000000000000000F00D0011",
+       "tray_weight": "1000"
+      }
+     ]
+    }
+   ]
+  },
+  "vt_tray": {
+   "bed_temp": "0",
+   "bed_temp_type": "0",
+   "cali_idx": -1,
+   "cols": [
+    "161616FF"
+   ],
+   "ctype": 0,
+   "drying_temp": "0",
+   "drying_time": "0",
+   "id": "254",
+   "nozzle_temp_max": "250",
+   "nozzle_temp_min": "200",
+   "remain": 0,
+   "tag_uid": "0000000000000000",
+   "tray_color": "161616FF",
+   "tray_diameter": "0.00",
+   "tray_id_name": "",
+   "tray_info_idx": "GFU99",
+   "tray_sub_brands": "",
+   "tray_type": "TPU",
+   "tray_uuid": "00000000000000000000000000000000",
+   "tray_weight": "0"
+  }
+ },
+ "info": {
+  "command": "get_version",
+  "module": [
+   {
+    "hw_ver": "N/A",
+    "name": "ota",
+    "sw_ver": "01.08.05.00"
+   },
+   {
+    "hw_ver": "AMS08",
+    "name": "ams/0",
+    "sw_ver": "00.00.06.44"
+   },
+   {
+    "hw_ver": "MC07",
+    "name": "mc",
+    "sw_ver": "00.00.27.26"
+   },
+   {
+    "hw_ver": "SMC01",
+    "name": "sm",
+    "sw_ver": "00.00.27.26"
+   },
+   {
+    "hw_ver": "TH07",
+    "name": "th",
+    "sw_ver": "00.00.07.12"
+   },
+   {
+    "hw_ver": "AP05",
+    "name": "ap",
+    "sw_ver": "00.00.32.69"
+   }
+  ]
+ }
+}

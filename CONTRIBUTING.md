@@ -14,7 +14,8 @@ are all welcome.
      [file locations](docs/how-it-works.md#file-locations)).
 
 Check the report and log for anything private (server addresses, file
-paths) before you post them. Filamatch never logs your API key.
+paths) before you post them. Filamatch never logs your API key or printer
+access codes.
 
 ## Test with your printer or slicer
 

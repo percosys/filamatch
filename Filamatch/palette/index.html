@@ -113,12 +113,12 @@
           <button id="tab-online" class="tab" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="panel-online" data-tab="online">Search online</button>
         </div>
 
-        <!-- On printer (Bambuddy) -->
+        <!-- On printer (the selected printer source) -->
         <div id="panel-printer" class="tab-panel" role="tabpanel" aria-labelledby="tab-printer" data-tab-panel="printer">
           <div class="row-tools">
             <label class="sr-only" for="bambuddy-printer">Printer</label>
             <select id="bambuddy-printer" class="select-input" disabled>
-              <option value="">Connect Bambuddy first</option>
+              <option value="">Set up a printer first</option>
             </select>
             <button id="bambuddy-refresh-btn" class="icon-btn" type="button" aria-label="Read the printer again" title="Read the printer again">
               <svg width="14" height="14" aria-hidden="true"><use href="#icon-refresh"></use></svg>
@@ -127,7 +127,7 @@
           <p id="bambuddy-status" class="status status--muted" role="status" aria-live="polite"></p>
           <div id="bambuddy-empty" class="empty-card">
             <p class="empty-card__title">Connect your printer to see what is loaded.</p>
-            <button id="bambuddy-setup-btn" class="btn btn--ghost" type="button">Connect Bambuddy</button>
+            <button id="bambuddy-setup-btn" class="btn btn--ghost" type="button">Connect printer</button>
           </div>
           <div id="bambuddy-slots-list" class="list" role="list" aria-label="Filaments loaded on the printer" hidden></div>
           <p id="bambuddy-slots-note" class="faint" hidden>Filaments already in Fusion are skipped. The same filament in several slots is shown once.</p>
@@ -202,10 +202,21 @@
       </header>
 
       <div class="screen__body">
-        <section class="group" aria-labelledby="connections-title">
-          <h2 id="connections-title" class="group__title">Connections</h2>
+        <section class="group" aria-labelledby="printer-source-title">
+          <h2 id="printer-source-title" class="group__title">Printer</h2>
+          <div id="printer-source" class="segmented" role="radiogroup" aria-labelledby="printer-source-title">
+            <label class="segmented__option" for="printer-source-bambuddy">
+              <input id="printer-source-bambuddy" type="radio" name="printer-source" value="bambuddy" checked>
+              <span>Bambuddy</span>
+            </label>
+            <label class="segmented__option" for="printer-source-bambu-lan">
+              <input id="printer-source-bambu-lan" type="radio" name="printer-source" value="bambu_lan">
+              <span>Bambu printer (LAN)</span>
+            </label>
+          </div>
+          <p id="printer-source-status" class="status status--muted" role="status" aria-live="polite"></p>
 
-          <div class="card">
+          <div id="bambuddy-card" class="card">
             <div class="card__row">
               <span id="bambuddy-dot" class="dot dot--off" aria-hidden="true"></span>
               <div class="card__main">
@@ -233,6 +244,51 @@
               <p id="setup-bambuddy-status" class="status status--muted" role="status" aria-live="polite"></p>
             </div>
           </div>
+
+          <div id="bambu-lan-card" class="card" hidden>
+            <div class="card__row">
+              <span id="bambu-lan-dot" class="dot dot--off" aria-hidden="true"></span>
+              <div class="card__main">
+                <div class="card__name">Bambu printers</div>
+                <div id="bambu-lan-summary" class="faint">No printer saved</div>
+              </div>
+              <button id="bambu-lan-add-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="bambu-lan-form">Add printer</button>
+            </div>
+            <div class="card__body">
+              <div id="bambu-lan-list" class="lan-list" role="list" aria-label="Saved Bambu printers" hidden></div>
+              <p id="bambu-lan-empty" class="faint">No printer saved yet. Add one to read its AMS slots.</p>
+              <p id="bambu-lan-list-status" class="status status--muted" role="status" aria-live="polite"></p>
+              <div id="bambu-lan-form" class="lan-form" hidden>
+                <div class="field">
+                  <label class="field-label" for="bambu-lan-ip">IP address</label>
+                  <input id="bambu-lan-ip" class="text-input" type="text" inputmode="decimal" placeholder="192.168.1.20" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="field">
+                  <label class="field-label" for="bambu-lan-code">Access code</label>
+                  <input id="bambu-lan-code" class="text-input" type="password" placeholder="8 characters" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="field">
+                  <label class="field-label" for="bambu-lan-name">Name (optional)</label>
+                  <input id="bambu-lan-name" class="text-input" type="text" placeholder="Filled in after Test" autocomplete="off" spellcheck="false">
+                </div>
+                <p class="faint">Find the IP address and access code on the printer screen (Settings &rarr; Network or WLAN). LAN Only Mode is not required.</p>
+                <div class="button-row">
+                  <button id="bambu-lan-test-btn" class="btn btn--ghost" type="button">Test</button>
+                  <button id="bambu-lan-save-btn" class="btn btn--primary" type="button">Save</button>
+                </div>
+                <p id="bambu-lan-status" class="status status--muted" role="status" aria-live="polite"></p>
+                <div id="bambu-lan-trust" class="trust-box" role="alert" hidden>
+                  <p id="bambu-lan-trust-text" class="trust-box__text"></p>
+                  <button id="bambu-lan-trust-btn" class="btn btn--ghost btn--small" type="button">Trust this printer</button>
+                </div>
+                <div id="bambu-lan-result" class="lan-result" hidden></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="connections-title">
+          <h2 id="connections-title" class="group__title">Connections</h2>
 
           <div class="card">
             <div class="card__row">
@@ -309,7 +365,6 @@
               <button id="refresh-log-btn" class="btn btn--ghost btn--small" type="button">Refresh log</button>
               <button id="clear-log-btn" class="btn btn--ghost btn--small" type="button">Clear log</button>
             </div>
-            <p id="library-status" class="status status--muted" role="status" aria-live="polite"></p>
             <p id="custom-library-message" class="faint" hidden></p>
             <p id="diagnostics-status" class="status status--muted" role="status" aria-live="polite"></p>
             <pre id="diagnostics-output" class="diagnostics-output" tabindex="0" hidden></pre>
@@ -331,17 +386,29 @@
       </header>
       <div class="screen__body welcome">
         <h1 id="welcome-title" class="welcome__title" tabindex="-1">Where are your filaments?</h1>
-        <p class="welcome__lead">Connect Bambuddy to see what is loaded in your printer. You can skip this and pick filaments from the catalog.</p>
-        <div class="field">
-          <label class="field-label" for="welcome-url">Bambuddy address</label>
-          <input id="welcome-url" class="text-input" type="text" placeholder="192.168.1.20:8000" autocomplete="off" spellcheck="false">
+        <p class="welcome__lead">Connect your printer to see what is loaded in the AMS. You can skip this and pick filaments from the catalog.</p>
+        <div class="welcome-choices">
+          <button id="welcome-lan-btn" class="choice" type="button">
+            <span class="choice__title">Connect a Bambu printer</span>
+            <span class="choice__sub">Directly on your network, with the IP address and access code from the printer screen.</span>
+          </button>
+          <button id="welcome-bambuddy-btn" class="choice" type="button" aria-expanded="false" aria-controls="welcome-bambuddy-form">
+            <span class="choice__title">Connect Bambuddy</span>
+            <span class="choice__sub">Read printers and spools from your Bambuddy server.</span>
+          </button>
         </div>
-        <div class="field">
-          <label class="field-label" for="welcome-key">API key</label>
-          <input id="welcome-key" class="text-input" type="password" placeholder="bb_..." autocomplete="off" spellcheck="false">
+        <div id="welcome-bambuddy-form" class="welcome-form" hidden>
+          <div class="field">
+            <label class="field-label" for="welcome-url">Bambuddy address</label>
+            <input id="welcome-url" class="text-input" type="text" placeholder="192.168.1.20:8000" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label class="field-label" for="welcome-key">API key</label>
+            <input id="welcome-key" class="text-input" type="password" placeholder="bb_..." autocomplete="off" spellcheck="false">
+          </div>
+          <p class="faint">The key is kept in your system keychain.</p>
+          <button id="welcome-connect-btn" class="btn btn--primary btn--big" type="button">Connect</button>
         </div>
-        <p class="faint">The key is kept in your system keychain.</p>
-        <button id="welcome-connect-btn" class="btn btn--primary btn--big" type="button">Connect</button>
         <p id="welcome-status" class="status status--muted" role="status" aria-live="polite"></p>
         <p class="save-line"><button id="welcome-skip-btn" class="link" type="button">Skip, use the catalog</button></p>
       </div>
