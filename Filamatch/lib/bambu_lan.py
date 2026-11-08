@@ -37,6 +37,7 @@ import time
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -756,6 +757,23 @@ def _side(extruder: Optional[int]) -> str:
     return ""
 
 
+def auto_refill_of(report: Mapping[str, Any]) -> Optional[bool]:
+    """The printer's AMS auto refill setting, or None when the report lacks it.
+
+    Bambu Studio reads ``home_flag`` bit 10; newer firmware also sends a hex
+    ``cfg`` (with ``fun``, ``aux`` and ``stat``) whose bit 18 is the same
+    setting and wins when present.
+    """
+    try:
+        if all(key in report for key in ("cfg", "fun", "aux", "stat")):
+            return bool((int(str(report["cfg"]), 16) >> 18) & 0x1)
+        if "home_flag" in report:
+            return bool((int(report["home_flag"]) >> 10) & 0x1)
+    except (TypeError, ValueError):
+        logger.debug("Unreadable auto refill flag in the printer report", exc_info=True)
+    return None
+
+
 def is_dual_nozzle(report: Mapping[str, Any]) -> bool:
     """True when the report lists two extruders (H2D)."""
     device = report.get("device")
@@ -1001,6 +1019,8 @@ class BambuLanSource:
         warnings: List[str] = []
         for printer, state, error in results:
             info = self._printer_info(printer)
+            if state is not None:
+                info = dataclasses.replace(info, auto_refill=auto_refill_of(state.report))
             infos.append(info)
             if state is None:
                 warnings.append("{}: {}".format(printer.name, error))
@@ -1119,6 +1139,16 @@ def _with_test_presets() -> None:
     _reset_presets([root])
 
 
+def _check_auto_refill() -> None:
+    _expect(auto_refill_of({"home_flag": 1 << 10}) is True, "home_flag bit 10 on")
+    _expect(auto_refill_of({"home_flag": (1 << 7) | (1 << 11)}) is False, "other home_flag bits do not count")
+    newer = {"home_flag": 1 << 10, "cfg": "{:X}".format(1 << 17), "fun": "0", "aux": "0", "stat": "0"}
+    _expect(auto_refill_of(newer) is False, "cfg bit 18 wins over home_flag when present")
+    _expect(auto_refill_of(dict(newer, cfg="{:X}".format(1 << 18))) is True, "cfg bit 18 on")
+    _expect(auto_refill_of({"cfg": "40000"}) is None, "cfg alone (no fun/aux/stat) is not read")
+    _expect(auto_refill_of({}) is None and auto_refill_of({"home_flag": "x"}) is None, "unknown")
+
+
 def _check_h2d_fixture() -> None:
     data = _load_fixture("h2d_report.json")
     printer = PrinterInfo(id=7, name="Workshop H2D", model="H2D")
@@ -1223,6 +1253,7 @@ def _selftest() -> int:
         ("certificate common names", _check_der_common_names),
         ("model and nozzle detection", _check_models),
         ("H2D report: AMS, AMS HT, external L/R", _check_h2d_fixture),
+        ("AMS auto refill from home_flag bit 10 or cfg bit 18", _check_auto_refill),
         ("X1C report: AMS and external", _check_x1c_fixture),
         ("settings round trip hides secrets", _check_settings_round_trip),
         ("one unreachable printer is a warning", _check_source_with_fake_reads),

@@ -70,6 +70,7 @@ def main() -> int:
         "importResult",
         "materialsData",
         "exportResult",
+        "printEstimate",
         "diagnosticsResult",
         "settingsSaved",
         "logData",
@@ -150,6 +151,20 @@ def main() -> int:
     check(
         html.count('id="export-btn"') == 1 and 'id="export-readiness"' in html,
         "Home has the ready check and one send button",
+    )
+    check(
+        'id="estimate-enabled"' in html
+        and 'id="spool-check"' in html
+        and "estimate_enabled: estimateEnabled ? estimateEnabled.checked : true" in js
+        and "function renderSpoolCheck" in js,
+        "Settings can turn off the print estimate; the spool check has its own line",
+    )
+    check(
+        "row.enough_with_backup" in js
+        and "payload.auto_refill" in js
+        and "AMS auto refill is on." in js
+        and "AMS auto refill is off on the printer." in js,
+        "the spool check counts backup spools and says if AMS auto refill is on",
     )
     check(
         'id="slicer-choice"' in html

@@ -27,7 +27,7 @@
  *   save_settings        { output_path, write_project_settings, orca_enabled,
  *                          orca_path, orca_profile_dir, prepare_enabled,
  *                          target_vendor, target_printer, target_process,
- *                          slicer_path, auto_library_update,
+ *                          slicer_path, auto_library_update, estimate_enabled,
  *                          custom_library_path, bambuddy_printer_id,
  *                          bambuddy_slot_map, bambuddy_verify_tls } -> settingsSaved
  *   clear_bambuddy_key   {}                                  -> settingsSaved
@@ -475,6 +475,7 @@
       target_process: '0.20mm Standard',
       slicer_path: '/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer',
       auto_library_update: true,
+      estimate_enabled: true,
       custom_library_path: '/Users/demo/Documents/Filamatch/Filamatch Library.adsklib',
       bambuddy_url: 'http://192.168.1.20:8000',
       bambuddy_printer_id: 1,
@@ -838,6 +839,7 @@
       target_process: asString(settings.target_process),
       slicer_path: asString(settings.slicer_path),
       auto_library_update: settings.auto_library_update !== false,
+      estimate_enabled: settings.estimate_enabled !== false,
       custom_library_path: asString(settings.custom_library_path),
       bambuddy_url: asString(settings.bambuddy_url),
       bambuddy_printer_id: printerIdValue(settings.bambuddy_printer_id),
@@ -1622,6 +1624,9 @@
         case 'exportResult':
           handleExportResult(payload);
           break;
+        case 'printEstimate':
+          handlePrintEstimate(payload);
+          break;
         case 'diagnosticsResult':
           handleDiagnosticsResult(payload);
           break;
@@ -1987,11 +1992,104 @@
       appendLog(success, 'info');
       state.ui.exported = true;
       renderReadiness();
+      setPrintEstimate(payload.estimating === true ? 'Working out the print time…' : '');
     } else {
       var failure = demoSuffix('Export failed: ' + replyError(payload));
       setStatus(status, failure, 'error');
       appendLog(failure, 'error');
+      setPrintEstimate('');
     }
+  }
+
+  /**
+   * Show (or hide, for '') the line under the send button with the print estimate.
+   * @param {string} text
+   */
+  function setPrintEstimate(text) {
+    var line = byId('print-estimate');
+    if (line) {
+      line.textContent = text;
+      line.hidden = !text;
+    }
+    renderSpoolCheck([]);
+  }
+
+  /**
+   * Spool check under the estimate: a line per filament whose own spool is too
+   * short (with the backup spools an AMS can refill from), else one line
+   * saying the known spools have enough.
+   * @param {object[]} spools rows {display_name, slot_label, needed_g, left_g,
+   *     enough, backup_count, backup_g, enough_with_backup}
+   * @param {boolean|null} [autoRefill] the printer's AMS auto refill setting
+   */
+  function renderSpoolCheck(spools, autoRefill) {
+    var box = byId('spool-check');
+    if (!box) {
+      return;
+    }
+    var rows = Array.isArray(spools) ? spools : [];
+    box.innerHTML = '';
+    box.hidden = rows.length === 0;
+    if (!rows.length) {
+      return;
+    }
+    var grams = function (value) { return Number(value).toFixed(1) + ' g'; };
+    var warn = false;
+    var short = rows.filter(function (row) { return row.enough !== true; });
+    var lines = short.map(function (row) {
+      var where = row.slot_label ? ' (' + asString(row.slot_label) + ')' : '';
+      var backups = Number(row.backup_count) || 0;
+      var spare = backups + ' backup spool' + (backups === 1 ? '' : 's') + ' with ' + grams(row.backup_g);
+      if (row.enough_with_backup !== true) {
+        warn = true;
+        return asString(row.display_name) + ' may run out: needs ' + grams(row.needed_g) + ', ' +
+          grams(row.left_g) + ' left' + where + (backups ? ' plus ' + spare : '') + '.';
+      }
+      var head = asString(row.display_name) + ': needs ' + grams(row.needed_g) + ', this spool has ' +
+        grams(row.left_g) + where + '; ' + spare + ' cover the rest';
+      if (autoRefill === true) {
+        return head + ', and AMS auto refill is on.';
+      }
+      warn = true;
+      return head + (autoRefill === false
+        ? ', but AMS auto refill is off on the printer.'
+        : ' if AMS auto refill is on in the printer settings.');
+    });
+    if (!lines.length) {
+      lines = ['Enough filament on the spools: ' + rows.map(function (row) {
+        return asString(row.display_name) + ' ' + Math.round(Number(row.left_g)) + ' g left';
+      }).join(', ') + '.'];
+    }
+    // One block for all lines, so they stack next to the single status dot.
+    var block = document.createElement('div');
+    lines.forEach(function (text) {
+      var line = document.createElement('div');
+      line.textContent = text;
+      block.appendChild(line);
+    });
+    box.appendChild(block);
+    box.className = 'status ' + (warn ? 'status--warning' : 'status--success');
+  }
+
+  /**
+   * `printEstimate`: print time and filament of the sent project, worked out
+   * in the background by slicing a copy.
+   * @param {object} payload {ok, minutes, grams, filament_grams[]}
+   */
+  function handlePrintEstimate(payload) {
+    if (!payload || payload.ok !== true) {
+      setPrintEstimate('');
+      return;
+    }
+    var minutes = Math.max(0, Math.round(Number(payload.minutes) || 0));
+    var time = minutes >= 60 ? Math.floor(minutes / 60) + ' h ' + (minutes % 60) + ' min' : minutes + ' min';
+    var parts = Array.isArray(payload.filament_grams) && payload.filament_grams.length > 1
+      ? ' (' + payload.filament_grams.map(function (grams) { return Number(grams).toFixed(1) + ' g'; }).join(' + ') + ')'
+      : '';
+    var text = 'About ' + time + ' and ' + Number(payload.grams).toFixed(1) + ' g of filament' + parts;
+    setPrintEstimate(text);
+    renderSpoolCheck(payload.spools, typeof payload.auto_refill === 'boolean' ? payload.auto_refill : null);
+    appendLog('Print estimate: ' + text, 'info');
   }
 
   /**
@@ -4803,6 +4901,10 @@
     if (autoLibraryUpdate) {
       autoLibraryUpdate.checked = settings.auto_library_update !== false;
     }
+    var estimateEnabled = byId('estimate-enabled');
+    if (estimateEnabled) {
+      estimateEnabled.checked = settings.estimate_enabled !== false;
+    }
     var verifyTls = byId('bambuddy-verify-tls');
     if (verifyTls) {
       verifyTls.checked = settings.bambuddy_verify_tls !== false;
@@ -4826,6 +4928,7 @@
     var orcaProfileDir = byId('orca-profile-dir');
     var prepareEnabled = byId('prepare-enabled');
     var autoLibraryUpdate = byId('auto-library-update');
+    var estimateEnabled = byId('estimate-enabled');
     var verifyTls = byId('bambuddy-verify-tls');
     var slicerPath = orcaPath ? orcaPath.value.trim() : '';
     var payload = {
@@ -4840,6 +4943,7 @@
       target_process: selectValue('target-process'),
       slicer_path: slicerPath,
       auto_library_update: autoLibraryUpdate ? autoLibraryUpdate.checked : true,
+      estimate_enabled: estimateEnabled ? estimateEnabled.checked : true,
       custom_library_path: (state.customLibrary && state.customLibrary.path) ||
         state.settings.custom_library_path || '',
       bambuddy_printer_id: state.bambuddy.selectedPrinterId || 0,
@@ -4946,6 +5050,7 @@
 
     appendLog('Requested 3MF export to ' + path +
       (preparing ? ' (prepared for ' + targetPrinter + ')' : '') + '.', 'info');
+    setPrintEstimate('');
     request('export_3mf', payload, {
       statusEl: byId('export-status'),
       pendingText: payload.orca.enabled ? 'Exporting and opening ' + slicerNames(slicerPath).full + '...' : 'Exporting the 3MF...',
@@ -5248,12 +5353,27 @@
         ? 'Prepared project for ' + asString(target.printer) + ' / ' + asString(target.process) +
           ' and exported (demo): ' + outputPath
         : 'Exported base-only 3MF without a printer profile (demo): ' + outputPath);
+      if (prepared) {
+        window.setTimeout(function () {
+          dispatchIncoming('printEstimate', {
+            ok: true, minutes: 83, grams: 41.6, filament_grams: [12.4, 29.2],
+            auto_refill: null,
+            spools: [
+              { display_name: 'Polymaker PolyLite ABS Black', slot_label: 'AMS 2 - T4', needed_g: 12.4, left_g: 11.0, enough: false,
+                backup_count: 0, backup_g: 0, enough_with_backup: false },
+              { display_name: 'Bambu Lab PLA Basic Black', slot_label: 'AMS 1 - T1', needed_g: 29.2, left_g: 20.0, enough: false,
+                backup_count: 2, backup_g: 1300, enough_with_backup: true }
+            ]
+          });
+        }, 1200);
+      }
       return {
         ok: true,
         output_path: outputPath,
         raw_export_path: rawPath,
         materials_used: used,
         prepared: prepared,
+        estimating: prepared,
         printer_name: prepared ? asString(target.printer) : '',
         process_name: prepared ? asString(target.process) : '',
         project_settings_written: payload.write_project_settings === true || prepared,
@@ -6791,6 +6911,11 @@
     var autoLibraryUpdate = byId('auto-library-update');
     if (autoLibraryUpdate) {
       autoLibraryUpdate.addEventListener('change', scheduleSettingsSave);
+    }
+
+    var estimateEnabled = byId('estimate-enabled');
+    if (estimateEnabled) {
+      estimateEnabled.addEventListener('change', scheduleSettingsSave);
     }
 
     var refreshMaterials = byId('refresh-materials-btn');

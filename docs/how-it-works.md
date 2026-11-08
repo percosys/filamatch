@@ -99,6 +99,12 @@ orca-slicer --load-settings "<printer>;<process>" --load-filaments "<f1>;<f2>;â€
   fits the build plate and prime tower, gives each H2D nozzle its flow
   type, pins each filament to the nozzle its AMS slot feeds, and checks
   that every body uses the slot and colour it has in Fusion.
+- **Estimate.** After the slicer opens, the preparing slicer slices a copy in
+  a temporary folder (`--slice 0 --export-3mf`) and Filamatch reads the time
+  and grams from its `Metadata/slice_info.config`. On an H2D the copy gets
+  `extruder_nozzle_stats` (one nozzle of the set flow type each), which the
+  slicer otherwise reads from the printer; the sent file keeps it empty, so
+  the slicer still offers to sync the real nozzles.
 
 If preparation fails, the tagged 3MF without printer settings is kept and
 the palette shows the slicer's log.

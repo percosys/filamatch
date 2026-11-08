@@ -119,6 +119,7 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         "names_restored": [],
         "slot_checks": [],
         "bambu_words": [],
+        "estimates": [],
     }
     materials = [FakeMaterial("pla_black", 1, ["Body1"]), FakeMaterial("petg_white", 2, ["Body2"])]
 
@@ -269,6 +270,12 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         return "orca" if "orca" in name else "bambu" if "bambu" in name else ""
 
     slicer_profiles.slicer_kind = slicer_kind
+
+    def estimate_print(project, slicer_exe):
+        state["estimates"].append((Path(project), slicer_exe))
+        return {"minutes": 43, "grams": 7.0, "filament_grams": [2.7, 4.3]}
+
+    slicer_profiles.estimate_print = estimate_print
     slicer_profiles.use_bambu_studio_words = lambda path, process_path=None: (
         state["bambu_words"].append(Path(path)) or {"enable_arc_fitting": "0"}
     )
@@ -575,6 +582,46 @@ def main() -> int:
         and saved.get("prepare_enabled") is True,
         "prepared export persists the target settings",
     )
+    estimate = palette.last("printEstimate")
+    check(
+        prepared_result.get("estimating") is True
+        and state["estimates"][-1] == (prepared_path, prepare_call.get("slicer_exe"))
+        and estimate.get("ok") is True
+        and estimate.get("minutes") == 43
+        and estimate.get("filament_grams") == [2.7, 4.3],
+        "a prepared export slices a copy afterwards and sends the print estimate",
+    )
+    check(
+        export_result.get("estimating") is False,
+        "an unprepared export has no print estimate",
+    )
+    bridge.save_settings({"estimate_enabled": False})
+    estimates_before = len(state["estimates"])
+    palette.sent.clear()
+    bridge.dispatch(
+        "export_3mf",
+        json.dumps(
+            {
+                "output_path": str(prepared_path),
+                "orca": {"enabled": False},
+                "target": {
+                    "prepare": True,
+                    "slicer_path": "/fake/OrcaSlicer",
+                    "vendor": "bambu_local",
+                    "printer": "Bambu Lab X1 Carbon 0.4 nozzle",
+                    "process": "0.20mm Standard @BBL X1C",
+                },
+            }
+        ),
+        palette,
+    )
+    check(
+        palette.last("exportResult").get("estimating") is False
+        and len(state["estimates"]) == estimates_before
+        and not palette.last("printEstimate"),
+        "with the estimate turned off in Settings, nothing is sliced in the background",
+    )
+    bridge.save_settings({"estimate_enabled": True})
 
     # --- the chosen slicer: OrcaSlicer prepares, the chosen app opens -------
     apps = Path(tempfile.mkdtemp(prefix="filamatch_apps_"))

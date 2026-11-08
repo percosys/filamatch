@@ -96,26 +96,79 @@ def score_slot(material: Any, slot: Any) -> int:
     return max(-1, min(MAX_SCORE, score))
 
 
+def grams_left(slot: Any) -> Optional[float]:
+    """Grams left on a slot's spool: the inventory weight, else the printer's
+    percentage of the label weight (Bambu RFID spools); ``None`` when unknown."""
+    spool = _field(slot, "spool")
+    grams = _field(spool, "remaining_g") if spool is not None else None
+    if grams is not None:
+        return float(grams)
+    percent = _field(slot, "remaining_percent")
+    weight = _field(spool, "label_weight_g") if spool is not None else None
+    if percent is not None and weight:
+        return float(weight) * float(percent) / 100.0
+    return None
+
+
+def same_filament(first: Any, second: Any) -> bool:
+    """True when two slots hold the same filament: the same colour and the same
+    printer filament id (Bambu ``tray_info_idx``), or the same type when a slot
+    has no id.  A Bambu AMS with auto refill switches between such spools."""
+
+    def colour(slot: Any) -> str:
+        text = _field(slot, "color_hex", "") or _field(_field(slot, "spool"), "color_hex", "")
+        return str(text or "").strip().lstrip("#").upper()[:6]
+
+    def kind(slot: Any) -> str:
+        text = _field(slot, "filament_type", "") or _field(_field(slot, "spool"), "material", "")
+        return str(text or "").strip().upper()
+
+    if not colour(first) or colour(first) != colour(second):
+        return False
+    ids = [str(_field(slot, "vendor_filament_id", "") or "").strip() for slot in (first, second)]
+    if all(ids):
+        return ids[0] == ids[1]
+    return bool(kind(first)) and kind(first) == kind(second)
+
+
+def backup_slots(slot: Any, slots: Sequence[Any], taken: Iterable[str] = ()) -> List[Any]:
+    """Other loaded slots with the same filament on the same nozzle that no
+    other filament of the print uses: the spools an AMS can refill from."""
+    key = str(_field(slot, "key", ""))
+    excluded = set(str(item) for item in taken) | {key}
+    return [
+        other
+        for other in slots
+        if str(_field(other, "key", "")) not in excluded
+        and _field(other, "loaded", True)
+        and _field(other, "extruder") == _field(slot, "extruder")
+        and same_filament(slot, other)
+    ]
+
+
 def auto_match(
     materials: Sequence[Any], slots: Sequence[Any]
 ) -> Dict[str, Dict[str, Any]]:
     """Greedily match each material to a unique loaded slot.
 
     Materials are considered in input order; every material/slot pair is
-    scored and the best available slot is taken.  Empty slots and materials
-    with no matching slot are left out, so the palette can show "unmapped".
+    scored and the best available slot is taken; between equal slots (several
+    spools of the same filament) the fullest spool wins.  Empty slots and
+    materials with no matching slot are left out, so the palette can show
+    "unmapped".
     """
     available = [slot for slot in slots if _field(slot, "spool") is not None]
-    candidates: List[Tuple[int, int, Any, Any]] = []
+    candidates: List[Tuple[int, int, float, Any, Any]] = []
     for material_index, material in enumerate(materials):
         for slot in available:
             value = score_slot(material, slot)
             if value >= MIN_AUTO_SCORE:
-                candidates.append((value, -material_index, material, slot))
-    candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
+                left = grams_left(slot)
+                candidates.append((value, -material_index, -1.0 if left is None else left, material, slot))
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
     matches: Dict[str, Dict[str, Any]] = {}
     used_slots: set = set()
-    for value, _negative_index, material, slot in candidates:
+    for value, _negative_index, _left, material, slot in candidates:
         material_id = str(_field(material, "material_id", ""))
         slot_key = str(_field(slot, "key", ""))
         if not material_id or material_id in matches or slot_key in used_slots:
@@ -382,9 +435,40 @@ def _check_colors() -> None:
     )
 
 
+def _check_identical_spools() -> None:
+    """Several spools of one filament: the fullest is picked; backups share the nozzle."""
+
+    def spool(grams):
+        return printer_model.SpoolInfo(1, "PLA", "Bambu Lab", "Black", "#000000", grams, 1000.0, None, "GFA00", "Bambu PLA Basic")
+
+    def slot(ams, tray, grams, extruder, colour="#000000", fid="GFA00", percent=None):
+        return printer_model.SlotInfo(
+            1, "H2D", ams, tray, spool(grams), "PLA", colour, extruder=extruder,
+            vendor_filament_id=fid, remaining_percent=percent,
+        )
+
+    nearly_empty = slot(0, 0, 50.0, 1)
+    full = slot(0, 1, 800.0, 1)
+    rfid = slot(0, 2, None, 1, percent=30.0)
+    other_nozzle = slot(1, 0, 900.0, 0)
+    white = slot(0, 3, 1000.0, 1, colour="#FFFFFF")
+    matte = slot(1, 1, 1000.0, 1, fid="GFA01")
+    slots = [nearly_empty, full, rfid, other_nozzle, white, matte]
+    black = _FakeMaterial("pla_black", "Bambu Lab - PLA Basic - Black", "#000000", "PLA", "Bambu Lab", "Black")
+    picked = auto_match([black], [nearly_empty, full, rfid])["pla_black"]["slot_key"]
+    _expect(picked == full.key, "the fullest identical spool must win, got {}".format(picked))
+    _expect(grams_left(rfid) == 300.0 and grams_left(nearly_empty) == 50.0, "grams from inventory or RFID percent")
+    _expect(
+        [item.key for item in backup_slots(full, slots)] == [nearly_empty.key, rfid.key],
+        "backups: same filament on the same nozzle only (not white, not Matte, not the other nozzle)",
+    )
+    _expect(backup_slots(full, slots, taken=[rfid.key]) == [nearly_empty], "a slot another filament uses is no backup")
+
+
 def _selftest() -> int:
     scenarios = (
         ("auto-match uses type, colour and unique slots", _check_auto_match),
+        ("identical spools: fullest picked, backups on the same nozzle", _check_identical_spools),
         ("unmatched materials get a review proposal", _check_fallback_review),
         ("manual overrides replace auto proposals and validate", _check_overrides),
         ("colour distance helper is sane", _check_colors),

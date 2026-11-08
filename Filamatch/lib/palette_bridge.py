@@ -80,6 +80,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "target_printer": "",
     "target_process": "",
     "auto_library_update": True,
+    # Slice a copy after sending for print time, filament and the spool check.
+    "estimate_enabled": True,
     "custom_library_path": "",
     "printer_source": "bambuddy",
     "bambuddy_url": "",
@@ -2038,12 +2040,27 @@ def _attach_bambuddy_slot_manifest(
             printer_name=printer.name if printer is not None else "",
             printer_id=printer_id,
         )
+        taken = [str(row["slot_key"]) for row in mapped_rows]
+
+        def backups(row: Mapping[str, Any]) -> List[Dict[str, Any]]:
+            slot = slots_by_key.get(str(row["slot_key"]))
+            if slot is None:
+                return []
+            return [
+                {"slot_key": other.key, "slot_label": other.slot_label, "remaining_g": slot_mapping.grams_left(other)}
+                for other in slot_mapping.backup_slots(slot, slots, taken)
+            ]
+
+        # AMS auto refill on the printer: True/False when it reports it, else None.
+        manifest["auto_refill"] = getattr(printer, "auto_refill", None) if printer is not None else None
         manifest["materials"] = [
             {
                 "fusion_material_id": row["material_id"],
                 "display_name": row["display_name"],
                 "slot_key": row["slot_key"],
                 "slot_label": row["slot_label"],
+                # Same filament on the same nozzle: what an AMS can refill from.
+                "backup_slots": backups(row),
             }
             for row in mapped_rows
         ]
@@ -2286,6 +2303,7 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
         "slot_manifest": None,
         "orca_launched": False,
         "orca_error": "",
+        "estimate_slicer": None,
         "resolved_slicer_path": str(
             target_data.get("slicer_path")
             or settings.get("slicer_path")
@@ -2326,6 +2344,7 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
             outcome.update(
                 prepared=True,
                 prepared_target=prepared_target,
+                estimate_slicer=slicer_exe,
                 printer_name=str(getattr(prepared_result, "printer_name", "") or ""),
                 process_name=str(getattr(prepared_result, "process_name", "") or ""),
                 log_tail=str(getattr(prepared_result, "log_tail", "") or "")[-4000:],
@@ -2474,7 +2493,104 @@ def _report_export(
             outcome["printer_name"],
         )
     )
+    estimate_slicer = outcome.get("estimate_slicer") if outcome["prepared"] else None
+    if not bool(settings.get("estimate_enabled", True)):
+        estimate_slicer = None
+    payload["estimating"] = bool(estimate_slicer)
     _send(palette, "exportResult", payload)
+    if estimate_slicer:
+        _start_print_estimate(palette, output, estimate_slicer, job["detected"], outcome["slot_manifest"])
+
+
+#: The spool check wants this much more filament on a spool than the estimate.
+SPOOL_MARGIN = 0.10
+
+
+def _spool_check(
+    detected: Sequence[Any], manifest: Optional[Mapping[str, Any]], filament_grams: Sequence[Any]
+) -> List[Dict[str, Any]]:
+    """Compare each filament's estimated grams with the grams left on its spool.
+
+    One row per filament whose spool weight is known (from Bambuddy, or the
+    printer for RFID spools): name, slot, grams needed and left, and
+    ``enough`` (left covers the estimate plus :data:`SPOOL_MARGIN`).  Loaded
+    spools of the same filament on the same nozzle are counted as backups
+    (``backup_g``, ``backup_count``, ``enough_with_backup``): an AMS with
+    auto refill switches to them when the first spool runs out.
+    """
+    if not manifest:
+        return []
+    rows_by_material = {
+        str(row.get("fusion_material_id")): row for row in manifest.get("materials") or []
+    }
+    left_by_slot = {
+        str(entry.get("slot_key")): entry.get("remaining_g") for entry in manifest.get("filaments") or []
+    }
+    checks: List[Dict[str, Any]] = []
+    for index, material in enumerate(detected):
+        if index >= len(filament_grams):
+            break
+        row = rows_by_material.get(str(getattr(material, "material_id", "")))
+        left = left_by_slot.get(str(row.get("slot_key"))) if row else None
+        if left is None:
+            continue
+        needed = float(filament_grams[index] or 0.0)
+        wanted = needed * (1.0 + SPOOL_MARGIN)
+        known_backups = [
+            float(backup["remaining_g"])
+            for backup in row.get("backup_slots") or []
+            if backup.get("remaining_g") is not None
+        ]
+        checks.append(
+            {
+                "display_name": str(getattr(material, "display_name", "") or ""),
+                "slot_label": str(row.get("slot_label") or ""),
+                "needed_g": round(needed, 1),
+                "left_g": round(float(left), 1),
+                "enough": float(left) >= wanted,
+                "backup_count": len(known_backups),
+                "backup_g": round(sum(known_backups), 1),
+                "enough_with_backup": float(left) + sum(known_backups) >= wanted,
+            }
+        )
+    return checks
+
+
+def _start_print_estimate(
+    palette: Any,
+    project: Path,
+    slicer_exe: Any,
+    detected: Sequence[Any] = (),
+    manifest: Optional[Mapping[str, Any]] = None,
+) -> None:
+    """Slice a copy in the background, then send ``printEstimate`` (time, grams, spool check)."""
+    from . import slicer_profiles
+
+    def finish(result: Any, error: Optional[BaseException]) -> None:
+        if error is not None or not result:
+            log_message("No print estimate: {}".format(_error_text(error) if error else "none reported"))
+            _send(palette, "printEstimate", {"ok": False, "output_path": str(project)})
+            return
+        spools = _spool_check(detected, manifest, result.get("filament_grams") or [])
+        log_message("Print estimate: {} min, {} g".format(result.get("minutes"), result.get("grams")))
+        for spool in spools:
+            if not spool["enough"]:
+                log_message(
+                    "{} may run out: needs {} g, {} g left in {} (+{} g on {} backup spool(s))".format(
+                        spool["display_name"], spool["needed_g"], spool["left_g"], spool["slot_label"],
+                        spool["backup_g"], spool["backup_count"],
+                    )
+                )
+        _send(
+            palette,
+            "printEstimate",
+            dict(
+                result, ok=True, output_path=str(project), spools=spools,
+                auto_refill=(manifest or {}).get("auto_refill"),
+            ),
+        )
+
+    _run_job("estimate", lambda: slicer_profiles.estimate_print(project, slicer_exe), finish)
 
 
 def _set_dialog_property(dialog: Any, name: str, value: Any) -> None:
@@ -3421,6 +3537,82 @@ def _self_test() -> int:
         )
     finally:
         testing.sibling_pop(__package__, "favorites")
+
+    # Spool check: grams needed per filament against grams left on its spool, with a 10% margin.
+    detected = [
+        types.SimpleNamespace(material_id="m-black", display_name="ABS-GF Black"),
+        types.SimpleNamespace(material_id="m-green", display_name="PolyLite Green"),
+        types.SimpleNamespace(material_id="m-white", display_name="PETG White"),
+        types.SimpleNamespace(material_id="m-red", display_name="PLA Red"),
+    ]
+    manifest = {
+        "materials": [
+            {"fusion_material_id": "m-black", "slot_key": "1:1:3", "slot_label": "AMS 2 - T4 (R)"},
+            {"fusion_material_id": "m-green", "slot_key": "1:1:0", "slot_label": "AMS 2 - T1 (R)"},
+            {"fusion_material_id": "m-white", "slot_key": "1:0:0", "slot_label": "AMS 1 - T1 (L)",
+             "backup_slots": [{"slot_key": "1:0:1", "slot_label": "AMS 1 - T2 (L)", "remaining_g": 25.0},
+                              {"slot_key": "1:0:2", "slot_label": "AMS 1 - T3 (L)", "remaining_g": None}]},
+        ],
+        "filaments": [
+            {"slot_key": "1:1:3", "remaining_g": 240.0},
+            {"slot_key": "1:1:0", "remaining_g": None},
+            {"slot_key": "1:0:0", "remaining_g": 10.5},
+        ],
+    }
+    spools = _spool_check(detected, manifest, [2.6, 4.3, 10.0, 99.0])
+    _check(
+        [(row["display_name"], row["enough"]) for row in spools] == [("ABS-GF Black", True), ("PETG White", False)]
+        and spools[1]["needed_g"] == 10.0 and spools[1]["left_g"] == 10.5 and spools[1]["slot_label"] == "AMS 1 - T1 (L)",
+        "spool check: enough, unknown weight skipped, 10.5 g left for 10 g is too tight, unmapped skipped",
+    )
+    _check(
+        spools[1]["backup_count"] == 1 and spools[1]["backup_g"] == 25.0 and spools[1]["enough_with_backup"] is True
+        and spools[0]["backup_count"] == 0 and spools[0]["enough_with_backup"] is True,
+        "backup spools of the same filament count (unknown weights left out)",
+    )
+    _check(_spool_check(detected, None, [1.0]) == [], "no slot record, no spool check")
+
+    # Slot record: of two identical black spools the fullest is used, the other is its backup.
+    from . import printer_model
+
+    def black_slot(tray: int, grams: float) -> Any:
+        spool = printer_model.SpoolInfo(
+            tray + 1, "PLA", "Bambu Lab", "Black", "#000000", grams, 1000.0, None, "GFA00", "Bambu PLA Basic"
+        )
+        return printer_model.SlotInfo(
+            1, "H2D", 0, tray, spool, "PLA", "#000000", extruder=1, vendor_filament_id="GFA00"
+        )
+
+    nearly_empty, full = black_slot(0, 40.0), black_slot(1, 700.0)
+    fake_sources = types.ModuleType("printer_sources")
+    fake_sources.is_configured = lambda settings: True
+    fake_sources.fetch_context = lambda settings: types.SimpleNamespace(
+        printers=[printer_model.PrinterInfo(1, "H2D", auto_refill=True)], slots=[nearly_empty, full]
+    )
+    fake_inventory = types.ModuleType("inventory_sync")
+    fake_inventory.entry_for_spool = lambda spool, slot: {"slot_key": slot.key, "remaining_g": spool.remaining_g}
+    fake_inventory.slot_manifest = lambda entries, printer_name="", printer_id=0: {"filaments": list(entries)}
+    fake_inventory.attach_slot_manifest = lambda path, manifest: None
+    testing.sibling_set(__package__, "printer_sources", fake_sources)
+    testing.sibling_set(__package__, "inventory_sync", fake_inventory)
+    try:
+        black = types.SimpleNamespace(
+            material_id="m-black", display_name="Bambu Lab PLA Basic Black", color_hex="#000000",
+            filament_type="PLA", manufacturer="Bambu Lab", color_name="Black",
+        )
+        manifest = _attach_bambuddy_slot_manifest(Path("unused.3mf"), [black], {}) or {}
+    finally:
+        testing.sibling_pop(__package__, "printer_sources")
+        testing.sibling_pop(__package__, "inventory_sync")
+    material = (manifest.get("materials") or [{}])[0]
+    _check(
+        manifest.get("auto_refill") is True
+        and material.get("slot_key") == full.key
+        and material.get("backup_slots") == [
+            {"slot_key": nearly_empty.key, "slot_label": nearly_empty.slot_label, "remaining_g": 40.0}
+        ],
+        "slot record: fullest identical spool used, the other listed as backup, auto refill passed on",
+    )
 
     # Each filament's nozzle comes from the slot chosen for it (H2D: AMS 2 feeds the right).
     slots_by_key = {

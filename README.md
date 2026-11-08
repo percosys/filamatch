@@ -20,6 +20,10 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.5.1:** after sending, Filamatch shows the print time and the
+> grams of each filament, and checks that your spools have enough. Several
+> spools of the same filament count together when AMS auto refill is on.
+>
 > **New in 0.5:** send to the slicer you pick (**Send to Orca**, **Send to
 > Bambu**); Bambu Studio prepares Bambu Lab projects by itself, without
 > OrcaSlicer. Each filament stays on the nozzle its AMS slot feeds, purge

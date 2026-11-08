@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.1 – print estimate and spool check
+
+**New**
+- Print time and filament after sending: once the slicer has opened,
+  Filamatch slices a copy in the background and shows, under the send
+  button, for example "About 43 min and 6.9 g of filament (2.6 g + 4.3 g)".
+  Your file is not changed. On a Bambu Lab H2D the copy names each nozzle,
+  which the slicer otherwise reads from the printer.
+- Spool check: with the estimate, each filament is compared with the grams
+  left on its spool (Bambuddy, or the printer for Bambu RFID spools). A
+  warning shows when a spool has less than the estimate plus 10%.
+- Several spools of the same filament: Filamatch picks the fullest one, and
+  the spool check counts the others as backups. It reads the printer's AMS
+  auto refill setting and warns when the print needs a backup spool but
+  auto refill is off.
+- Settings > Export: turn the print estimate and spool check off on a slow
+  computer. The background slice takes about 1 to 5 seconds on an M4 Mac.
+
+**Fixed**
+- The exact filament type: a filament such as Bambu ABS-GF was written as
+  plain "ABS", because the type came from the catalog. The preset's own type
+  is now kept when it is the same filament or a variant of it ("ABS-GF" for
+  "ABS"), so the slicer and the printer match AMS slots by the right type.
+
 ## 0.5.0 – send to the slicer you pick
 
 **New**

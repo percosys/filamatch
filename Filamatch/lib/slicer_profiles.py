@@ -2486,16 +2486,37 @@ def _brand_from_display_name(display_name: str) -> str:
     return " ".join(words[:2]) if len(words) > 1 else words[0]
 
 
+def _is_type_variant(preset_type: str, material_type: str) -> bool:
+    """True when ``preset_type`` is ``material_type`` or a variant of it (ABS-GF of ABS)."""
+    preset, material = preset_type.strip().upper(), material_type.strip().upper()
+    return bool(material) and (preset == material or preset.startswith((material + "-", material + " ")))
+
+
+def _preset_filament_types(paths: Sequence[str]) -> List[str]:
+    """The ``filament_type`` of every filament preset file ("" when it has none)."""
+    types: List[str] = []
+    for path in paths:
+        value = (_read_json_file(Path(path)) or {}).get("filament_type")
+        if isinstance(value, list):
+            value = value[0] if value else ""
+        types.append(str(value or "").strip())
+    return types
+
+
 def _postprocess_project_settings(
     output_path: Path,
     materials: Sequence[Any],
     preset_identities: Optional[Sequence[Tuple[str, str, str]]] = None,
     extra_entries: Optional[Mapping[str, Optional[bytes]]] = None,
+    preset_types: Optional[Sequence[str]] = None,
 ) -> Dict[str, Any]:
     """Rewrite the prepared 3MF's project_settings with the detected materials.
 
     ``extra_entries`` (name -> bytes, or ``None`` to drop) are applied in the
-    same archive rewrite, e.g. the slot manifest.
+    same archive rewrite, e.g. the slot manifest.  ``preset_types`` are the
+    filament presets' own types: a preset's type that is the material's type
+    or a variant of it ("ABS-GF" for "ABS") is kept, because the printer
+    matches AMS slots by the exact type.
 
     The slicer generates the project with the requested number of filaments; this
     function makes the colour/type/density arrays exactly describe the detected
@@ -2545,6 +2566,9 @@ def _postprocess_project_settings(
         str(_material_field(material, "filament_type", "PLA") or "PLA").strip() or "PLA"
         for material in materials
     ]
+    for index, preset_type in enumerate(preset_types or ()):
+        if index < len(types) and preset_type and _is_type_variant(preset_type, types[index]):
+            types[index] = preset_type
     densities = [
         _format_density(_material_field(material, "density_g_cm3"))
         for material in materials
@@ -2793,6 +2817,70 @@ def use_bambu_studio_words(project_3mf: Path, process_path: Any = None) -> Dict[
         )
         logger.info("Wrote Bambu Studio's words for %s.", changed)
     return changed
+
+
+def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
+    """Slice a copy of a prepared project and return its print time and filament.
+
+    The copy is sliced by ``slicer_exe`` (the slicer that prepared it) in a
+    temporary folder; the project itself is not changed.  On a printer with
+    two nozzles the copy gets ``extruder_nozzle_stats`` (one nozzle of the
+    flow type each), which the slicer otherwise reads from the printer: without
+    it Bambu Studio's command line stops with "No valid nozzle found".
+
+    Returns:
+        ``{"minutes": int, "grams": float, "filament_grams": [float, ...]}``;
+        ``filament_grams`` has one entry per filament slot (0 when unused).
+
+    Raises:
+        SlicerProfilesError: If the slicer fails or reports no estimate.
+    """
+    slicer_exe = resolve_slicer_executable(slicer_exe)
+    _cache_root().mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix="estimate_", dir=str(_cache_root())))
+    try:
+        copy = work / "project.3mf"
+        shutil.copy2(str(project_3mf), str(copy))
+        with zipfile.ZipFile(str(copy), "r") as archive:
+            settings = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
+        flow_types = settings.get("nozzle_volume_type")
+        diameters = settings.get("nozzle_diameter")
+        if (
+            isinstance(diameters, list) and len(diameters) > 1
+            and not settings.get("extruder_nozzle_stats")
+            and isinstance(flow_types, list) and len(flow_types) == len(diameters)
+        ):
+            settings["extruder_nozzle_stats"] = ["{}#1".format(flow) for flow in flow_types]
+            rewrite_zip_entries(copy, {_PROJECT_SETTINGS_PART: json.dumps(settings).encode("utf-8")})
+        command = [str(slicer_exe), "--slice", "0", "--export-3mf", "sliced.3mf", "--outputdir", str(work), str(copy)]
+        result = _run_command(command, CLI_TIMEOUT_SECONDS)
+        sliced = work / "sliced.3mf"
+        info = ""
+        if sliced.is_file():
+            with zipfile.ZipFile(str(sliced), "r") as archive:
+                if "Metadata/slice_info.config" in archive.namelist():
+                    info = archive.read("Metadata/slice_info.config").decode("utf-8", "replace")
+        seconds = re.search(r'key="prediction" value="([\d.]+)"', info)
+        grams = re.search(r'key="weight" value="([\d.]+)"', info)
+        if _safe_get(result, "returncode", "a slicer CLI result") not in (0, None) or not seconds or not grams:
+            report = _read_json_file(work / "result.json") or {}
+            raise SlicerProfilesError(
+                "The slicer gave no print estimate: {}".format(
+                    report.get("error_string") or "exit code {}".format(_safe_get(result, "returncode", "a result"))
+                )
+            )
+        used = {
+            int(number): float(value)
+            for number, value in re.findall(r'<filament id="(\d+)"[^>]*?used_g="([\d.]+)"', info)
+        }
+        return {
+            "minutes": int(round(float(seconds.group(1)) / 60.0)),
+            "grams": round(float(grams.group(1)), 1),
+            # One entry per project filament (slot 1, 2, ...); an unused one is 0.
+            "filament_grams": [round(used.get(number, 0.0), 1) for number in range(1, max(used, default=0) + 1)],
+        }
+    finally:
+        shutil.rmtree(str(work), ignore_errors=True)
 
 
 NOZZLE_LEFT = "left"
@@ -3310,6 +3398,7 @@ def prepare_project(
             material_list,
             preset_identities=filament_identities,
             extra_entries=extra_entries,
+            preset_types=_preset_filament_types(filament_paths),
         )
         check_slot_assignments(output_path, material_list)
         log_tail = _read_log_tail(log_path)
@@ -4598,6 +4687,71 @@ def _check_bambu_studio_words(environment: _TestEnvironment) -> None:
     )
 
 
+def _check_estimate_print(environment: _TestEnvironment) -> None:
+    """A copy is sliced for time and grams; two nozzles get nozzle stats; failures raise."""
+    project = environment.root / "estimate" / "project.3mf"
+    project.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(str(project), "w") as archive:
+        archive.writestr(_PROJECT_SETTINGS_PART, json.dumps({
+            "nozzle_diameter": ["0.4", "0.4"], "nozzle_volume_type": ["Standard", "High Flow"], "extruder_nozzle_stats": [],
+        }))
+    seen: Dict[str, Any] = {}
+
+    def slicing(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
+        out_dir = Path(_flag_value(command, "--outputdir") or "")
+        with zipfile.ZipFile(command[-1], "r") as archive:
+            seen["stats"] = json.loads(archive.read(_PROJECT_SETTINGS_PART))["extruder_nozzle_stats"]
+        with zipfile.ZipFile(str(out_dir / "sliced.3mf"), "w") as archive:
+            archive.writestr("Metadata/slice_info.config", (
+                '<config><plate><metadata key="prediction" value="2563"/><metadata key="weight" value="6.99"/>'
+                '<filament id="1" used_g="2.71"/><filament id="3" used_g="4.28"/></plate></config>'
+            ))
+        return _FakeCompletedProcess(0)
+
+    environment.runner.cli_handler = slicing
+    estimate = estimate_print(project, environment.slicer_exe)
+    _expect(
+        estimate == {"minutes": 43, "grams": 7.0, "filament_grams": [2.7, 0.0, 4.3]},
+        "time, total and grams per slot (unused slot 2 is 0): {}".format(estimate),
+    )
+    _expect(seen.get("stats") == ["Standard#1", "High Flow#1"], "the copy names each nozzle: {}".format(seen))
+    _expect(
+        json.loads(_read_archive_entry(project, _PROJECT_SETTINGS_PART))["extruder_nozzle_stats"] == [],
+        "the project itself is not changed",
+    )
+
+    def failing(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
+        out_dir = Path(_flag_value(command, "--outputdir") or "")
+        (out_dir / "result.json").write_text(json.dumps({"error_string": "Failed slicing the model."}))
+        return _FakeCompletedProcess(156)
+
+    environment.runner.cli_handler = failing
+    try:
+        estimate_print(project, environment.slicer_exe)
+    except SlicerProfilesError as exc:
+        _expect("Failed slicing the model" in str(exc), "the error must explain: {}".format(exc))
+    else:
+        raise AssertionError("a failed slice must raise")
+    _expect(not list((environment.cache_root).glob("estimate_*")), "the temporary folder is removed")
+
+
+def _check_filament_types(environment: _TestEnvironment) -> None:
+    """A preset's exact type is kept when it is a variant of the material's type."""
+    _expect(_is_type_variant("ABS-GF", "ABS") and _is_type_variant("PLA", "pla"), "ABS-GF is an ABS; PLA is PLA")
+    _expect(not _is_type_variant("PLA", "PETG") and not _is_type_variant("ABSX", "ABS"), "a stand-in preset is not a variant")
+    project = environment.root / "types" / "project.3mf"
+    _write_prepared_3mf(project)
+    materials = [
+        {"color_hex": "#000000", "filament_type": "ABS", "display_name": "ABS-GF Black"},
+        {"color_hex": "#FFFFFF", "filament_type": "PETG", "display_name": "PETG White"},
+    ]
+    settings = _postprocess_project_settings(project, materials, preset_types=["ABS-GF", "PLA"])
+    _expect(
+        settings["filament_type"] == ["ABS-GF", "PETG"],
+        "the preset's ABS-GF is kept, a PLA stand-in for PETG is not: {}".format(settings["filament_type"]),
+    )
+
+
 def _check_slicer_names(environment: _TestEnvironment) -> None:
     """Slicer kind and display name come from the executable or app path."""
     cases = (
@@ -5218,6 +5372,8 @@ def _selftest() -> int:
         ("Bambu Studio presets reach the CLI merged with their parents", _check_standalone_bambu_presets),
         ("each filament is pinned to the nozzle its slot feeds", _check_nozzle_map),
         ("slicer kind and name come from the app path", _check_slicer_names),
+        ("a preset's exact filament type (ABS-GF) is kept", _check_filament_types),
+        ("a copy is sliced for the print time and grams", _check_estimate_print),
         ("projects sent to Bambu Studio use Bambu Studio's words", _check_bambu_studio_words),
         ("Bambu Studio prepares projects by itself", _check_prepare_bambu_studio),
         ("listings fail fast offline and cache missing files/tags", _check_network_failfast),

@@ -84,6 +84,9 @@ class PrinterInfo:
     location: str = ""
     is_active: bool = True
     brand: str = ""
+    #: AMS auto refill (switch to a spool of the same filament when one runs
+    #: out): True/False when the printer reports it, else None.
+    auto_refill: Optional[bool] = None
 
     @property
     def label(self) -> str:

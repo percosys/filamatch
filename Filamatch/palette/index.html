@@ -87,6 +87,8 @@
           <div id="export-readiness" class="readiness" role="status" aria-live="polite"></div>
           <button id="export-btn" class="btn btn--primary btn--big" type="button">Send to slicer</button>
           <p id="export-status" class="status status--muted" role="status" aria-live="polite"></p>
+          <p id="print-estimate" class="status status--muted" role="status" aria-live="polite" hidden></p>
+          <div id="spool-check" class="status" role="status" aria-live="polite" hidden></div>
           <p class="save-line">
             <span id="output-file-label">Saves the 3MF next to your other exports</span>
             <span aria-hidden="true">&middot;</span>
@@ -327,6 +329,11 @@
             </div>
           </div>
           <p id="settings-export-status" class="status status--muted" role="status" aria-live="polite"></p>
+          <label class="switch-field" for="estimate-enabled">
+            <span>Show print time, filament and a spool check after sending</span>
+            <input id="estimate-enabled" type="checkbox" checked>
+          </label>
+          <p class="faint">Slices a copy in the background after the slicer opens. Turn it off on a slow computer.</p>
         </section>
 
         <section class="group" aria-labelledby="library-title">

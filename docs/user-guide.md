@@ -101,6 +101,31 @@ cannot open a prepared project, so it gets the plain 3MF.
 The line below the button shows where the file is saved; **Change** picks
 another place.
 
+After a prepared send, the palette shows the print time and filament under
+the button, for example "About 43 min and 6.9 g of filament (2.6 g + 4.3 g)".
+Filamatch works it out by slicing a copy in the background after the slicer
+has opened. The numbers come from the slicer, so they match what the slicer
+shows when you slice.
+
+Below it, the spool check compares each filament with the grams left on its
+spool (from Bambuddy, or from the printer for Bambu RFID spools). It warns
+when a spool has less than the estimate plus 10%, for example "Bambu Lab -
+ABS-GF - Black may run out: needs 2.5 g, 1.0 g left (AMS 2 - T4 (R))".
+Spools whose weight is not known are left out.
+
+Several spools of the same filament (same colour and type, on the same
+nozzle) count together:
+
+- Filamatch picks the fullest of them for the print.
+- The other spools are backups. If the picked spool is too short, the
+  check adds the grams on the backups.
+- A Bambu Lab AMS only switches to a backup spool when **AMS auto refill**
+  is on in the printer settings. Filamatch reads this setting from the
+  printer and says if it is on or off. When it is off, or not known, the
+  line is a warning.
+
+On a slow computer, turn this off in **Settings > Export**.
+
 ## Add filaments
 
 ![Add filaments](images/add.png)
@@ -134,6 +159,9 @@ Select filaments and click **Add to Fusion**. You return to Home.
   computer; **Other app…** picks any other slicer. The send button shows the
   name of the slicer you pick.
 - **Export folder:** where the send button saves files.
+- **Print time, filament and spool check after sending:** on by default.
+  It slices a copy in the background (about 1 to 5 seconds on a fast Mac,
+  longer on a slow computer); turn it off there.
 - **Fusion library:** keep the Filamatch Library up to date after adding
   filaments, or rebuild it now.
 - **Advanced:**

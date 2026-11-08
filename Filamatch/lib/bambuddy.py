@@ -496,7 +496,7 @@ class BambuddyClient:
         slots: List[SlotInfo] = []
         live_spools: Dict[int, SpoolInfo] = {}
         warnings: List[str] = []
-        for printer in printers:
+        for index, printer in enumerate(printers):
             if not printer.is_active:
                 continue
             try:
@@ -513,6 +513,10 @@ class BambuddyClient:
                     "are shown.".format(printer.name)
                 )
                 continue
+            # AMS auto refill, as Bambuddy reads it from the printer.
+            refill = status.get("ams_filament_backup")
+            if isinstance(refill, bool):
+                printer = printers[index] = replace(printer, auto_refill=refill)
             for slot in live_slots(printer, status):
                 link = linked.pop(slot.key, None)
                 if link is not None:
@@ -771,7 +775,7 @@ def _check_live_slots() -> None:
                 {"printer_id": 2, "ams_id": 0, "tray_id": 2, "spool": dict(spool, id=9)},
             ]
         ),
-        "/api/v1/printers/1/status": _json_response(status),
+        "/api/v1/printers/1/status": _json_response(dict(status, ams_filament_backup=True)),
         "/api/v1/printers/2/status": _json_response({"id": 2, "connected": False}),
     }
     bambu_lan._reset_presets([fixtures / "bambu_lan" / "presets"])
@@ -791,6 +795,10 @@ def _check_live_slots() -> None:
     _expect(context.slot_by_key("1:255:1").filament_type == "TPU", "right external spool is tray 1")
     _expect(not context.slot_by_key("1:255:0").loaded, "empty left external spool")
     _expect(not context.slot_by_key("1:128:0").loaded, "empty AMS HT")
+    _expect(
+        [printer.auto_refill for printer in context.printers] == [True, None],
+        "AMS auto refill from Bambuddy's ams_filament_backup; unknown when not connected",
+    )
     single = live_slots(
         PrinterInfo(id=3, name="Office X1C", model="X1C"),
         {
