@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.8.0 – Send to PrusaSlicer
+
+**New**
+- **Send to PrusaSlicer prepares the project** (PrusaSlicer 2.9.7 or
+  newer), as Send to Orca and Send to Bambu do:
+  - Pick PrusaSlicer under Settings > Send to. Filamatch finds it by
+    itself, also in its "Original Prusa Drivers" folder.
+  - Print settings lists PrusaSlicer's own printers and prints: first
+    **My presets (PrusaSlicer)** (the printers, prints and filaments you
+    saved in PrusaSlicer yourself), then Prusa Research and the 31 other
+    vendors PrusaSlicer ships. The list is read again each time you open
+    Print settings, so a printer you just saved in PrusaSlicer is there.
+  - The project gets the printer, the print, and a filament preset on
+    every tool that fits the printer: the design's own filament, one made
+    from the Open Filament Database, else the generic preset of its type.
+    Each body is on its tool, in its colour.
+  - The bodies sit together in the middle of the bed with their lowest
+    point on it, and the wipe tower is placed beside them.
+  - After sending, the palette shows the print time and the grams of each
+    filament, with the spool check.
+  - Filamatch works out which presets fit from PrusaSlicer's own rules and
+    builds the settings in a settings folder of its own: your PrusaSlicer
+    settings are not changed. (PrusaSlicer 2.9's command line takes a
+    printer and filament preset by name but does not apply them.)
+  - **Save new filament presets in the slicer** also works for PrusaSlicer.
+- Advanced > **Reload slicer profiles** (was "Reload Orca profiles")
+  reloads the lists of whichever slicer you pick.
+
+**Fixed**
+- The PrusaSlicer layout (Send to PrusaSlicer without preparing, and
+  SuperSlicer) puts the bodies' lowest point on the bed: a design drawn
+  below Fusion's origin was "Sinking" in PrusaSlicer.
+
+**Known limits**
+- PrusaSlicer's own print time for MMU3 printers is sometimes broken
+  ("2147483647d"). Filamatch slices again; when it stays broken, the
+  palette shows only the grams.
+- Filamatch does not read loaded spools from Prusa printers yet.
+
+**What is tested:** PrusaSlicer 2.9.7 on macOS: the command line for the
+Prusa XL 5T, MK4 MMU3 and CORE One (prepare and estimate; these are cases
+in the slicer test matrix), and a full send from Fusion to the PrusaSlicer
+app with a printer preset of the owner's own (Bambu Lab H2D values: two
+tools, 350 x 320 bed): printer, print, a filament per tool, each body on
+its tool, on the bed, wipe tower beside it. Not tested: opening a project
+for a Prusa printer in the PrusaSlicer app, Windows, SuperSlicer, and
+printing.
+
 ## 0.7.0 – Filament presets and printer nozzles
 
 **Fixed**

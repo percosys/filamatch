@@ -164,7 +164,7 @@ _PROFILE_KIND_ALIASES = {
     "filament": "filament",
 }
 _VERSION_PATTERN = re.compile(
-    r"(?:OrcaSlicer|BambuStudio|Bambu Studio|Orca)[-\s]+v?"
+    r"(?:OrcaSlicer|BambuStudio|Bambu Studio|Orca|PrusaSlicer)[-\s]+v?"
     r"(\d+(?:\.\d+){1,3}(?:[-_][0-9A-Za-z.]+)?)",
     re.IGNORECASE,
 )
@@ -779,6 +779,11 @@ def _default_slicer_candidates() -> List[Tuple[str, str, Path]]:
                 applications / "BambuStudio.app" / "Contents" / "MacOS" / "BambuStudio",
             )
         )
+        # PrusaSlicer's installer puts it in "Original Prusa Drivers".
+        for folder in (applications, applications / "Original Prusa Drivers"):
+            candidates.append(
+                ("prusa", "PrusaSlicer", folder / "PrusaSlicer.app" / "Contents" / "MacOS" / "PrusaSlicer")
+            )
         return candidates
     if os.name == "nt":
         program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
@@ -797,9 +802,13 @@ def _default_slicer_candidates() -> List[Tuple[str, str, Path]]:
                     Path(local_app_data) / "Programs" / "BambuStudio" / "bambu-studio.exe",
                 )
             )
+        candidates.append(
+            ("prusa", "PrusaSlicer", Path(program_files) / "Prusa3D" / "PrusaSlicer" / "prusa-slicer-console.exe")
+        )
         return candidates
     candidates.append(("orca", "OrcaSlicer", Path("/usr/bin/orca-slicer")))
     candidates.append(("bambu", "BambuStudio", Path("/usr/bin/bambu-studio")))
+    candidates.append(("prusa", "PrusaSlicer", Path("/usr/bin/prusa-slicer")))
     return candidates
 
 
@@ -891,17 +900,19 @@ def resolve_slicer_executable(slicer_exe: Any) -> str:
 
 
 def _kind_from_path(path: str) -> str:
-    """Guess the slicer kind (``orca``/``bambu``) from its executable path."""
+    """Guess the slicer kind (``orca``/``bambu``/``prusa``) from its executable path."""
     lowered = Path(str(path)).name.lower()
     if "orca" in lowered:
         return "orca"
     if "bambu" in lowered:
         return "bambu"
+    if "prusaslicer" in lowered or "prusa-slicer" in lowered:
+        return "prusa"
     return ""
 
 
 def slicer_kind(path: Any) -> str:
-    """Return ``orca``, ``bambu`` or ``""`` for a slicer path (executable or ``.app``)."""
+    """Return ``orca``, ``bambu``, ``prusa`` or ``""`` for a slicer path (executable or ``.app``)."""
     text = str(path or "").strip()
     if not text:
         return ""
@@ -917,6 +928,8 @@ def slicer_name(path: Any) -> str:
         return "OrcaSlicer"
     if kind == "bambu":
         return "Bambu Studio"
+    if kind == "prusa":
+        return "PrusaSlicer"
     bundle = re.search(r"([^/\\]+)\.app(?:[/\\]|$)", text, re.IGNORECASE)
     if bundle:
         return bundle.group(1)
@@ -958,7 +971,8 @@ def _slicer_identity(slicer_exe: Any) -> Tuple[str, str]:
     match = _VERSION_PATTERN.search(first_line) or _VERSION_PATTERN.search(output)
     if match is not None:
         version = match.group(1)
-        kind = "orca" if match.group(0).lower().startswith("orca") else "bambu"
+        lowered = match.group(0).lower()
+        kind = "orca" if lowered.startswith("orca") else "prusa" if lowered.startswith("prusa") else "bambu"
     identity = (version, kind or _kind_from_path(key))
     if output.strip():
         _VERSION_CACHE[cache_key] = identity
@@ -1342,6 +1356,10 @@ def list_vendors(slicer_exe: Any) -> List[Dict[str, Any]]:
     first connection-level failure the remaining vendors come from the cache
     only, so an offline machine lists in seconds instead of minutes.
     """
+    if slicer_kind(slicer_exe) == "prusa":
+        from . import prusa_profiles
+
+        return prusa_profiles.list_vendors(resolve_slicer_executable(slicer_exe))
     vendors: List[Dict[str, Any]] = []
     network = _NetworkSession(timeout=LIST_NETWORK_TIMEOUT_SECONDS)
 
@@ -1409,6 +1427,10 @@ def list_printers(slicer_exe: Any, vendor_id: str) -> List[Dict[str, Any]]:
         SlicerProfilesError: If the requested vendor is unavailable.
     """
     vendor = _require_text(vendor_id, "vendor id")
+    if slicer_kind(slicer_exe) == "prusa":
+        from . import prusa_profiles
+
+        return prusa_profiles.list_printers(resolve_slicer_executable(slicer_exe), vendor)
 
     if vendor == "bambu_local":
         root = _bambu_system_dir()
@@ -1617,6 +1639,10 @@ def list_processes(
     """
     vendor = _require_text(vendor_id, "vendor id")
     printer = _require_text(printer_name, "printer name")
+    if slicer_kind(slicer_exe) == "prusa":
+        from . import prusa_profiles
+
+        return prusa_profiles.list_processes(resolve_slicer_executable(slicer_exe), vendor, printer)
 
     if vendor == "bambu_local":
         root = _bambu_system_dir()
@@ -3184,6 +3210,13 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
         SlicerProfilesError: If the slicer fails or reports no estimate.
     """
     slicer_exe = resolve_slicer_executable(slicer_exe)
+    if slicer_kind(slicer_exe) == "prusa":
+        from . import prusa_profiles
+
+        try:
+            return prusa_profiles.estimate_print(Path(project_3mf), slicer_exe)
+        except prusa_profiles.PrusaProfilesError as exc:
+            raise SlicerProfilesError(str(exc)) from exc
     _cache_root().mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix="estimate_", dir=str(_cache_root())))
     try:
@@ -3240,6 +3273,29 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
         }
     finally:
         shutil.rmtree(str(work), ignore_errors=True)
+
+
+def _prepare_prusa_project(
+    base_path: Path, output_path: Path, target: ProfileTarget, slicer_exe: str, materials: Sequence[Any]
+) -> PreparedProject:
+    """PrusaSlicer prepares in its own way (see prusa_profiles.prepare_project)."""
+    from . import prusa_profiles
+
+    try:
+        result = prusa_profiles.prepare_project(
+            base_path, output_path, target.vendor, target.printer_name, target.process_name, slicer_exe, materials
+        )
+    except prusa_profiles.PrusaProfilesError as exc:
+        raise SlicerProfilesError(str(exc)) from exc
+    return PreparedProject(
+        output_path=output_path,
+        printer_name=target.printer_name,
+        process_name=target.process_name,
+        filament_names=tuple(result["filament_names"]),
+        slicer_version=str(result["slicer_version"]),
+        log_tail="",
+        built_presets=tuple(result["built_presets"]),
+    )
 
 
 def apply_printer_nozzles(project_3mf: Path, nozzles: Sequence[Any]) -> List[str]:
@@ -3691,6 +3747,8 @@ def prepare_project(
                 str(output_path.parent), exc
             )
         ) from exc
+    if slicer_kind(slicer_exe) == "prusa":
+        return _prepare_prusa_project(base_path, output_path, target, slicer_exe, material_list)
     log_directory = Path(log_dir) if log_dir is not None else _cache_root() / "logs"
     try:
         log_directory.mkdir(parents=True, exist_ok=True)

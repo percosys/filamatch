@@ -13,6 +13,9 @@
       ["White cube", "#FFFFFF", "PETG", "Bambu PETG HF"],
       ["Red cube", "#C12E1F", "PLA", "Bambu PLA Basic"]
     ],
+    "single_pla": [
+      ["Black cube", "#000000", "PLA", "Bambu PLA Basic"]
+    ],
     "database_abs": [
       ["Black cube", "#000000", "PLA", "Bambu PLA Basic"],
       ["Grey cube", "#4D4D4D", "ABS", "", {"manufacturer": "Add-North", "product_line": "rABS", "slicer_data": {"min_print_temperature": 230, "max_print_temperature": 260, "min_bed_temperature": 100, "max_bed_temperature": 110, "slicers": {"bambustudio": {"generic_id": "GFB99", "id": "GF_ANRA", "profile_name": "addnorth ABS rABS"}, "orcaslicer": {"generic_id": "GFB99", "id": "GF_ANRA", "profile_name": "addnorth ABS rABS"}}}}],
@@ -40,6 +43,10 @@
     {"id": "prusa-mmu3-orca", "vendor": "Prusa", "printer": "Prusa CORE One MMU3 0.4 nozzle", "slicer": "orca", "materials": "pla4"},
     {"id": "u1-orca", "vendor": "Snapmaker", "printer": "Snapmaker U1 (0.4 nozzle)", "slicer": "orca", "materials": "pla_petg"},
     {"id": "u1-mixed-orca", "vendor": "Snapmaker", "printer": "Snapmaker U1 (0.4+0.6 nozzle)", "slicer": "orca", "materials": "pla_petg"},
+    {"id": "prusa-xl5t-prusaslicer", "vendor": "prusa:PrusaResearch", "printer": "Original Prusa XL - 5T Input Shaper 0.4 nozzle", "process": "0.20mm SPEED @XLIS 0.4", "slicer": "prusaslicer", "materials": "pla_petg"},
+    {"id": "prusa-xl5t-database-prusaslicer", "vendor": "prusa:PrusaResearch", "printer": "Original Prusa XL - 5T Input Shaper 0.4 nozzle", "process": "0.20mm SPEED @XLIS 0.4", "slicer": "prusaslicer", "materials": "database_abs"},
+    {"id": "prusa-mk4mmu3-prusaslicer", "vendor": "prusa:PrusaResearch", "printer": "Original Prusa MK4 MMU3 0.4 nozzle", "process": "0.20mm SPEED @MK4IS 0.4", "slicer": "prusaslicer", "materials": "pla4"},
+    {"id": "prusa-coreone-prusaslicer", "vendor": "prusa:PrusaResearch", "printer": "Prusa CORE One HF0.4 nozzle", "process": "0.20mm BALANCED @COREONE HF0.4", "slicer": "prusaslicer", "materials": "single_pla"},
     {"id": "prusaslicer-layout", "kind": "prusaslicer", "materials": "pla_petg", "model": "touching", "extruders": 4}
   ]
 }

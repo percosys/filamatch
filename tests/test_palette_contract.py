@@ -162,6 +162,11 @@ def main() -> int:
         "Settings can turn off the print estimate; the spool check has its own line",
     )
     check(
+        "slicerNames().full === 'PrusaSlicer' && !isActionPending('get_profiles')" in js
+        and "Reload slicer profiles" in html,
+        "opening Print settings re-reads PrusaSlicer's presets; the reload button names any slicer",
+    )
+    check(
         'id="print-settings-nozzles"' in html
         and "function nozzleMismatch" in js
         and "'Printer nozzles: ' + nozzleSummary(nozzles)" in js

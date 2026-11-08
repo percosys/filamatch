@@ -2093,13 +2093,15 @@
     }
     var minutes = Math.max(0, Math.round(Number(payload.minutes) || 0));
     var time = minutes >= 60 ? Math.floor(minutes / 60) + ' h ' + (minutes % 60) + ' min' : minutes + ' min';
+    /* PrusaSlicer's time is sometimes broken (MMU3): grams only then. */
+    var timePart = payload.minutes === null || payload.minutes === undefined ? '' : time + ' and ';
     var parts = Array.isArray(payload.filament_grams) && payload.filament_grams.length > 1
       ? ' (' + payload.filament_grams.map(function (grams) { return Number(grams).toFixed(1) + ' g'; }).join(' + ') + ')'
       : '';
     var plates = Math.round(Number(payload.plates) || 1);
     // Bambu Studio puts bodies on plates of their own when one filament's bed is too hot for another.
     var onPlates = plates > 1 ? ', on ' + plates + ' plates' : '';
-    var text = 'About ' + time + ' and ' + Number(payload.grams).toFixed(1) + ' g of filament' + parts + onPlates;
+    var text = 'About ' + timePart + Number(payload.grams).toFixed(1) + ' g of filament' + parts + onPlates;
     setPrintEstimate(text);
     renderSpoolCheck(payload.spools, typeof payload.auto_refill === 'boolean' ? payload.auto_refill : null);
     appendLog('Print estimate: ' + text, 'info');
@@ -6922,7 +6924,15 @@
         }
       },
       'bambuddy-setup-btn': openPrinterSetup,
-      'print-settings-toggle': function () { toggleCardBody('print-settings-toggle'); },
+      'print-settings-toggle': function () {
+        toggleCardBody('print-settings-toggle');
+        var body = byId('print-settings-body');
+        // PrusaSlicer's presets are files on this computer: re-read them, so a
+        // printer just saved in PrusaSlicer is in the list.
+        if (body && !body.hidden && slicerNames().full === 'PrusaSlicer' && !isActionPending('get_profiles')) {
+          requestProfiles();
+        }
+      },
       'bambuddy-edit-toggle': function () { toggleCardBody('bambuddy-edit-toggle'); },
       'slicer-edit-toggle': function () { toggleCardBody('slicer-edit-toggle'); },
       'welcome-connect-btn': onWelcomeConnect,

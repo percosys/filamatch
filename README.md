@@ -6,7 +6,8 @@
 
 <p align="center">
   Give every body in your Autodesk Fusion design a real filament, match it to
-  the spools loaded on your printer, and send the design to OrcaSlicer ready to print.
+  the spools loaded on your printer, and send the design to OrcaSlicer, Bambu Studio or
+  PrusaSlicer ready to print.
 </p>
 
 <p align="center">
@@ -20,6 +21,12 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.8:** **Send to PrusaSlicer** prepares the project too:
+> PrusaSlicer's own printers and prints (and the ones you saved yourself),
+> a filament preset that fits the printer on every tool, each body on its
+> tool, centred on the bed with the wipe tower beside it, and the print
+> time and grams after sending. Your PrusaSlicer settings are not changed.
+>
 > **New in 0.7:** filaments from the Open Filament Database bring their
 > slicer settings: when your slicer has no preset for one, Filamatch makes
 > it from the database's temperatures, fans and flow (and can save it in
@@ -114,7 +121,11 @@ by hand, every time. Filamatch keeps that information in the design:
   presets from your installed OrcaSlicer (or Bambu Studio) or downloaded from
   OrcaSlicer's profile collection. Picks a build plate and wipe tower position
   the filaments accept.
-- Opens the result in OrcaSlicer.
+- **Send to PrusaSlicer** prepares a PrusaSlicer project the same way:
+  PrusaSlicer's own printers and prints, a filament preset that fits the
+  printer on every tool, each body on its tool, and the print estimate.
+  Your PrusaSlicer settings are not changed.
+- Opens the result in the slicer you pick.
 
 **Under the hood**
 - Slow work (printer queries, profile downloads, the slicer run) happens in
@@ -132,7 +143,7 @@ by hand, every time. Filamatch keeps that information in the design:
 | | |
 |---|---|
 | **Autodesk Fusion** | Current release, macOS or Windows. Filamatch uses Fusion's built-in Python; nothing else to install. |
-| **OrcaSlicer or Bambu Studio** | Prepares the project (print settings, slots, nozzles, purge volumes) and opens it; the send button names the one you pick. Bambu Studio prepares Bambu Lab printers by itself; other printers need OrcaSlicer. Other slicers get the plain 3MF. Without a slicer you can still export a tagged 3MF. |
+| **OrcaSlicer, Bambu Studio or PrusaSlicer** | Prepares the project (print settings, slots, nozzles, purge volumes) and opens it; the send button names the one you pick. Bambu Studio prepares Bambu Lab printers by itself, PrusaSlicer 2.9.7 or newer the printers in its own lists; other printers need OrcaSlicer. Other slicers get the plain 3MF (SuperSlicer in PrusaSlicer's layout). Without a slicer you can still export a tagged 3MF. |
 | **A Bambu Lab printer** (optional) | To read the filaments loaded in the printer. Connect it directly (IP address and access code from the printer screen) or through [Bambuddy](https://github.com/maziggy/bambuddy). See [Printers](#printers) for what is tested. Without a printer, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. Other printer brands are on the [roadmap](docs/roadmap.md). |
 
 Windows support is written but has been tested less than macOS.
@@ -160,10 +171,10 @@ the printer.
 | Bambu Lab H2C | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side and slices it; the estimate works | Loaded spools, printing |
 | Bambu Lab H3C | Send to Bambu prepares the project; Bambu Studio 2.9.1 opens it with its 9 nozzles and slices it; the estimate works. OrcaSlicer 2.5 cannot slice the H3C, so Filamatch refuses it | Loaded spools, printing |
 | Bambu Lab X2D | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side; the estimate works | Slicing in the app, loaded spools, printing; the "(L)" / "(R)" labels may be swapped (Bambu Studio says "Main" and "Auxiliary") |
-| Prusa XL 5T | Send to Orca prepares the project with Prusa's filament presets; OrcaSlicer 2.5 opens and slices it; the estimate matches | Loaded spools (not read from Prusa printers), printing |
-| Prusa CORE One INDX 4T / 8T, MMU3 | Send to Orca prepares the project and estimates it (OrcaSlicer 2.5 command line) | Opening in the app; the INDX 8T estimate often fails because OrcaSlicer crashes; printing |
+| Prusa XL 5T | Send to Orca prepares the project with Prusa's filament presets; OrcaSlicer 2.5 opens and slices it; the estimate matches. Send to PrusaSlicer prepares it with PrusaSlicer 2.9.7's own presets and estimates it (command line) | Opening the PrusaSlicer project in the app, loaded spools (not read from Prusa printers), printing |
+| Prusa CORE One INDX 4T / 8T, MMU3 | Send to Orca prepares the project and estimates it (OrcaSlicer 2.5 command line). Send to PrusaSlicer prepares and estimates the MK4 MMU3 and the CORE One (PrusaSlicer 2.9.7 command line) | Opening in the app; the INDX 8T estimate often fails because OrcaSlicer crashes; printing |
 | Snapmaker U1 (0.4 nozzles, and 0.4 + 0.6 nozzles) | Send to Orca prepares the project with each body on its tool and estimates it (OrcaSlicer 2.5 command line). The 0.4 set gets Snapmaker's filament presets; the mixed set gets OrcaSlicer's generic ones, because Snapmaker's presets list only the 0.4 U1 | Opening in the app, the Snapmaker Orca app, loaded spools, printing |
-| Any printer in PrusaSlicer | Send to PrusaSlicer keeps each body on its extruder (PrusaSlicer 2.6.0) | PrusaSlicer 2.9, SuperSlicer |
+| Any printer in PrusaSlicer | Send to PrusaSlicer prepares a full project from PrusaSlicer's own printer, print and filament presets, with each body on its tool and the print estimate (PrusaSlicer 2.9.7 command line: Prusa XL 5T, MK4 MMU3, CORE One); a send from Fusion opened in the PrusaSlicer 2.9.7 app with a printer preset of the owner's own (two tools); without preparing it keeps each body on its extruder (2.6.0 and 2.9.7) | Projects for Prusa printers opened in the PrusaSlicer app, other vendors' printers in PrusaSlicer, SuperSlicer, printing |
 
 **3. Expected to work, not tested yet:**
 - Other Bambu Lab printers with one nozzle and an AMS (P1S, P1P, A1, A1

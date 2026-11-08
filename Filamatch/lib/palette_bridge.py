@@ -1605,15 +1605,15 @@ def _installed_slicer(installs: Sequence[Any], kind: str) -> str:
 def _prepare_slicer_path(chosen: str, installs: Sequence[Any], vendor: str = "") -> str:
     """Return the slicer whose command line prepares the project ("" when none).
 
-    The chosen slicer prepares its own project: OrcaSlicer always, Bambu
-    Studio for printers from its own presets (``bambu_local``).  Other
-    printers sent to Bambu Studio, and slicers that cannot prepare, use an
-    installed OrcaSlicer; the chosen slicer then only opens the result.
+    The chosen slicer prepares its own project: OrcaSlicer and PrusaSlicer
+    always, Bambu Studio for printers from its own presets (``bambu_local``).
+    Other printers sent to Bambu Studio, and slicers that cannot prepare, use
+    an installed OrcaSlicer; the chosen slicer then only opens the result.
     """
     from . import slicer_profiles
 
     kind = slicer_profiles.slicer_kind(chosen)
-    if kind == "orca" or (kind == "bambu" and vendor in ("", "bambu_local")):
+    if kind in ("orca", "prusa") or (kind == "bambu" and vendor in ("", "bambu_local")):
         return chosen
     orca = _installed_slicer(installs, "orca")
     if orca or kind == "bambu" or vendor not in ("", "bambu_local"):
@@ -1634,13 +1634,18 @@ def _profiles_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
     ).strip()
     installs = slicer_profiles.find_installed_slicers()
     slicer_exe = _usable_slicer_path(requested_slicer, installs)
-    # An installed OrcaSlicer picks the matching online profile version.
-    slicer_exe = _installed_slicer(installs, "orca") or slicer_exe
+    if slicer_profiles.slicer_kind(slicer_exe) != "prusa":
+        # An installed OrcaSlicer picks the matching online profile version;
+        # PrusaSlicer lists its own presets.
+        slicer_exe = _installed_slicer(installs, "orca") or slicer_exe
 
     vendors = slicer_profiles.list_vendors(slicer_exe) if slicer_exe else []
     vendor = str(
         data.get("vendor") or settings.get("target_vendor") or (vendors[0]["id"] if vendors else "")
     ).strip()
+    if vendors and vendor not in {item["id"] for item in vendors}:
+        # A vendor of another slicer (after switching between OrcaSlicer and PrusaSlicer).
+        vendor = vendors[0]["id"]
     printers = slicer_profiles.list_printers(slicer_exe, vendor) if vendor else []
     printer_names = {item["name"] for item in printers}
     printer = str(data.get("printer") or settings.get("target_printer") or "").strip()
@@ -2508,8 +2513,8 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
     open_app = str(
         orca.get("executable") or outcome["resolved_slicer_path"] or ""
     ).strip()
-    if prepare and open_app and _slicer_kind(open_app) not in ("orca", "bambu"):
-        # Prepared projects are in the Bambu Studio/OrcaSlicer format only.
+    if prepare and open_app and _slicer_kind(open_app) not in ("orca", "bambu", "prusa"):
+        # Prepared projects are for Bambu Studio, OrcaSlicer and PrusaSlicer only.
         log_message(
             "{} cannot open prepared projects; sending the plain 3MF.".format(
                 _slicer_display_name(open_app)

@@ -37,7 +37,7 @@ LIB_DIR = REPO_ROOT / "Filamatch" / "lib"
 SELF_TEST_MODULES = (
     "catalog", "importer", "exporter", "diagnostics", "materials_workflow", "favorites",
     "slicer_profiles", "openfilament", "custom_library", "printer_model", "secret_store",
-    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project", "printer_catalog", "printer_report", "filament_presets",
+    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project", "printer_catalog", "printer_report", "filament_presets", "prusa_profiles",
 )
 #: Modules whose checks live in another module's self-test.
 TESTED_BY = {"project_fixes": "slicer_profiles", "slicer_profiles_selftest": "slicer_profiles", "testing": None}

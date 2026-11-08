@@ -25,6 +25,7 @@ Filamatch/                      the add-in: this folder is what users install
     ├── project_fixes.py        fit project settings to the printer (tower, nozzles)
     ├── filament_presets.py     presets built from the Open Filament Database; slicer user presets
     ├── prusa_project.py        the PrusaSlicer 3MF layout
+    ├── prusa_profiles.py       PrusaSlicer presets, projects and estimates
     ├── printer_catalog.py      reads data/printers.json
     ├── printer_model.py        neutral printer / slot / spool types
     ├── printer_sources.py      printer source registry (Bambuddy today)

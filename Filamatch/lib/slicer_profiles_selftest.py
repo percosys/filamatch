@@ -1673,7 +1673,8 @@ def _check_slicer_names(environment: _TestEnvironment) -> None:
         ("/Applications/BambuStudio.app/Contents/MacOS/BambuStudio", "bambu", "Bambu Studio"),
         ("/Applications/OrcaSlicer.app", "orca", "OrcaSlicer"),
         ("C:\\Program Files\\OrcaSlicer\\orca-slicer.exe", "orca", "OrcaSlicer"),
-        ("/Applications/Original Prusa Drivers/PrusaSlicer.app/Contents/MacOS/PrusaSlicer", "", "PrusaSlicer"),
+        ("/Applications/Original Prusa Drivers/PrusaSlicer.app/Contents/MacOS/PrusaSlicer", "prusa", "PrusaSlicer"),
+        ("C:\\Program Files\\Prusa3D\\PrusaSlicer\\prusa-slicer-console.exe", "prusa", "PrusaSlicer"),
         ("C:\\Tools\\SuperSlicer\\superslicer.exe", "", "superslicer"),
         ("", "", "the slicer"),
     )

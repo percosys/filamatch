@@ -178,8 +178,9 @@ def _number(value: float) -> str:
     return "{:.6f}".format(value).rstrip("0").rstrip(".") or "0"
 
 
-def _write_model(objects: Sequence[Tuple[str, List[_Part]]]) -> Tuple[bytes, bytes]:
-    """Return ``(3dmodel.model, Slic3r_PE_model.config)`` for the objects."""
+def _write_model(objects: Sequence[Tuple[str, List[_Part]]], shift: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+                 ) -> Tuple[bytes, bytes]:
+    """Return ``(3dmodel.model, Slic3r_PE_model.config)`` for the objects, moved by ``shift`` (mm)."""
     model = [
         '<?xml version="1.0" encoding="UTF-8"?>\n',
         '<model unit="millimeter" xml:lang="en-US" xmlns="{}" xmlns:slic3rpe="{}">\n'.format(CORE_NS, SLIC3R_NS),
@@ -222,7 +223,7 @@ def _write_model(objects: Sequence[Tuple[str, List[_Part]]]) -> Tuple[bytes, byt
         model.append('    </triangles>\n   </mesh>\n  </object>\n')
         config.append(' </object>\n')
         build.append('  <item objectid="{}" transform="1 0 0 0 1 0 0 0 1 {} {} {}" printable="1"/>\n'.format(
-            number, _number(origin[0]), _number(origin[1]), _number(origin[2])))
+            number, _number(origin[0] + shift[0]), _number(origin[1] + shift[1]), _number(origin[2] + shift[2])))
     model.append(' </resources>\n <build>\n')
     model.extend(build)
     model.append(' </build>\n</model>\n')
@@ -236,11 +237,19 @@ def _escape(text: str) -> str:
     )
 
 
-def to_prusa_layout(project_3mf: Path, output: Optional[Path] = None) -> Dict[str, Any]:
+def to_prusa_layout(project_3mf: Path, output: Optional[Path] = None,
+                    center: Optional[Tuple[float, float]] = None) -> Dict[str, Any]:
     """Rewrite a Filamatch 3MF in the PrusaSlicer layout (in place without ``output``).
 
-    Returns ``{"objects": int, "parts": int, "assembled": bool}``.  Other
-    archive entries (thumbnail, Filamatch's slot record) are kept.
+    PrusaSlicer keeps a project's positions, so the bodies move together until
+    the lowest point is on the bed (a design drawn below Fusion's origin was
+    "sinking"), and with ``center`` (the bed's middle, mm) until the middle of
+    all of them is there (a design drawn around the origin was off the bed).
+
+    Returns ``{"objects": int, "parts": int, "assembled": bool, "box":
+    (min x, min y, max x, max y)}``, the box of all bodies in mm after the
+    move.  Other archive entries (thumbnail, Filamatch's slot record) are
+    kept.
 
     Raises:
         PrusaProjectError: If the model cannot be read; ``project_3mf`` is
@@ -256,7 +265,13 @@ def to_prusa_layout(project_3mf: Path, output: Optional[Path] = None) -> Dict[st
                 objects = [(items[0][1][0].name, [part for _id, parts in items for part in parts])]
             else:
                 objects = [(parts[0].name, parts) for _id, parts in items]
-            model, config = _write_model(objects)
+            points = [point for _name, parts in objects for part in parts for point in part.vertices]
+            xs, ys, zs = [point[0] for point in points], [point[1] for point in points], [point[2] for point in points]
+            shift = (0.0, 0.0, -min(zs))
+            if center is not None:
+                shift = (center[0] - (min(xs) + max(xs)) / 2.0, center[1] - (min(ys) + max(ys)) / 2.0, -min(zs))
+            box = (min(xs) + shift[0], min(ys) + shift[1], max(xs) + shift[0], max(ys) + shift[1])
+            model, config = _write_model(objects, shift)
             skipped = set(BAMBU_PARTS) | {MODEL_PART, PRUSA_MODEL_CONFIG, "3D/_rels/3dmodel.model.rels"}
             descriptor, temporary = tempfile.mkstemp(prefix="filamatch_prusa_", suffix=".3mf", dir=str(output.parent))
             os.close(descriptor)
@@ -275,7 +290,8 @@ def to_prusa_layout(project_3mf: Path, output: Optional[Path] = None) -> Dict[st
     except (KeyError, ValueError, TypeError, ET.ParseError, zipfile.BadZipFile) as exc:
         raise PrusaProjectError("Could not convert {} for PrusaSlicer: {}".format(project_3mf.name, exc)) from exc
     os.replace(temporary, str(output))
-    result = {"objects": len(objects), "parts": sum(len(parts) for _name, parts in objects), "assembled": assembled}
+    result = {"objects": len(objects), "parts": sum(len(parts) for _name, parts in objects), "assembled": assembled,
+              "box": tuple(round(value, 3) for value in box)}
     logger.info("Wrote the PrusaSlicer layout to %s: %s", output, result)
     return result
 
@@ -320,6 +336,29 @@ def _settings(*extruders: Tuple[str, int]) -> str:
     )
 
 
+def _check_centered(root: Path) -> None:
+    path = root / "centered.3mf"
+    _write_test_3mf(
+        path,
+        '<object id="1" name="Left" type="model">{0}</object><object id="2" name="Right" type="model">{0}</object>'.format(_cube(10)),
+        '<item objectid="1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/><item objectid="2" transform="1 0 0 0 1 0 0 0 1 50 0 0"/>',
+        _settings(("1", 1), ("2", 2)),
+    )
+    result = to_prusa_layout(path, center=(175.0, 160.0))
+    with zipfile.ZipFile(str(path)) as archive:
+        items = [item.get("transform") for item in ET.fromstring(archive.read(MODEL_PART)).iter("{%s}item" % CORE_NS)]
+    _expect(items == ["1 0 0 0 1 0 0 0 1 150 160 0", "1 0 0 0 1 0 0 0 1 200 160 0"]
+            and result["box"] == (145.0, 155.0, 205.0, 165.0),
+            "the bodies move together to the bed's middle and keep their spacing: {} {}".format(items, result))
+    sunk = root / "sunk.3mf"
+    _write_test_3mf(sunk, '<object id="1" name="Plate" type="model">{}</object>'.format(_cube(10)),
+                    '<item objectid="1" transform="1 0 0 0 1 0 0 0 1 0 0 -3"/>', _settings(("1", 1)))
+    to_prusa_layout(sunk)
+    with zipfile.ZipFile(str(sunk)) as archive:
+        items = [item.get("transform") for item in ET.fromstring(archive.read(MODEL_PART)).iter("{%s}item" % CORE_NS)]
+    _expect(items == ["1 0 0 0 1 0 0 0 1 5 5 0"], "a body drawn below the origin is put on the bed: {}".format(items))
+
+
 def _check_separate_bodies(root: Path) -> None:
     path = root / "separate.3mf"
     _write_test_3mf(
@@ -329,7 +368,7 @@ def _check_separate_bodies(root: Path) -> None:
         _settings(("1", 1), ("2", 3)),
     )
     result = to_prusa_layout(path)
-    _expect(result == {"objects": 2, "parts": 2, "assembled": False}, "two separate bodies: {}".format(result))
+    _expect(result == {"objects": 2, "parts": 2, "assembled": False, "box": (0.0, 0.0, 60.0, 10.0)}, "two separate bodies: {}".format(result))
     with zipfile.ZipFile(str(path)) as archive:
         names = archive.namelist()
         config = ET.fromstring(archive.read(PRUSA_MODEL_CONFIG))
@@ -357,7 +396,7 @@ def _check_touching_bodies(root: Path) -> None:
         _settings(("1", 2), ("2", 1)),
     )
     result = to_prusa_layout(path, out)
-    _expect(result == {"objects": 1, "parts": 2, "assembled": True}, "touching bodies become one object: {}".format(result))
+    _expect(result == {"objects": 1, "parts": 2, "assembled": True, "box": (0.0, 0.0, 10.0, 10.0)}, "touching bodies become one object: {}".format(result))
     with zipfile.ZipFile(str(out)) as archive:
         config = ET.fromstring(archive.read(PRUSA_MODEL_CONFIG))
         model = ET.fromstring(archive.read(MODEL_PART))
@@ -432,6 +471,7 @@ def _check_prusa_family() -> None:
 def _selftest() -> int:
     scenarios = (
         ("separate bodies keep their extruders and places", _check_separate_bodies),
+        ("a prepared project is centred on the bed", _check_centered),
         ("touching bodies become one object with one part each", _check_touching_bodies),
         ("components and inch units are flattened", _check_components_and_units),
     )

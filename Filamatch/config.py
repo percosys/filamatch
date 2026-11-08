@@ -31,7 +31,7 @@ from pathlib import Path
 
 ADDIN_NAME = "Filamatch"
 COMPANY_NAME = "Percosys"
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 
 #: Writes debug messages to the TEXT COMMANDS window when True.
 DEBUG = False

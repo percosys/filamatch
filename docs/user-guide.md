@@ -123,10 +123,30 @@ order:
    "customized preset" when it opens the file;
 4. else the slicer's generic preset for the type.
 
-A slicer other than OrcaSlicer or Bambu Studio cannot open a prepared
-project, so it gets the plain 3MF. PrusaSlicer and SuperSlicer get it in
-their own layout, so each body keeps its extruder; your printer and
-filament settings in PrusaSlicer stay as they are.
+**Send to PrusaSlicer** (PrusaSlicer 2.9.7 or newer) prepares a PrusaSlicer
+project the same way: Print settings lists PrusaSlicer's own printers and
+prints (**My presets (PrusaSlicer)** first, the printers, prints and
+filaments you saved in PrusaSlicer yourself; then Prusa Research and the
+other vendors PrusaSlicer ships),
+each body goes on its tool, and every tool gets a filament preset that fits
+the printer: the design's own filament, or one made from the Open Filament
+Database, else the generic preset for its type (spare tools get the
+printer's default filament). The bodies move together to the middle of
+the bed, keeping their places to each other, with their lowest point on
+the bed, and the wipe tower (the block that cleans the nozzle between
+filaments; it is not in the object list) goes beside them. Print settings re-reads
+PrusaSlicer's presets every time you open it, so a printer you just saved
+in PrusaSlicer is in the list. Filamatch builds the full settings from
+PrusaSlicer's presets in a settings folder of its own, so your PrusaSlicer
+settings are not changed. A design with more filaments than the printer
+has tools is refused. After sending, the palette shows the print time and
+grams; PrusaSlicer's own time is sometimes broken for MMU3 printers, and
+then only the grams are shown.
+
+Other slicers cannot open a prepared project, so they get the plain 3MF.
+SuperSlicer, and PrusaSlicer with **Advanced > Prepare** turned off, get it
+in PrusaSlicer's layout, so each body keeps its extruder and your printer
+and filament settings in the slicer stay as they are.
 
 The line below the button shows where the file is saved; **Change** picks
 another place.
@@ -221,12 +241,12 @@ Tested on macOS:
 | File | OrcaSlicer | Bambu Studio | PrusaSlicer / SuperSlicer |
 |---|---|---|---|
 | **Send to Orca / Send to Bambu** (prepared project) | Opens with slots | Opens with slots. Send to Bambu prepares with your own Bambu Studio; a file prepared by OrcaSlicer needs Bambu Studio 2.8 or newer | Does not open |
-| **Send to PrusaSlicer** (PrusaSlicer layout) | Not for this slicer | Not for this slicer | Opens with each body on its extruder (PrusaSlicer 2.6; SuperSlicer reads the same layout but is not tested) |
-| **Export only** (Advanced) | Opens with slots | Opens with slots | With PrusaSlicer picked: as Send to PrusaSlicer |
+| **Send to PrusaSlicer** (prepared PrusaSlicer project) | Not for this slicer | Not for this slicer | PrusaSlicer 2.9.7: printer, print and filament settings and each body on its tool, checked with its command line (opening in the app not yet checked) |
+| **Send to PrusaSlicer** without Prepare, or SuperSlicer (PrusaSlicer layout) | Not for this slicer | Not for this slicer | Opens with each body on its extruder (PrusaSlicer 2.6 and 2.9.7; SuperSlicer reads the same layout but is not tested) |
+| **Export only** (Advanced) | Opens with slots | Opens with slots | With PrusaSlicer picked: the PrusaSlicer layout |
 
 Bodies that touch open in PrusaSlicer as one object with one part per body,
-so they keep their places. PrusaSlicer has no print estimate in Filamatch
-yet.
+so they keep their places.
 
 ## Troubleshooting
 

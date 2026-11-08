@@ -268,7 +268,7 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
 
     def slicer_kind(path):
         name = Path(str(path or "")).name.lower()
-        return "orca" if "orca" in name else "bambu" if "bambu" in name else ""
+        return "orca" if "orca" in name else "bambu" if "bambu" in name else "prusa" if "prusaslicer" in name else ""
 
     slicer_profiles.slicer_kind = slicer_kind
     slicer_profiles.orca_supports_printer = lambda name: "H3C" not in str(name)
@@ -357,7 +357,7 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
 
     _install_module("slicer_profiles", slicer_profiles)
     prusa_project = types.ModuleType("prusa_project")
-    prusa_project.is_prusa_family = lambda path: "prusa" in str(path).lower()
+    prusa_project.is_prusa_family = lambda path: "prusa" in str(path).lower() or "superslicer" in str(path).lower()
     prusa_project.to_prusa_layout = lambda path, output=None: (
         state["prusa_layouts"].append(Path(path)) or {"objects": 1, "parts": 2, "assembled": True}
     )
@@ -634,12 +634,14 @@ def main() -> int:
     # --- the chosen slicer: OrcaSlicer prepares, the chosen app opens -------
     apps = Path(tempfile.mkdtemp(prefix="filamatch_apps_"))
     bambu_app, prusa_app, orca_app = apps / "BambuStudio", apps / "PrusaSlicer", apps / "OrcaSlicer"
+    super_app = apps / "SuperSlicer"
     bambu_app.write_text("fake Bambu Studio")
     prusa_app.write_text("fake PrusaSlicer")
     orca_app.write_text("fake OrcaSlicer")
+    super_app.write_text("fake SuperSlicer")
 
     def send_to(app: Path, vendor: str = "bambu_local",
-                printer: str = "Bambu Lab X1 Carbon 0.4 nozzle") -> Dict[str, Any]:
+                printer: str = "Bambu Lab X1 Carbon 0.4 nozzle", prepare: bool = True) -> Dict[str, Any]:
         palette.sent.clear()
         bridge.dispatch(
             "export_3mf",
@@ -648,7 +650,7 @@ def main() -> int:
                     "output_path": str(prepared_path),
                     "orca": {"enabled": False, "executable": str(app)},
                     "target": {
-                        "prepare": True,
+                        "prepare": prepare,
                         "slicer_path": str(app),
                         "vendor": vendor,
                         "printer": printer,
@@ -677,20 +679,29 @@ def main() -> int:
         and (other_printer.get("settings") or {}).get("slicer_path") == str(bambu_app),
         "Send to Bambu with another printer: OrcaSlicer prepares and Bambu Studio's words are written",
     )
-    prepare_count = len(state["prepare_calls"])
-    prusa_result = send_to(prusa_app)
+    prusa_result = send_to(prusa_app, vendor="prusa:PrusaResearch", printer="Original Prusa XL - 5T Input Shaper 0.4 nozzle")
     check(
         prusa_result.get("ok") is True
-        and prusa_result.get("prepared") is False
+        and prusa_result.get("prepared") is True
+        and state["prepare_calls"][-1]["slicer_exe"] == str(prusa_app)
+        and state["prusa_layouts"] == [],
+        "Send to PrusaSlicer: PrusaSlicer prepares its own project (printer, print and filament settings)",
+    )
+    prepare_count = len(state["prepare_calls"])
+    plain_prusa = send_to(prusa_app, vendor="prusa:PrusaResearch", prepare=False)
+    super_result = send_to(super_app)
+    check(
+        plain_prusa.get("ok") is True and plain_prusa.get("prepared") is False
+        and super_result.get("ok") is True and super_result.get("prepared") is False
         and len(state["prepare_calls"]) == prepare_count
         and prepared_path.read_text() == "exported 3MF"
         and not prepared_path.with_name(prepared_path.stem + ".base.3mf").exists(),
-        "Send to PrusaSlicer: the plain 3MF, because PrusaSlicer cannot open prepared projects",
+        "PrusaSlicer without preparing, and SuperSlicer (cannot prepare): the plain 3MF",
     )
     check(
-        state["prusa_layouts"] == [prepared_path]
+        state["prusa_layouts"] == [prepared_path, prepared_path]
         and any("PrusaSlicer layout: 1 object(s) with 2 part(s)" in str(line) for line in palette.sent),
-        "Send to PrusaSlicer writes the PrusaSlicer layout, so each body keeps its extruder",
+        "the plain 3MF for PrusaSlicer and SuperSlicer is in their layout, so each body keeps its extruder",
     )
     fake_slicers = sys.modules["{}.slicer_profiles".format(LIB)]
     installed = fake_slicers.find_installed_slicers
