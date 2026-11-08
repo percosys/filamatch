@@ -21,7 +21,8 @@
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
 > **New in 0.6:** printers with several nozzles (Bambu Lab H2C, H3C, X2D,
-> Prusa XL, CORE One INDX) and **Send to PrusaSlicer** with each body on its
+> Prusa XL, CORE One INDX, and in 0.6.1 the Snapmaker U1) and **Send to
+> PrusaSlicer** with each body on its
 > extruder. These are checked in the slicers, not yet on the printers: see
 > [Printers](#printers) for what is tested.
 >
@@ -133,6 +134,7 @@ the printer.
 | Bambu Lab X2D | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side; the estimate works | Slicing in the app, loaded spools, printing; the "(L)" / "(R)" labels may be swapped (Bambu Studio says "Main" and "Auxiliary") |
 | Prusa XL 5T | Send to Orca prepares the project with Prusa's filament presets; OrcaSlicer 2.5 opens and slices it; the estimate matches | Loaded spools (not read from Prusa printers), printing |
 | Prusa CORE One INDX 4T / 8T, MMU3 | Send to Orca prepares the project and estimates it (OrcaSlicer 2.5 command line) | Opening in the app; the INDX 8T estimate often fails because OrcaSlicer crashes; printing |
+| Snapmaker U1 (0.4 nozzles, and 0.4 + 0.6 nozzles) | Send to Orca prepares the project with each body on its tool and estimates it (OrcaSlicer 2.5 command line). The 0.4 set gets Snapmaker's filament presets; the mixed set gets OrcaSlicer's generic ones, because Snapmaker's presets list only the 0.4 U1 | Opening in the app, the Snapmaker Orca app, loaded spools, printing |
 | Any printer in PrusaSlicer | Send to PrusaSlicer keeps each body on its extruder (PrusaSlicer 2.6.0) | PrusaSlicer 2.9, SuperSlicer |
 
 **3. Expected to work, not tested yet:**
@@ -144,9 +146,9 @@ the printer.
   QIDI Studio): these use the same project layout, so the slots should be
   kept. Filamatch does not read the loaded spools of these printers yet.
 
-Other tool changers (Snapmaker U1, Klipper tool changers, IDEX printers)
-get the plain 3MF with each body's filament; Filamatch does nothing
-printer-specific for them yet.
+Other tool changers (Klipper tool changers, IDEX printers) get the plain
+3MF with each body's filament; Filamatch does nothing printer-specific for
+them yet.
 
 The plan for multi-nozzle and tool-changer printers is in
 [docs/design/multi-nozzle.md](docs/design/multi-nozzle.md).

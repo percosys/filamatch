@@ -3362,6 +3362,31 @@ def _find_name_sub_path(
     return sub_path
 
 
+def _fit_bridge_line_width(machine: Mapping[str, Any], process: Dict[str, Any]) -> None:
+    """Keep the bridge line width within the smallest nozzle (mixed nozzle sizes).
+
+    OrcaSlicer 2.5 works out a percentage (its default is 100%) over the
+    largest nozzle but checks it against the smallest one, so it refuses a
+    printer with mixed nozzles: the Snapmaker U1 (0.4+0.6 nozzle) preset
+    stops with "Bridge line width must not exceed nozzle diameter".  The width
+    is then set to the smallest nozzle, in mm.
+    """
+    try:
+        diameters = [float(value) for value in machine.get("nozzle_diameter") or []]
+    except (TypeError, ValueError):
+        return
+    if len(set(diameters)) < 2:
+        return
+    value = str(process.get("bridge_line_width", "100%")).strip()
+    try:
+        width = max(diameters) * float(value[:-1]) / 100.0 if value.endswith("%") else float(value)
+    except ValueError:
+        return
+    if width > min(diameters):
+        process["bridge_line_width"] = "{:g}".format(min(diameters))
+        logger.info("Bridge line width %s -> %g mm (nozzles %s).", value, min(diameters), diameters)
+
+
 def _prepare_remote_profiles(
     target: ProfileTarget, slicer_exe: Any
 ) -> Tuple[Path, Path]:
@@ -3388,6 +3413,7 @@ def _prepare_remote_profiles(
     process_flattened = _flatten_remote_preset_at(
         vendor, process_sub_path, ref, name_map, network=network
     )
+    _fit_bridge_line_width(machine_flattened, process_flattened)
     output_dir = _cache_root() / "flattened" / ref / _safe_filename(vendor)
     machine_path = _write_flattened_profile(
         output_dir, target.printer_name, machine_flattened
@@ -4625,6 +4651,20 @@ def _check_prepare_remote(environment: _TestEnvironment) -> None:
     )
 
 
+def _check_bridge_line_width() -> None:
+    """Mixed nozzles: the bridge width stays within the smallest nozzle."""
+    mixed = {"nozzle_diameter": ["0.4", "0.4", "0.6", "0.6"]}
+    default = {"line_width": "105%"}
+    _fit_bridge_line_width(mixed, default)
+    _expect(default["bridge_line_width"] == "0.4", "OrcaSlicer's 100% default becomes 0.4 mm: {}".format(default))
+    narrow = {"bridge_line_width": "60%"}
+    _fit_bridge_line_width(mixed, narrow)
+    _expect(narrow["bridge_line_width"] == "60%", "60% of 0.6 mm (0.36) already fits: {}".format(narrow))
+    same = {}
+    _fit_bridge_line_width({"nozzle_diameter": ["0.4", "0.4"]}, same)
+    _expect(same == {}, "equal nozzles keep the slicer's default")
+
+
 def _check_remote_filament_presets(environment: _TestEnvironment) -> None:
     """A printer from the online profiles gets its vendor's own filament presets."""
     target = ProfileTarget(
@@ -5760,6 +5800,7 @@ def _selftest() -> int:
         ("a preset's exact filament type (ABS-GF) is kept", _check_filament_types),
         ("a copy is sliced for the print time and grams", _check_estimate_print),
         ("online printers get their vendor's own filament presets", _check_remote_filament_presets),
+        ("mixed nozzle sizes keep the bridge width within the smallest", lambda environment: _check_bridge_line_width()),
         ("projects sent to Bambu Studio use Bambu Studio's words", _check_bambu_studio_words),
         ("Bambu Studio prepares projects by itself", _check_prepare_bambu_studio),
         ("listings fail fast offline and cache missing files/tags", _check_network_failfast),

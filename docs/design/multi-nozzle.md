@@ -100,6 +100,14 @@ is the second step: feed slot -> nozzle -> what to write for the slicer.
 - The firmware refills from another tool with the same colour, like a
   Bambu auto refill.
 
+OrcaSlicer 2.5 has U1 presets for 0.2, 0.4, 0.6 and 0.8 nozzles and a
+mixed "0.4+0.6 nozzle" set (tools 1-2: 0.4, tools 3-4: 0.6). Its default
+bridge width (100%) is worked out from the largest nozzle but checked
+against the smallest, so OrcaSlicer refuses every mixed-nozzle printer;
+Filamatch sets the bridge width to the smallest nozzle
+(`_fit_bridge_line_width`). Snapmaker's U1 filament presets list only the
+0.4 U1. Built: Send to Orca for the U1 (prepare and estimate).
+
 **B. IDEX**: copy and mirror modes print the same filament on both heads.
 The slicer sees one tool; the grams double.
 

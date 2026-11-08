@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.1 – Snapmaker U1
+
+**New**
+- Snapmaker U1 through OrcaSlicer: Send to Orca prepares the project with
+  each body on its tool, and the estimate works, for the 0.4 nozzle set and
+  the mixed 0.4 + 0.6 set. The 0.4 set gets Snapmaker's own filament
+  presets; the mixed set gets OrcaSlicer's generic presets, because
+  Snapmaker's presets list only the 0.4 U1.
+
+**Fixed**
+- Printers with mixed nozzle sizes: OrcaSlicer 2.5 refused them ("Bridge
+  line width must not exceed nozzle diameter"), because it works out its
+  default bridge width from the largest nozzle but checks it against the
+  smallest. Filamatch sets the bridge width to the smallest nozzle.
+
+**What is tested:** checked with OrcaSlicer 2.5's command line only (the
+four-cube test file: prepare, then slice for the estimate). Not tested:
+opening the U1 projects in the OrcaSlicer app, the Snapmaker Orca app,
+reading the U1's loaded spools, and printing.
+
+**Nothing else changed:** the same eleven printer and slicer cases as in
+0.6.0 (Bambu Lab H2D, X1 Carbon, H2C, H3C and X2D in Bambu Studio 2.9.1 and
+OrcaSlicer 2.5; Prusa XL 5T, CORE One INDX 4T, MK4 MMU3 and the U1 with
+0.4 nozzles in OrcaSlicer 2.5) give the same project settings and the same
+estimates with 0.6.0 and 0.6.1. In both versions OrcaSlicer refuses the
+estimate for PLA with PETG on one nozzle (X1 Carbon, MK4 MMU3), as it
+should. Only the mixed-nozzle U1 is new.
+
 ## 0.6.0 – multi-nozzle printers and PrusaSlicer
 
 **New**
