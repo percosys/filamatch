@@ -1,5 +1,72 @@
 # Changelog
 
+## 0.6.0 – multi-nozzle printers and PrusaSlicer
+
+**New**
+- Bambu Lab H2C, H3C and X2D: Send to Bambu prepares the project, and the
+  print time and filament estimate works. The estimate copy counts every
+  hotend of a nozzle rack (H2C: 1 + 6, H3C: 9). On the H2C and X2D each
+  filament goes to the side its AMS feeds; on the H3C the slicer chooses
+  the hotend.
+- Prusa XL 5T, CORE One INDX (4T, 8T) and CORE One MMU3 through
+  OrcaSlicer: each body stays on its tool, with Prusa's own filament
+  presets, and the estimate works.
+- **Send to PrusaSlicer keeps the slots.** PrusaSlicer and SuperSlicer get
+  the file in their own layout, with each body on its extruder; bodies that
+  touch become one object with one part per body. Your PrusaSlicer printer
+  and filament settings are not changed.
+- A filament is not pinned to a nozzle that cannot print it (the H2C's left
+  nozzle prints no TPU); the slicer then chooses.
+- OrcaSlicer with a Bambu Lab H3C is refused with a reason: OrcaSlicer 2.5
+  cannot slice the H3C. Choose Bambu Studio 2.9.1 or newer.
+- README: a list of tested printers, and a
+  [printer support form](https://github.com/percosys/filamatch/issues/new?template=printer-support.yml)
+  for owners of other printers. The plan for these printers is in
+  [docs/design/multi-nozzle.md](https://github.com/percosys/filamatch/blob/main/docs/design/multi-nozzle.md).
+
+**Fixed**
+- The prime tower is placed with its brim and rib walls counted, and a
+  turned tower (Prusa XL presets) is placed the right way. Before, Bambu
+  Studio refused the X2D ("G-code outside of the printable area") and
+  OrcaSlicer refused the Prusa XL ("Prime tower is partially outside").
+- Printers from OrcaSlicer's online profiles (Prusa and the other vendors)
+  get the vendor's own filament presets, for example "Prusament PLA @XL" or
+  "Generic PETG @Prusa CORE One INDX". Before, they got Bambu Studio's
+  presets, and OrcaSlicer showed other presets instead ("Voron Generic ABS"
+  on a Prusa XL). Another brand's filament gets the vendor's Generic preset.
+- When the print estimate fails, the palette shows the slicer's own reason,
+  for example "Selected nozzle temperatures are incompatible" (PLA and PETG
+  on one MMU3 nozzle). A slicer crash is retried twice.
+
+**What is tested in this release**
+
+None of the new printers was tested on a real printer. Everything below
+was checked on macOS with a test file of four cubes, one filament each.
+
+| Printer or slicer | Checked in the slicer app | Checked with the slicer's command line |
+|---|---|---|
+| Bambu Lab H2C | Bambu Studio 2.9.1: opens with Filamatch's nozzle choice ("Custom" grouping), slices (4 h 48 min, 79.5 g) | Prepare and estimate in Bambu Studio 2.9.1 and OrcaSlicer 2.5 |
+| Bambu Lab H3C | Bambu Studio 2.9.1: opens with its 9 nozzles, slices (1 h 10 min, 29.5 g) | Prepare and estimate in Bambu Studio 2.9.1; OrcaSlicer is refused |
+| Bambu Lab X2D | Bambu Studio 2.9.1: opens with Filamatch's nozzle choice; not sliced in the app | Prepare and estimate in Bambu Studio 2.9.1 and OrcaSlicer 2.5 |
+| Prusa XL 5T | OrcaSlicer 2.5: opens with Prusament presets, slices (1 h 41 min, 35.1 g, same as the estimate) | Prepare and estimate in OrcaSlicer 2.5 |
+| Prusa CORE One INDX 4T / 8T | Not opened in the app | Prepare and estimate in OrcaSlicer 2.5; the 8T estimate often fails because OrcaSlicer crashes |
+| Prusa CORE One MMU3 | Not opened in the app | Prepare and estimate in OrcaSlicer 2.5 with PLA only; PLA with PETG is refused by the slicer, as it should be |
+| PrusaSlicer layout | PrusaSlicer 2.6.0: one object with its four parts in place | PrusaSlicer 2.6.0 slices with tools T0 to T3 |
+
+Not tested yet:
+- Reading the loaded spools of the H2C, H3C and X2D (LAN-only mode or
+  Bambuddy), printing on any of the new printers, and the spool check on
+  them.
+- The X2D's slot labels: Bambu Studio calls its nozzles "Main" and
+  "Auxiliary"; the palette may show "(L)" and "(R)" the wrong way round.
+  The nozzle choice itself follows the printer's own extruder numbers.
+- PrusaSlicer 2.9 and SuperSlicer; filament presets of online vendors other
+  than Prusa; the new features on Windows.
+
+Unchanged and still validated on real printers: the Bambu Lab H2D (full
+flow) and the X1 Carbon (loaded spools). Their prepared projects and
+presets are the same as in 0.5.1.
+
 ## 0.5.1 – print estimate and spool check
 
 **New**

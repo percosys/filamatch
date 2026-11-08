@@ -22,7 +22,7 @@ LIB_DIR = REPO_ROOT / "Filamatch" / "lib"
 SELF_TEST_MODULES = (
     "catalog", "importer", "exporter", "diagnostics", "materials_workflow", "favorites",
     "slicer_profiles", "openfilament", "custom_library", "printer_model", "secret_store",
-    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers",
+    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project",
 )
 
 

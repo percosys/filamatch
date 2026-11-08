@@ -1927,6 +1927,11 @@ def _resolve_profile_target(data: Mapping[str, Any]) -> Any:
             "Printer preset {!r} was not found for vendor {!r}. Refresh the profile list "
             "and choose the printer again.".format(printer, vendor)
         )
+    if slicer_profiles.slicer_kind(slicer_exe) == "orca" and not slicer_profiles.orca_supports_printer(machine["name"]):
+        raise RuntimeError(
+            "OrcaSlicer cannot slice the {} yet. Choose Bambu Studio 2.9.1 or newer in "
+            "Settings > Send to, or turn off Advanced > Prepare to send a plain 3MF.".format(machine["name"])
+        )
     processes = slicer_profiles.list_processes(slicer_exe, vendor, machine["name"])
     proc = next((item for item in processes if item.get("name") == process), None)
     if proc is None:
@@ -1970,6 +1975,29 @@ def _pin_slot_nozzles(output_path: Path, nozzles: Sequence[Optional[str]]) -> No
     except Exception as exc:
         LOGGER.exception("Could not pin the filaments to their nozzles")
         log_message("The slicer picks the nozzles itself: {}".format(_error_text(exc)))
+
+
+def _is_prusa_family(path: str) -> bool:
+    """True for PrusaSlicer and SuperSlicer, which read their own 3MF layout."""
+    from . import prusa_project
+
+    return prusa_project.is_prusa_family(path)
+
+
+def _write_prusa_layout(output_path: Path) -> None:
+    """Rewrite the plain 3MF so PrusaSlicer keeps each body's extruder (never fails the export)."""
+    from . import prusa_project
+
+    try:
+        result = prusa_project.to_prusa_layout(output_path)
+        log_message(
+            "PrusaSlicer layout: {} object(s) with {} part(s), each on its own extruder".format(
+                result["objects"], result["parts"]
+            )
+        )
+    except Exception as exc:
+        LOGGER.exception("Could not write the PrusaSlicer layout")
+        log_message("PrusaSlicer gets the plain 3MF; its slots are not kept: {}".format(_error_text(exc)))
 
 
 def _use_bambu_studio_words(output_path: Path, target: Any) -> None:
@@ -2390,6 +2418,9 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
         )
     except Exception:
         LOGGER.exception("Unexpected slot-manifest failure during export")
+
+    if not outcome["prepared"] and _is_prusa_family(open_app):
+        _write_prusa_layout(output)
 
     if _wants_slicer_launch(orca, settings):
         executable = str(

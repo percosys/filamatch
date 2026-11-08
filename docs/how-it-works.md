@@ -89,6 +89,10 @@ orca-slicer --load-settings "<printer>;<process>" --load-filaments "<f1>;<f2>;â€
 - **Presets.** Bambu Studio's presets hold only what differs from their
   parents. Filamatch merges each one with its parents into a stand-alone
   copy, because neither command line reads Bambu Studio's parents reliably.
+  A printer from OrcaSlicer's online profiles (Prusa, Creality, ...) gets
+  that vendor's own filament presets ("Prusament PLA @XL"; another brand's
+  filament gets the vendor's Generic preset), downloaded once and merged the
+  same way; Bambu Lab printers use Bambu Studio's presets.
 - **Colours and purge.** Every filament slot gets its own preset copy with
   the filament's colour, so the slicer works out purge volumes that fit
   the real colours.
@@ -108,6 +112,25 @@ orca-slicer --load-settings "<printer>;<process>" --load-filaments "<f1>;<f2>;â€
 
 If preparation fails, the tagged 3MF without printer settings is kept and
 the palette shows the slicer's log.
+
+**Printers with more than one nozzle.** The estimate copy names every
+nozzle: one `extruder_nozzle_stats` entry per extruder, with the number of
+hotends from `extruder_max_nozzle_count` (H2C `["Standard#1","Standard#6"]`,
+H3C `["Standard#9"]`). The nozzle side follows `physical_extruder_map`, and
+a filament is not pinned to an extruder whose `unprintable_filament_types`
+holds its type. The prime tower is placed with its brim and rib walls and
+its rotation (Prusa XL presets turn it 90 degrees). The plan for these
+printers is in [design/multi-nozzle.md](design/multi-nozzle.md).
+
+**PrusaSlicer layout.** PrusaSlicer does not read
+`Metadata/model_settings.config`. For PrusaSlicer and SuperSlicer,
+Filamatch rewrites the plain 3MF in their layout (`lib/prusa_project.py`):
+one mesh per object, each body a part (a triangle range) with its 1-based
+`extruder` in `Metadata/Slic3r_PE_model.config`, and
+`slic3rpe:Version3mf` = 1. Bodies that touch become the parts of one
+object. The file gets no `Metadata/Slic3r_PE.config`, because PrusaSlicer
+resets every key a partial config leaves out; the Bambu Studio / OrcaSlicer
+settings are removed.
 
 ## Filaments in Fusion
 

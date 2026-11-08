@@ -51,7 +51,7 @@ import zipfile
 from collections.abc import Mapping as MappingABC
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .. import config
 
@@ -82,6 +82,8 @@ TOUCH_TOLERANCE_MM = 0.05
 #: Distance (mm) kept between the prime tower and the edge of the area every
 #: nozzle can reach (covers the tower brim).
 WIPE_TOWER_MARGIN_MM = 5.0
+#: Extra runs of the estimate slice when the slicer crashes (not when it refuses).
+ESTIMATE_CRASH_RETRIES = 2
 
 #: Orca/Bambu build plate names and the per-filament temperature key of each
 #: (a 0 temperature means the filament must not be printed on that plate).
@@ -196,6 +198,9 @@ _PRINTER_TOKENS: Tuple[str, ...] = (
     "H2D",
     "H2S",
     "H2C",
+    "H3C",
+    "X2D",
+    "XL",
     "P2S",
     "A2L",
     "MK4",
@@ -1927,6 +1932,15 @@ def _has_whole_token(upper_text: str, token: str) -> bool:
     return re.search(pattern, upper_text) is not None
 
 
+#: Printers OrcaSlicer cannot slice yet (OrcaSlicer 2.5; Orca issue #17218).
+ORCA_UNSUPPORTED_PRINTERS: Tuple[str, ...] = ("H3C",)
+
+
+def orca_supports_printer(printer_name: str) -> bool:
+    """False for a printer OrcaSlicer cannot open or slice (Bambu Lab H3C)."""
+    return _printer_token(printer_name) not in ORCA_UNSUPPORTED_PRINTERS
+
+
 def _printer_token(printer_name: str) -> str:
     """Return a coarse printer-family token for preset compatibility filtering.
 
@@ -2024,6 +2038,11 @@ def _pick_filament_candidate(
             words = [word for word in preferred_core.replace("@", " ").split() if word]
             if words and all(word in text for word in words):
                 score += 180
+        if score == 0 and "GENERIC" in text:
+            # Another brand's filament gets the vendor's generic preset, not one of
+            # its own brand (a Bambu PLA on a Prusa printer: "Generic PLA", not
+            # "Prusament PLA").  A Bambu "Basic" preset still wins (+5 below).
+            score += 3
         if target_nozzle:
             score += 80 if candidate_nozzle_text == target_nozzle else 10
         if listed or (printer_token and candidate_printer_token == printer_token):
@@ -2138,17 +2157,90 @@ def _preferred_preset_for_material(material: Any) -> str:
     return ""
 
 
-def _choose_filament_paths(materials: Sequence[Any], printer_name: str) -> List[str]:
+def _remote_filament_candidates(
+    target: "ProfileTarget", slicer_exe: Any, wanted_types: Sequence[str]
+) -> List[Dict[str, Any]]:
+    """The online vendor's own filament presets that may fit the target printer.
+
+    For a printer from OrcaSlicer's online profiles (a Prusa XL, for example)
+    Bambu Studio's filament presets carry names OrcaSlicer does not know for
+    that printer, so OrcaSlicer shows other presets ("Voron Generic ABS").
+    This lists the vendor's presets whose ``@`` suffix fits the printer name
+    ("Generic PLA @Prusa XL", "Prusament PLA @XL", "Generic PLA @Prusa") and
+    the shared library's "Generic <type> @System", for the wanted types only,
+    and flattens each into the cache (downloaded once, then cached).  Network
+    failures give fewer candidates, never an error.
+    """
+    vendor = _require_text(target.vendor, "remote vendor id")
+    network = _NetworkSession()
+    try:
+        manifest, ref = _load_vendor_manifest(vendor, slicer_exe, network=network)
+        name_map = _build_remote_name_map(vendor, slicer_exe, ref, network=network)
+    except SlicerProfilesError:
+        logger.warning("No online filament presets for %s; using the installed ones.", vendor, exc_info=True)
+        return []
+    printer_words = set(re.findall(r"[A-Z0-9.+]+", str(target.printer_name).upper()))
+    types = {str(item).strip().upper() for item in wanted_types if str(item).strip()}
+    tokens = types | {item.split("-")[0] for item in types}
+    names: List[str] = []
+    for entry in _manifest_entries(manifest, "filament_list"):
+        name = str(entry.get("name") or "").strip()
+        if "@" not in name:
+            continue
+        product, suffix = name.rsplit("@", 1)
+        suffix_words = set(re.findall(r"[A-Z0-9.+]+", suffix.upper()))
+        if not suffix_words or "BASE" in suffix_words or not suffix_words <= printer_words:
+            continue
+        if set(re.findall(r"[A-Z0-9]+", product.upper())) & tokens:
+            names.append(name)
+    names += [
+        "Generic {} @System".format(token)
+        for token in sorted(tokens)
+        if "Generic {} @System".format(token) in name_map
+    ]
+    directory = _cache_root() / "flattened" / ref / _safe_filename(vendor) / "filament"
+    candidates: List[Dict[str, Any]] = []
+    for name in names:
+        sub_path = name_map.get(name)
+        if not sub_path:
+            continue
+        try:
+            data = _flatten_remote_preset_at(vendor, sub_path, ref, name_map, network=network)
+        except SlicerProfilesError:
+            logger.debug("Skipping online filament preset %r.", name, exc_info=True)
+            continue
+        if str(data.get("instantiation", "true")).strip().lower() == "false":
+            continue
+        data["name"] = name
+        preset_path = _write_flattened_profile(directory, name, data)
+        candidates.append(
+            {
+                "path": str(preset_path),
+                "name": name,
+                "file_name": preset_path.name,
+                "types": _preset_type_tokens(data),
+                "compatible_printers": _compatible_printer_names(data.get("compatible_printers")),
+            }
+        )
+    logger.info("%d online %s filament preset(s) may fit %r.", len(candidates), vendor, target.printer_name)
+    return candidates
+
+
+def _choose_filament_paths(
+    materials: Sequence[Any], printer_name: str, preferred_candidates: Sequence[Dict[str, Any]] = ()
+) -> List[str]:
     """Choose one filament preset file per material for ``--load-filaments``.
 
-    Local Bambu Studio filament presets are preferred (matched by detected
-    filament type and printer token); imported filament presets are the fallback.
-    When a type has no exact match, the first chosen file is reused (passing the
-    same file for multiple slots is verified to work).
+    ``preferred_candidates`` (the online vendor's own presets, see
+    :func:`_remote_filament_candidates`) come first; then local Bambu Studio
+    filament presets (matched by detected filament type and printer token);
+    imported filament presets are the fallback.  When a type has no exact
+    match, the first chosen file is reused (passing the same file for multiple
+    slots is verified to work).
     """
     bambu_candidates = _local_filament_candidates(_bambu_system_dir())
     imported_candidates = _imported_filament_candidates()
-    if not bambu_candidates and not imported_candidates:
+    if not preferred_candidates and not bambu_candidates and not imported_candidates:
         raise SlicerProfilesError(
             "No filament profiles are available. Install Bambu Studio (its system "
             "filament presets are used) or import filament JSON profiles with the "
@@ -2160,10 +2252,10 @@ def _choose_filament_paths(materials: Sequence[Any], printer_name: str) -> List[
         filament_type = _material_field(material, "filament_type", "PLA")
         wanted_types.append(str(filament_type or "PLA").strip().upper())
         preferred = _preferred_preset_for_material(material)
-        chosen = _pick_filament_candidate(
-            bambu_candidates, filament_type, printer_name, preferred
-        ) or _pick_filament_candidate(
-            imported_candidates, filament_type, printer_name, preferred
+        chosen = (
+            _pick_filament_candidate(list(preferred_candidates), filament_type, printer_name, preferred)
+            or _pick_filament_candidate(bambu_candidates, filament_type, printer_name, preferred)
+            or _pick_filament_candidate(imported_candidates, filament_type, printer_name, preferred)
         )
         selected.append(chosen)
     fallback = next((path for path in selected if path is not None), None)
@@ -2696,6 +2788,30 @@ def _area_bounds(polygon: Any) -> Optional[Tuple[float, float, float, float]]:
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def _wipe_tower_footprint(settings: Mapping[str, Any]) -> float:
+    """Return the prime tower's size on the bed, in mm.
+
+    The tower is wider than ``prime_tower_width``: its brim (``-1`` = automatic,
+    about 3 mm) and Bambu Studio's rib walls add to it.  A Bambu Lab X2D tower
+    of width 35 covered 47 x 46 mm with four filaments; with only the width
+    counted it was placed past the bed and Bambu Studio refused to slice.
+    """
+
+    def number(key: str, default: float) -> float:
+        try:
+            value = float(settings.get(key, default))
+        except (TypeError, ValueError):
+            return default
+        return value
+
+    width = number("prime_tower_width", 60.0) or 60.0
+    brim = number("prime_tower_brim_width", -1.0)
+    footprint = width + 2 * (brim if brim >= 0 else 3.0)
+    if str(settings.get("prime_tower_rib_wall", "0")).strip() in ("1", "true"):
+        footprint += number("prime_tower_rib_width", 8.0)
+    return footprint
+
+
 def _fit_wipe_tower(settings: Dict[str, Any]) -> None:
     """Move the prime tower inside the area every nozzle can reach.
 
@@ -2713,14 +2829,22 @@ def _fit_wipe_tower(settings: Dict[str, Any]) -> None:
     bounds = [bound for bound in bounds if bound is not None]
     if not bounds:
         return
-    x0 = max(bound[0] for bound in bounds) + WIPE_TOWER_MARGIN_MM
-    y0 = max(bound[1] for bound in bounds) + WIPE_TOWER_MARGIN_MM
+    size = _wipe_tower_footprint(settings)
+    # The tower grows from its (x, y) corner; a rotated tower grows the other
+    # way (Prusa XL presets: 90 degrees, so it grows to the left of x).
     try:
-        size = float(settings.get("prime_tower_width") or 60)
+        angle = int(round(float(settings.get("wipe_tower_rotation_angle") or 0))) % 360
     except (TypeError, ValueError):
-        size = 60.0
-    x1 = min(bound[2] for bound in bounds) - WIPE_TOWER_MARGIN_MM - size
-    y1 = min(bound[3] for bound in bounds) - WIPE_TOWER_MARGIN_MM - size
+        angle = 0
+    grow_x, grow_y = {0: (1, 1), 90: (-1, 1), 180: (-1, -1), 270: (1, -1)}.get(angle, (0, 0))
+
+    def limits(low: float, high: float, grow: int) -> Tuple[float, float]:
+        low, high = low + WIPE_TOWER_MARGIN_MM, high - WIPE_TOWER_MARGIN_MM
+        # grow 0 (any other angle): keep a tower size free on both sides.
+        return (low + (size if grow <= 0 else 0.0), high - (size if grow >= 0 else 0.0))
+
+    x0, x1 = limits(max(bound[0] for bound in bounds), min(bound[2] for bound in bounds), grow_x)
+    y0, y1 = limits(max(bound[1] for bound in bounds), min(bound[3] for bound in bounds), grow_y)
     if x1 < x0 or y1 < y0:
         return
     for key, low, high in (("wipe_tower_x", x0, x1), ("wipe_tower_y", y0, y1)):
@@ -2819,14 +2943,62 @@ def use_bambu_studio_words(project_3mf: Path, process_path: Any = None) -> Dict[
     return changed
 
 
+def _cli_error_line(output: str) -> str:
+    """The slicer's own reason for a failed slice, from its command-line output.
+
+    OrcaSlicer prints the reason on the line before "run found error", for
+    example "Selected nozzle temperatures are incompatible. ..." (PLA and
+    PETG on one MMU3 nozzle).  Log lines ("[2026-...] [error] ...") are
+    skipped.  Empty when there is no such line.
+    """
+    lines = [line.strip() for line in str(output or "").splitlines()]
+    for index, line in enumerate(lines):
+        if line.lower().startswith("run found error"):
+            # The reason goes to stderr, which can come after stdout's "run found error".
+            reasons = [item for item in reversed(lines[:index]) if item and not item.startswith("[")]
+            reasons += [item for item in lines[index + 1:] if item and not item.startswith("[")]
+            return reasons[0][:300] if reasons else ""
+    return ""
+
+
+def _nozzle_stats(settings: Mapping[str, Any]) -> List[str]:
+    """Return ``extruder_nozzle_stats`` for a printer with more than one nozzle.
+
+    One entry per extruder, ``"<flow type>#<nozzle count>"``: the flow type
+    from ``nozzle_volume_type`` and the count from ``extruder_max_nozzle_count``
+    (a nozzle rack).  Bambu Lab H2D ``["Standard#1", "High Flow#1"]``, H2C
+    ``["Standard#1", "Standard#6"]``, H3C ``["Standard#9"]``.  OrcaSlicer stops
+    when an entry has no nozzle of its extruder's flow type, so the type is
+    always the extruder's own.  Empty for a one-nozzle printer or when the
+    flow types do not match the extruders.
+    """
+    flow_types = settings.get("nozzle_volume_type")
+    diameters = settings.get("nozzle_diameter")
+    if not isinstance(diameters, list) or not isinstance(flow_types, list) or len(flow_types) != len(diameters):
+        return []
+    counts = settings.get("extruder_max_nozzle_count")
+    counts = counts if isinstance(counts, list) else []
+
+    def count(index: int) -> int:
+        try:
+            return max(1, int(str(counts[index]).strip()))
+        except (IndexError, ValueError):
+            return 1
+
+    stats = ["{}#{}".format(flow, count(index)) for index, flow in enumerate(flow_types)]
+    if sum(count(index) for index in range(len(flow_types))) < 2:
+        return []
+    return stats
+
+
 def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
     """Slice a copy of a prepared project and return its print time and filament.
 
     The copy is sliced by ``slicer_exe`` (the slicer that prepared it) in a
     temporary folder; the project itself is not changed.  On a printer with
-    two nozzles the copy gets ``extruder_nozzle_stats`` (one nozzle of the
-    flow type each), which the slicer otherwise reads from the printer: without
-    it Bambu Studio's command line stops with "No valid nozzle found".
+    more than one nozzle the copy gets ``extruder_nozzle_stats`` (see
+    :func:`_nozzle_stats`), which the slicer otherwise reads from the printer:
+    without it Bambu Studio's command line stops with "No valid nozzle found".
 
     Returns:
         ``{"minutes": int, "grams": float, "filament_grams": [float, ...]}``;
@@ -2843,17 +3015,20 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
         shutil.copy2(str(project_3mf), str(copy))
         with zipfile.ZipFile(str(copy), "r") as archive:
             settings = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
-        flow_types = settings.get("nozzle_volume_type")
-        diameters = settings.get("nozzle_diameter")
-        if (
-            isinstance(diameters, list) and len(diameters) > 1
-            and not settings.get("extruder_nozzle_stats")
-            and isinstance(flow_types, list) and len(flow_types) == len(diameters)
-        ):
-            settings["extruder_nozzle_stats"] = ["{}#1".format(flow) for flow in flow_types]
+        stats = _nozzle_stats(settings)
+        if stats and not settings.get("extruder_nozzle_stats"):
+            settings["extruder_nozzle_stats"] = stats
             rewrite_zip_entries(copy, {_PROJECT_SETTINGS_PART: json.dumps(settings).encode("utf-8")})
         command = [str(slicer_exe), "--slice", "0", "--export-3mf", "sliced.3mf", "--outputdir", str(work), str(copy)]
-        result = _run_command(command, CLI_TIMEOUT_SECONDS)
+        for attempt in range(ESTIMATE_CRASH_RETRIES + 1):
+            # In the temporary folder: OrcaSlicer writes "00000.log" where it runs.
+            result = _run_command(command, CLI_TIMEOUT_SECONDS, cwd=str(work))
+            code = _safe_get(result, "returncode", "a slicer CLI result")
+            if not (isinstance(code, int) and code < 0) or attempt == ESTIMATE_CRASH_RETRIES:
+                break
+            # OrcaSlicer 2.5 crashes now and then on some printers (Prusa CORE One
+            # INDX 8T: about half the runs); the next run usually works.
+            logger.warning("The slicer crashed (signal %s) while estimating; trying again.", -code)
         sliced = work / "sliced.3mf"
         info = ""
         if sliced.is_file():
@@ -2863,10 +3038,16 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
         seconds = re.search(r'key="prediction" value="([\d.]+)"', info)
         grams = re.search(r'key="weight" value="([\d.]+)"', info)
         if _safe_get(result, "returncode", "a slicer CLI result") not in (0, None) or not seconds or not grams:
-            report = _read_json_file(work / "result.json") or {}
+            report = (_read_json_file(work / "result.json") if (work / "result.json").is_file() else None) or {}
             raise SlicerProfilesError(
                 "The slicer gave no print estimate: {}".format(
-                    report.get("error_string") or "exit code {}".format(_safe_get(result, "returncode", "a result"))
+                    report.get("error_string")
+                    or _cli_error_line(_result_text(result))
+                    or (
+                        "the slicer crashed (signal {})".format(-code)
+                        if isinstance(code, int) and code < 0
+                        else "exit code {}".format(code)
+                    )
                 )
             )
         used = {
@@ -2888,6 +3069,52 @@ NOZZLE_RIGHT = "right"
 # ``filament_map`` numbers the nozzles 1 = left, 2 = right (Bambu Studio 2.9.1,
 # Bambu Lab H2D); OrcaSlicer reads the same keys.
 _FILAMENT_MAP_VALUES = {NOZZLE_LEFT: "1", NOZZLE_RIGHT: "2"}
+# The printer's own extruder ids (MQTT: 0 = right/main, 1 = left/deputy).
+# ``physical_extruder_map`` turns a slicer extruder index into one of these.
+_PRINTER_EXTRUDER_IDS = {NOZZLE_RIGHT: "0", NOZZLE_LEFT: "1"}
+
+
+def _filament_map_values(settings: Mapping[str, Any]) -> Dict[str, str]:
+    """``filament_map`` value of each side, from the project's ``physical_extruder_map``.
+
+    Bambu Lab H2D, H2C and X2D map slicer extruder 1 to the printer's left
+    extruder (``["1", "0"]``).  Without the key the H2D numbering is used.
+    """
+    physical = settings.get("physical_extruder_map")
+    if isinstance(physical, list) and len(physical) == 2:
+        ids = [str(value).strip() for value in physical]
+        values = {}
+        for side, printer_id in _PRINTER_EXTRUDER_IDS.items():
+            if printer_id in ids:
+                values[side] = str(ids.index(printer_id) + 1)
+        if len(values) == 2:
+            return values
+    return dict(_FILAMENT_MAP_VALUES)
+
+
+def _unprintable_on_nozzle(settings: Mapping[str, Any], values: Sequence[str]) -> List[str]:
+    """Filaments pinned to an extruder that cannot print their type.
+
+    ``unprintable_filament_types`` has one comma list per extruder; the Bambu
+    Lab H2C, for example, prints no TPU on its left extruder.  Returns lines
+    such as ``"filament 3 (TPU) on extruder 1"``.
+    """
+    unprintable = settings.get("unprintable_filament_types")
+    types = settings.get("filament_type")
+    if not isinstance(unprintable, list) or not isinstance(types, list):
+        return []
+    problems = []
+    for index, value in enumerate(values):
+        try:
+            extruder = int(value) - 1
+        except ValueError:
+            continue
+        if not 0 <= extruder < len(unprintable) or index >= len(types):
+            continue
+        refused = {item.strip().upper() for item in str(unprintable[extruder]).split(",") if item.strip()}
+        if str(types[index]).strip().upper() in refused:
+            problems.append("filament {} ({}) on extruder {}".format(index + 1, types[index], extruder + 1))
+    return problems
 
 
 def apply_nozzle_map(project_3mf: Path, nozzles: Sequence[Optional[str]]) -> bool:
@@ -2902,7 +3129,8 @@ def apply_nozzle_map(project_3mf: Path, nozzles: Sequence[Optional[str]]) -> boo
     Returns:
         True when the map was written (``filament_map_mode`` "Manual" in the
         project and in every plate); False for a one-nozzle printer, a project
-        without settings or a filament whose nozzle is unknown.
+        without settings, a filament whose nozzle is unknown, or a filament
+        whose type that nozzle cannot print (the slicer then decides).
 
     Raises:
         SlicerProfilesError: If the filament count does not match or the
@@ -2928,7 +3156,12 @@ def apply_nozzle_map(project_3mf: Path, nozzles: Sequence[Optional[str]]) -> boo
                 len(colours) if isinstance(colours, list) else 0, len(wanted)
             )
         )
-    values = [_FILAMENT_MAP_VALUES[nozzle] for nozzle in wanted]
+    sides = _filament_map_values(settings)
+    values = [sides[nozzle] for nozzle in wanted]
+    refused = _unprintable_on_nozzle(settings, values)
+    if refused:
+        logger.warning("The printer cannot print %s; the slicer picks the nozzles.", ", ".join(refused))
+        return False
     settings["filament_map"] = values
     settings["filament_map_mode"] = "Manual"
     for plate in model_root.findall("plate"):
@@ -3297,7 +3530,13 @@ def prepare_project(
 
     for_bambu_studio = _slicer_identity(slicer_exe)[1] == "bambu"
     machine_path, process_path = _prepare_profile_paths(target, slicer_exe, for_bambu_studio)
-    filament_paths = _choose_filament_paths(material_list, target.printer_name)
+    online: List[Dict[str, Any]] = []
+    # Bambu Studio's own presets already carry OrcaSlicer's Bambu Lab names.
+    if target.source == "orca_remote" and str(target.vendor).strip().upper() != "BBL":
+        online = _remote_filament_candidates(
+            target, slicer_exe, [_material_field(material, "filament_type", "PLA") for material in material_list]
+        )
+    filament_paths = _choose_filament_paths(material_list, target.printer_name, online)
     filament_identities = _filament_preset_identities(filament_paths)
     filament_paths = _coloured_filament_presets(
         [_standalone_bambu_preset(path, for_bambu_studio) for path in filament_paths],
@@ -3343,7 +3582,9 @@ def prepare_project(
         ] + log_flags + _layout_flags(cli_base)
         logger.info("Running slicer CLI: %s", _command_text(command))
         try:
-            result = _run_command(command, CLI_TIMEOUT_SECONDS)
+            # In the cache folder: OrcaSlicer writes "00000.log" where it runs.
+            _cache_root().mkdir(parents=True, exist_ok=True)
+            result = _run_command(command, CLI_TIMEOUT_SECONDS, cwd=str(_cache_root()))
             if for_bambu_studio:
                 log_path.write_text(_result_text(result), encoding="utf-8")
         except subprocess.TimeoutExpired as exc:
@@ -3821,8 +4062,39 @@ class _TestEnvironment:
                     }
                 ],
                 "process_list": [],
-                "filament_list": [],
+                "filament_list": [
+                    {"name": "Generic PLA @base", "sub_path": "filament/Generic PLA @base.json"},
+                    {"name": "Generic PLA @Prusa MK4", "sub_path": "filament/Generic PLA @Prusa MK4.json"},
+                    {"name": "Generic PLA @Prusa XL", "sub_path": "filament/Generic PLA @Prusa XL.json"},
+                ],
             },
+        )
+        self._add_remote_json(
+            "main",
+            "Prusa/filament/Generic PLA @base.json",
+            {"name": "Generic PLA @base", "type": "filament", "filament_type": ["PLA"],
+             "nozzle_temperature": ["215"], "instantiation": "false"},
+        )
+        for printer in ("MK4", "XL"):
+            self._add_remote_json(
+                "main",
+                "Prusa/filament/Generic PLA @Prusa {}.json".format(printer),
+                {"name": "Generic PLA @Prusa {}".format(printer), "type": "filament",
+                 "inherits": "Generic PLA @base", "instantiation": "true",
+                 "compatible_printers": ["Prusa {} 0.4 nozzle".format(printer)]},
+            )
+        self._add_remote_json(
+            "main",
+            "OrcaFilamentLibrary.json",
+            {"name": "OrcaFilamentLibrary", "filament_list": [
+                {"name": "Generic PETG @System", "sub_path": "filament/Generic PETG @System.json"},
+            ]},
+        )
+        self._add_remote_json(
+            "main",
+            "OrcaFilamentLibrary/filament/Generic PETG @System.json",
+            {"name": "Generic PETG @System", "type": "filament", "filament_type": ["PETG"],
+             "nozzle_temperature": ["240"], "instantiation": "true"},
         )
 
 
@@ -4353,6 +4625,53 @@ def _check_prepare_remote(environment: _TestEnvironment) -> None:
     )
 
 
+def _check_remote_filament_presets(environment: _TestEnvironment) -> None:
+    """A printer from the online profiles gets its vendor's own filament presets."""
+    target = ProfileTarget(
+        vendor="Prusa", printer_name="Prusa MK4 0.4 nozzle", machine_path="", process_name="",
+        process_path="", source="orca_remote",
+    )
+    candidates = _remote_filament_candidates(target, environment.slicer_exe, ["PLA", "PETG"])
+    names = sorted(candidate["name"] for candidate in candidates)
+    _expect(
+        names == ["Generic PETG @System", "Generic PLA @Prusa MK4"],
+        "the MK4's PLA and the library PETG; not the XL's, not a base preset: {}".format(names),
+    )
+    materials = [
+        {"filament_type": "PLA", "display_name": "Prusament - PLA - Galaxy Black"},
+        {"filament_type": "PETG", "display_name": "Prusament - PETG - Orange"},
+    ]
+    paths = _choose_filament_paths(materials, target.printer_name, candidates)
+    chosen = [json.loads(Path(item).read_text(encoding="utf-8")) for item in paths]
+    _expect(
+        [preset["name"] for preset in chosen] == ["Generic PLA @Prusa MK4", "Generic PETG @System"],
+        "each material gets the vendor's preset: {}".format([preset["name"] for preset in chosen]),
+    )
+    brands = [
+        {"name": "Prusament PLA @MK4", "path": "prusament.json", "file_name": "prusament.json", "types": {"PLA"},
+         "compatible_printers": ("prusa mk4 0.4 nozzle",)},
+        {"name": "Generic PLA @Prusa MK4", "path": "generic.json", "file_name": "generic.json", "types": {"PLA"},
+         "compatible_printers": ("prusa mk4 0.4 nozzle",)},
+    ]
+    _expect(
+        _pick_filament_candidate(brands, "PLA", target.printer_name, "Bambu PLA Basic") == "generic.json"
+        and _pick_filament_candidate(brands, "PLA", target.printer_name, "Prusament PLA") == "prusament.json",
+        "another brand's PLA gets the generic preset; Prusament gets Prusament",
+    )
+    _expect(
+        chosen[0].get("nozzle_temperature") == ["215"] and "inherits" not in chosen[0] and chosen[0].get("from") == "user",
+        "the preset is flattened with its parent's values: {}".format(chosen[0]),
+    )
+    unlisted = ProfileTarget(
+        vendor="Prusa", printer_name="Prusa CORE One 0.4 nozzle", machine_path="", process_name="",
+        process_path="", source="orca_remote",
+    )
+    _expect(
+        [candidate["name"] for candidate in _remote_filament_candidates(unlisted, environment.slicer_exe, ["PLA"])] == [],
+        "no preset fits a printer the vendor list does not name",
+    )
+
+
 def _check_prepare_failure(environment: _TestEnvironment) -> None:
     """CLI failures/missing output/empty printer id raise with the log tail."""
     records: Dict[str, Any] = {}
@@ -4530,7 +4849,27 @@ def _check_fit_wipe_tower(environment: _TestEnvironment) -> None:
     }
     _fit_wipe_tower(single)
     _expect(single["wipe_tower_x"] == ["15"], "a single-nozzle x inside the bed must stay")
-    _expect(single["wipe_tower_y"] == ["216"], "y must be pulled back onto the bed: {}".format(single))
+    _expect(single["wipe_tower_y"] == ["210"], "y must be pulled back onto the bed, brim included: {}".format(single))
+    # Bambu Lab X2D: rib walls make the tower bigger; at y 216 Bambu Studio refused to slice.
+    x2d = dict(single, wipe_tower_y=["216"], prime_tower_brim_width="-1", prime_tower_rib_wall="1",
+               prime_tower_rib_width="8", extruder_printable_area=["0x0,256x0,256x256,0x256", "20.5x0,256x0,256x256,20.5x256"])
+    _fit_wipe_tower(x2d)
+    _expect(x2d["wipe_tower_y"] == ["202"] and x2d["wipe_tower_x"] == ["25.5"],
+            "the X2D tower must fit with its rib walls: {}".format(x2d))
+    # Prusa XL: the tower is turned 90 degrees and grows to the left of x; at x 15 OrcaSlicer refused.
+    xl = {"enable_prime_tower": "1", "wipe_tower_x": ["15"], "wipe_tower_y": ["220"], "prime_tower_width": "60",
+          "prime_tower_brim_width": "3", "wipe_tower_rotation_angle": "90",
+          "printable_area": ["0x0", "360x0", "360x360", "0x360"]}
+    _fit_wipe_tower(xl)
+    _expect(xl["wipe_tower_x"] == ["71"] and xl["wipe_tower_y"] == ["220"],
+            "a turned tower keeps its size free left of x: {}".format(xl))
+    _expect(
+        _cli_error_line("loading\nSelected nozzle temperatures are incompatible.\nrun found error, exit\n")
+        == "Selected nozzle temperatures are incompatible."
+        and _cli_error_line("run found error, exit\nPrime tower is outside.\n") == "Prime tower is outside."
+        and _cli_error_line("all fine") == "",
+        "the slicer's own reason is read from its output (stdout or stderr first)",
+    )
     off = dict(h2d, enable_prime_tower="0", wipe_tower_x=["15"])
     _fit_wipe_tower(off)
     _expect(off["wipe_tower_x"] == ["15"], "a disabled prime tower is left alone")
@@ -4719,6 +5058,16 @@ def _check_estimate_print(environment: _TestEnvironment) -> None:
         json.loads(_read_archive_entry(project, _PROJECT_SETTINGS_PART))["extruder_nozzle_stats"] == [],
         "the project itself is not changed",
     )
+    # Nozzle racks: the H2C's right extruder holds 6 hotends, the H3C's one extruder 9.
+    h2c = {"nozzle_diameter": ["0.4", "0.4"], "nozzle_volume_type": ["Standard", "Standard"],
+           "extruder_max_nozzle_count": ["1", "6"]}
+    h3c = {"nozzle_diameter": ["0.4"], "nozzle_volume_type": ["Standard"], "extruder_max_nozzle_count": ["9"]}
+    x1c = {"nozzle_diameter": ["0.4"], "nozzle_volume_type": ["Standard"], "extruder_max_nozzle_count": ["1"]}
+    _expect(
+        _nozzle_stats(h2c) == ["Standard#1", "Standard#6"] and _nozzle_stats(h3c) == ["Standard#9"]
+        and _nozzle_stats(x1c) == [] and _nozzle_stats({"nozzle_diameter": ["0.4", "0.4"]}) == [],
+        "rack printers count every hotend; one nozzle or unknown flow types get no stats",
+    )
 
     def failing(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
         out_dir = Path(_flag_value(command, "--outputdir") or "")
@@ -4732,6 +5081,23 @@ def _check_estimate_print(environment: _TestEnvironment) -> None:
         _expect("Failed slicing the model" in str(exc), "the error must explain: {}".format(exc))
     else:
         raise AssertionError("a failed slice must raise")
+
+    crashes = {"count": 0}
+
+    def crashing_twice(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
+        crashes["count"] += 1
+        return _FakeCompletedProcess(-10) if crashes["count"] <= 2 else slicing(command, runner)
+
+    environment.runner.cli_handler = crashing_twice
+    _expect(estimate_print(project, environment.slicer_exe)["minutes"] == 43 and crashes["count"] == 3,
+            "a crashed slice is run again: {}".format(crashes))
+    environment.runner.cli_handler = lambda command, runner: _FakeCompletedProcess(-10)
+    try:
+        estimate_print(project, environment.slicer_exe)
+    except SlicerProfilesError as exc:
+        _expect("the slicer crashed (signal 10)" in str(exc), "a crash is named: {}".format(exc))
+    else:
+        raise AssertionError("a slicer that always crashes must raise")
     _expect(not list((environment.cache_root).glob("estimate_*")), "the temporary folder is removed")
 
 
@@ -4812,6 +5178,25 @@ def _check_nozzle_map(environment: _TestEnvironment) -> None:
     mixed = project("mixed.3mf", ["0.4", "0.4"])
     _expect(apply_nozzle_map(mixed, [NOZZLE_LEFT, NOZZLE_RIGHT]), "a left and a right slot")
     _expect(read(mixed)[0]["filament_map"] == ["1", "2"], "left is 1 and right is 2")
+    _expect(
+        _filament_map_values({"physical_extruder_map": ["1", "0"]}) == {NOZZLE_LEFT: "1", NOZZLE_RIGHT: "2"}
+        and _filament_map_values({"physical_extruder_map": ["0", "1"]}) == {NOZZLE_LEFT: "2", NOZZLE_RIGHT: "1"}
+        and _filament_map_values({}) == {NOZZLE_LEFT: "1", NOZZLE_RIGHT: "2"},
+        "the side numbers follow physical_extruder_map",
+    )
+    # Bambu Lab H2C: no TPU on the left extruder, so a TPU slot on the left is not pinned.
+    tpu = project("h2c_tpu.3mf", ["0.4", "0.4"])
+    with zipfile.ZipFile(str(tpu), "r") as archive:
+        tpu_settings = json.loads(archive.read(_PROJECT_SETTINGS_PART))
+    tpu_settings.update(filament_type=["PLA", "TPU"], unprintable_filament_types=["TPU", "PPS-CF,PPA-CF"])
+    rewrite_zip_entries(tpu, {_PROJECT_SETTINGS_PART: json.dumps(tpu_settings).encode("utf-8")})
+    _expect(not apply_nozzle_map(tpu, [NOZZLE_RIGHT, NOZZLE_LEFT]), "TPU on the H2C's left nozzle is refused")
+    _expect(read(tpu)[0]["filament_map_mode"] == "Auto For Flush", "a refused map leaves the project as it was")
+    _expect(apply_nozzle_map(tpu, [NOZZLE_LEFT, NOZZLE_RIGHT]), "TPU on the right nozzle is fine")
+    _expect(
+        orca_supports_printer("Bambu Lab H2C 0.4 nozzle") and not orca_supports_printer("Bambu Lab H3C 0.4 nozzle"),
+        "OrcaSlicer 2.5 has no H3C",
+    )
 
     unknown = project("unknown.3mf", ["0.4", "0.4"])
     _expect(not apply_nozzle_map(unknown, [NOZZLE_RIGHT, None]), "an unknown nozzle leaves the choice to the slicer")
@@ -5374,6 +5759,7 @@ def _selftest() -> int:
         ("slicer kind and name come from the app path", _check_slicer_names),
         ("a preset's exact filament type (ABS-GF) is kept", _check_filament_types),
         ("a copy is sliced for the print time and grams", _check_estimate_print),
+        ("online printers get their vendor's own filament presets", _check_remote_filament_presets),
         ("projects sent to Bambu Studio use Bambu Studio's words", _check_bambu_studio_words),
         ("Bambu Studio prepares projects by itself", _check_prepare_bambu_studio),
         ("listings fail fast offline and cache missing files/tags", _check_network_failfast),

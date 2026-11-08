@@ -1,7 +1,10 @@
 # Plan: multi-nozzle and tool-changer printers
 
-Status: plan (2026-11-08). Nothing in this note is built yet, except where
-"today" says so. It goes with [printer-connections.md](printer-connections.md),
+Status (2026-11-08): the slicer side of phase 3 and the PrusaSlicer layout
+of phase 5 are built in 0.6.0 (see the changelog for what is tested). The
+rest is a plan.
+
+This note goes with [printer-connections.md](printer-connections.md),
 which covers how Filamatch reads printers. This note covers what Filamatch
 does with nozzles and tools: matching, the project file, the estimate and the
 spool check.
@@ -242,12 +245,18 @@ The tool data each one gives:
 3. **Bambu slicer side** (testable now: Bambu Studio 2.9.1 has the H2C, H3C
    and X2D presets). X2D map through `physical_extruder_map`; nozzle stats
    for the estimate copy per preset; the H2C side map; H3C left on
-   "Auto For Match"; the new compatibility checks.
+   "Auto For Match"; the new compatibility checks. *Built:* nozzle stats
+   per extruder (`_nozzle_stats`), side map through `physical_extruder_map`,
+   `unprintable_filament_types` check, prime tower footprint and rotation,
+   OrcaSlicer refused for the H3C. Checked with the CLI of both slicers and
+   in the Bambu Studio app (H2C, H3C, X2D).
 4. **Bambu printer side** (needs testers). Parse `device.nozzle.info`,
    `device.holder`, AMS 3H; reach per slot; labels.
 5. **PrusaSlicer writer, prepare and estimate.** XL, INDX, MMU3. Needs
    PrusaSlicer 2.9.7 (the installed 2.6.0 is too old for INDX and XL+).
-   Weights through Spoolman.
+   Weights through Spoolman. *Built:* the writer (`lib/prusa_project.py`),
+   used for Send to PrusaSlicer; checked with PrusaSlicer 2.6.0. Prepare and
+   estimate are still open.
 6. **Orca-based slicers.** Register each app, its preset folders and CLI.
 7. **Other printer sources**: U1, Klipper MMU and tool changers, Creality
    CFS, Elegoo, Flashforge. These go into the phases of
@@ -285,6 +294,14 @@ new users.
    or show only the RFID value?
 9. Does Snapmaker Orca put the U1 tool map in the G-code or send it through
    Moonraker?
+10. X2D: Bambu Studio names the nozzles "Main" and "Auxiliary", not left and
+    right. The map is right (it follows the printer's extruder ids), but the
+    palette's "(L)" / "(R)" labels may be wrong on this printer.
+11. OrcaSlicer 2.5 crashes on about half the CORE One INDX 8T slices (more
+    often with fewer filaments than tools). The estimate retries twice.
+12. *Fixed:* printers from OrcaSlicer's online profiles now get the
+    vendor's own filament presets (`_remote_filament_candidates`); before,
+    OrcaSlicer showed other presets ("Voron Generic ABS" on a Prusa XL).
 
 ## 9. Sources
 

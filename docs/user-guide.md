@@ -95,8 +95,10 @@ example **Send to Orca** or **Send to Bambu**. It:
 3. adds a small slot record (which spool is in which slot);
 4. opens the file in the slicer you picked.
 
-A slicer other than OrcaSlicer or Bambu Studio (for example PrusaSlicer)
-cannot open a prepared project, so it gets the plain 3MF.
+A slicer other than OrcaSlicer or Bambu Studio cannot open a prepared
+project, so it gets the plain 3MF. PrusaSlicer and SuperSlicer get it in
+their own layout, so each body keeps its extruder; your printer and
+filament settings in PrusaSlicer stay as they are.
 
 The line below the button shows where the file is saved; **Change** picks
 another place.
@@ -177,10 +179,13 @@ Tested on macOS:
 
 | File | OrcaSlicer | Bambu Studio | PrusaSlicer / SuperSlicer |
 |---|---|---|---|
-| **Send to Orca / Send to Bambu** (prepared project) | Opens with slots | Opens with slots. Send to Bambu prepares with your own Bambu Studio; a file prepared by OrcaSlicer needs Bambu Studio 2.8 or newer | Does not open (gets the plain 3MF) |
-| **Export only** (Advanced) | Opens with slots | Opens with slots | Opens, but slots are not kept |
+| **Send to Orca / Send to Bambu** (prepared project) | Opens with slots | Opens with slots. Send to Bambu prepares with your own Bambu Studio; a file prepared by OrcaSlicer needs Bambu Studio 2.8 or newer | Does not open |
+| **Send to PrusaSlicer** (PrusaSlicer layout) | Not for this slicer | Not for this slicer | Opens with each body on its extruder (PrusaSlicer 2.6; SuperSlicer reads the same layout but is not tested) |
+| **Export only** (Advanced) | Opens with slots | Opens with slots | With PrusaSlicer picked: as Send to PrusaSlicer |
 
-PrusaSlicer support is on the [roadmap](roadmap.md).
+Bodies that touch open in PrusaSlicer as one object with one part per body,
+so they keep their places. PrusaSlicer has no print estimate in Filamatch
+yet.
 
 ## Troubleshooting
 

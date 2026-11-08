@@ -119,6 +119,7 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         "names_restored": [],
         "slot_checks": [],
         "bambu_words": [],
+        "prusa_layouts": [],
         "estimates": [],
     }
     materials = [FakeMaterial("pla_black", 1, ["Body1"]), FakeMaterial("petg_white", 2, ["Body2"])]
@@ -270,6 +271,7 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         return "orca" if "orca" in name else "bambu" if "bambu" in name else ""
 
     slicer_profiles.slicer_kind = slicer_kind
+    slicer_profiles.orca_supports_printer = lambda name: "H3C" not in str(name)
 
     def estimate_print(project, slicer_exe):
         state["estimates"].append((Path(project), slicer_exe))
@@ -354,6 +356,12 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
     custom_library.build_library_file = lambda source, destination: Path(destination)
 
     _install_module("slicer_profiles", slicer_profiles)
+    prusa_project = types.ModuleType("prusa_project")
+    prusa_project.is_prusa_family = lambda path: "prusa" in str(path).lower()
+    prusa_project.to_prusa_layout = lambda path, output=None: (
+        state["prusa_layouts"].append(Path(path)) or {"objects": 1, "parts": 2, "assembled": True}
+    )
+    _install_module("prusa_project", prusa_project)
     _install_module("openfilament", openfilament)
     _install_module("custom_library", custom_library)
 
@@ -625,11 +633,13 @@ def main() -> int:
 
     # --- the chosen slicer: OrcaSlicer prepares, the chosen app opens -------
     apps = Path(tempfile.mkdtemp(prefix="filamatch_apps_"))
-    bambu_app, prusa_app = apps / "BambuStudio", apps / "PrusaSlicer"
+    bambu_app, prusa_app, orca_app = apps / "BambuStudio", apps / "PrusaSlicer", apps / "OrcaSlicer"
     bambu_app.write_text("fake Bambu Studio")
     prusa_app.write_text("fake PrusaSlicer")
+    orca_app.write_text("fake OrcaSlicer")
 
-    def send_to(app: Path, vendor: str = "bambu_local") -> Dict[str, Any]:
+    def send_to(app: Path, vendor: str = "bambu_local",
+                printer: str = "Bambu Lab X1 Carbon 0.4 nozzle") -> Dict[str, Any]:
         palette.sent.clear()
         bridge.dispatch(
             "export_3mf",
@@ -641,7 +651,7 @@ def main() -> int:
                         "prepare": True,
                         "slicer_path": str(app),
                         "vendor": vendor,
-                        "printer": "Bambu Lab X1 Carbon 0.4 nozzle",
+                        "printer": printer,
                         "process": "0.20mm Standard @BBL X1C",
                     },
                 }
@@ -677,6 +687,11 @@ def main() -> int:
         and not prepared_path.with_name(prepared_path.stem + ".base.3mf").exists(),
         "Send to PrusaSlicer: the plain 3MF, because PrusaSlicer cannot open prepared projects",
     )
+    check(
+        state["prusa_layouts"] == [prepared_path]
+        and any("PrusaSlicer layout: 1 object(s) with 2 part(s)" in str(line) for line in palette.sent),
+        "Send to PrusaSlicer writes the PrusaSlicer layout, so each body keeps its extruder",
+    )
     fake_slicers = sys.modules["{}.slicer_profiles".format(LIB)]
     installed = fake_slicers.find_installed_slicers
     fake_slicers.find_installed_slicers = lambda: []
@@ -692,6 +707,22 @@ def main() -> int:
     check(
         no_orca_other.get("ok") is False and "needs OrcaSlicer" in str(no_orca_other.get("error")),
         "Send to Bambu with another printer and no OrcaSlicer explains why",
+    )
+    listed = fake_slicers.list_printers
+    fake_slicers.list_printers = lambda exe, vendor: [
+        {"name": "Bambu Lab H3C 0.4 nozzle", "machine_path": "/tmp/h3c.json", "source": "bambu_local"}
+    ]
+    try:
+        prepare_count = len(state["prepare_calls"])
+        h3c_orca = send_to(orca_app, printer="Bambu Lab H3C 0.4 nozzle")
+        h3c_bambu = send_to(bambu_app, printer="Bambu Lab H3C 0.4 nozzle")
+    finally:
+        fake_slicers.list_printers = listed
+    check(
+        h3c_orca.get("ok") is False and "OrcaSlicer cannot slice the Bambu Lab H3C" in str(h3c_orca.get("error"))
+        and h3c_bambu.get("ok") is True and len(state["prepare_calls"]) == prepare_count + 1
+        and state["prepare_calls"][-1]["slicer_exe"] == str(bambu_app),
+        "Bambu Lab H3C: OrcaSlicer is refused with a reason, Bambu Studio prepares",
     )
     shutil.rmtree(apps, ignore_errors=True)
 

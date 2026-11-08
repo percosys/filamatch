@@ -20,6 +20,11 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.6:** printers with several nozzles (Bambu Lab H2C, H3C, X2D,
+> Prusa XL, CORE One INDX) and **Send to PrusaSlicer** with each body on its
+> extruder. These are checked in the slicers, not yet on the printers: see
+> [Printers](#printers) for what is tested.
+>
 > **New in 0.5.1:** after sending, Filamatch shows the print time and the
 > grams of each filament, and checks that your spools have enough. Several
 > spools of the same filament count together when AMS auto refill is on.
@@ -112,14 +117,25 @@ already has its filament, and the slicer does the rest. Reading the loaded
 spools, choosing the nozzle for each filament and the spool check depend on
 the printer.
 
-**Tested and validated** on real printers:
+**1. Tested and validated on a real printer:**
 
 | Printer | What is tested |
 |---|---|
 | Bambu Lab H2D (AMS 2 Pro, AMS HT) | Loaded spools (LAN-only mode and Bambuddy), Send to Orca (OrcaSlicer 2.5), Send to Bambu (Bambu Studio 2.9.1), each filament on the nozzle its AMS feeds, print estimate and spool check |
 | Bambu Lab X1 Carbon (AMS) | Loaded spools |
 
-**Expected to work, not tested yet:**
+**2. Checked in the slicers with test files, not yet on a real printer:**
+
+| Printer | What is checked | Not tested |
+|---|---|---|
+| Bambu Lab H2C | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side and slices it; the estimate works | Loaded spools, printing |
+| Bambu Lab H3C | Send to Bambu prepares the project; Bambu Studio 2.9.1 opens it with its 9 nozzles and slices it; the estimate works. OrcaSlicer 2.5 cannot slice the H3C, so Filamatch refuses it | Loaded spools, printing |
+| Bambu Lab X2D | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side; the estimate works | Slicing in the app, loaded spools, printing; the "(L)" / "(R)" labels may be swapped (Bambu Studio says "Main" and "Auxiliary") |
+| Prusa XL 5T | Send to Orca prepares the project with Prusa's filament presets; OrcaSlicer 2.5 opens and slices it; the estimate matches | Loaded spools (not read from Prusa printers), printing |
+| Prusa CORE One INDX 4T / 8T, MMU3 | Send to Orca prepares the project and estimates it (OrcaSlicer 2.5 command line) | Opening in the app; the INDX 8T estimate often fails because OrcaSlicer crashes; printing |
+| Any printer in PrusaSlicer | Send to PrusaSlicer keeps each body on its extruder (PrusaSlicer 2.6.0) | PrusaSlicer 2.9, SuperSlicer |
+
+**3. Expected to work, not tested yet:**
 - Other Bambu Lab printers with one nozzle and an AMS (P1S, P1P, A1,
   A1 mini, X1E, H2S, P2S): the same printer connection and slicer presets
   as the tested printers.
@@ -128,13 +144,9 @@ the printer.
   QIDI Studio): these use the same project layout, so the slots should be
   kept. Filamatch does not read the loaded spools of these printers yet.
 
-**Partly supported:**
-- Bambu Lab H2C, H3C and X2D: the slicer chooses the nozzle or tool for
-  each filament. Reading the loaded spools and the print estimate are not
-  tested on these printers.
-- Prusa XL, CORE One INDX and MMU3: PrusaSlicer opens the file but does not
-  keep the slots yet. OrcaSlicer has profiles for these printers and keeps
-  the slots.
+Other tool changers (Snapmaker U1, Klipper tool changers, IDEX printers)
+get the plain 3MF with each body's filament; Filamatch does nothing
+printer-specific for them yet.
 
 The plan for multi-nozzle and tool-changer printers is in
 [docs/design/multi-nozzle.md](docs/design/multi-nozzle.md).

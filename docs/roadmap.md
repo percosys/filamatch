@@ -21,8 +21,9 @@ The shared printer, spool and slot model behind it is already in place.
 
 ## Slicers
 
-- **PrusaSlicer and SuperSlicer:** also write the slot metadata these slicers
-  read, so an exported 3MF keeps its slots there.
+- **PrusaSlicer and SuperSlicer:** the slots are kept (PrusaSlicer layout,
+  0.6). Next: prepare the project and estimate with PrusaSlicer's command
+  line.
 - **Cura and the OrcaSlicer family** (Creality Print, Elegoo Slicer,
   Snapmaker Orca, Anycubic Slicer Next): test and document.
 - **Bambu Studio** as a first-class target next to OrcaSlicer.
