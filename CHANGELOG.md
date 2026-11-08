@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.5.0 – send to the slicer you pick
+
+**New**
+- The send button names the slicer you pick: **Send to Orca**, **Send to
+  Bambu**, **Send to PrusaSlicer**. Settings > Connections > Change lists the
+  installed slicers. Other slicers get the plain 3MF, because they cannot
+  open prepared projects.
+- Bambu Studio prepares projects by itself: OrcaSlicer is no longer needed
+  to send a Bambu Lab printer's project to Bambu Studio. The file carries
+  your own Bambu Studio version and opens without the "Some values have been
+  replaced" notice. For printers outside Bambu Studio's own list, OrcaSlicer
+  prepares the project and Filamatch writes Bambu Studio's words for the 4
+  settings that OrcaSlicer words its own way.
+- Slot check: after every export, Filamatch checks that each body uses the
+  slot and the colour that it has in Fusion. If one does not, the export
+  stops before the slicer opens, and the message names the body and the slot.
+- Printers with two nozzles (Bambu Lab H2D): each filament now uses the
+  nozzle that its AMS slot feeds. Before, the slicer chose the nozzles
+  itself ("Auto For Flush") and could put a filament on the other nozzle.
+  When a slot's nozzle is not known (for example an AMS on a filament track
+  switch), the slicer still chooses. Tested in Bambu Studio 2.9.1; OrcaSlicer
+  2.5 keeps the choice.
+
+**Fixed**
+- Purge volumes fit the real filament colours. The slicer works out the
+  purge volumes from the filament presets' colours; Bambu Studio's presets
+  have none, so OrcaSlicer used placeholder colours (orange and white) and
+  Filamatch set the real colours afterwards. Each filament preset now
+  carries its colour (black to green: 591 mm³ instead of 525).
+- Send to Orca works again after an update to Bambu Studio 2.9. OrcaSlicer
+  2.5 refused the printer and filament presets of Bambu Studio 2.9 ("Vendor
+  bundle contains invalid presets"). Filamatch now merges each Bambu Studio
+  preset with its parent presets and gives OrcaSlicer the merged copy.
+- Bambu Studio 2.9 showed both H2D nozzles as "High Flow" in a Send to Orca
+  file. Each nozzle now gets its own flow type ("Standard" by default).
+
+**Docs**
+- The user guide, How it works and the README describe the slicer choice,
+  who prepares the project, and the new checks. Tested on macOS with
+  OrcaSlicer 2.5 and Bambu Studio 2.9.1 on a Bambu Lab H2D.
+
 ## 0.4.0 – direct Bambu printer connection
 
 **New**

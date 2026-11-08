@@ -20,9 +20,11 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
-> **New in 0.4:** connect your Bambu Lab printers directly on your network,
-> without Bambuddy. Bambuddy users now see every loaded slot too. See the
-> [changelog](CHANGELOG.md).
+> **New in 0.5:** send to the slicer you pick (**Send to Orca**, **Send to
+> Bambu**); Bambu Studio prepares Bambu Lab projects by itself, without
+> OrcaSlicer. Each filament stays on the nozzle its AMS slot feeds, purge
+> volumes fit the real colours, and every export checks that each body has
+> the filament it has in Fusion. See the [changelog](CHANGELOG.md).
 
 ## Why
 
@@ -36,6 +38,8 @@ by hand, every time. Filamatch keeps that information in the design:
    and matches each design filament to a slot.
 3. **Send to Orca** exports the design with each body already assigned to its
    slot, prepares the printer and process settings, and opens OrcaSlicer.
+   The button names the slicer you pick in Settings, for example **Send to
+   Bambu**.
 
 ## Features
 
@@ -92,7 +96,7 @@ by hand, every time. Filamatch keeps that information in the design:
 | | |
 |---|---|
 | **Autodesk Fusion** | Current release, macOS or Windows. Filamatch uses Fusion's built-in Python; nothing else to install. |
-| **OrcaSlicer** | For **Send to Orca**. Bambu Studio also works for project preparation. Without a slicer you can still export a tagged 3MF. |
+| **OrcaSlicer or Bambu Studio** | Prepares the project (print settings, slots, nozzles, purge volumes) and opens it; the send button names the one you pick. Bambu Studio prepares Bambu Lab printers by itself; other printers need OrcaSlicer. Other slicers get the plain 3MF. Without a slicer you can still export a tagged 3MF. |
 | **A Bambu Lab printer** (optional) | To read the filaments loaded in the printer. Connect it directly (IP address and access code from the printer screen) or through [Bambuddy](https://github.com/maziggy/bambuddy). Tested with an H2D and an X1C. Without a printer, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. Other printer brands are on the [roadmap](docs/roadmap.md). |
 
 Windows support is written but has been tested less than macOS.

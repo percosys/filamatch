@@ -117,6 +117,8 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         "prepare_calls": [],
         "events": [],
         "names_restored": [],
+        "slot_checks": [],
+        "bambu_words": [],
     }
     materials = [FakeMaterial("pla_black", 1, ["Body1"]), FakeMaterial("petg_white", 2, ["Body2"])]
 
@@ -158,6 +160,7 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         state["export_calls"].append(kwargs)
         if state.get("fail_injection"):
             raise InjectionFailedError("simulated injection failure", kwargs["output_path"])
+        Path(kwargs["output_path"]).write_text("exported 3MF")
         return FakeExportResult(kwargs["output_path"], bool(kwargs.get("write_project_settings")))
 
     exporter.export_and_inject = export_and_inject
@@ -260,6 +263,26 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
         )
 
     slicer_profiles.prepare_project = prepare_project
+
+    def slicer_kind(path):
+        name = Path(str(path or "")).name.lower()
+        return "orca" if "orca" in name else "bambu" if "bambu" in name else ""
+
+    slicer_profiles.slicer_kind = slicer_kind
+    slicer_profiles.use_bambu_studio_words = lambda path, process_path=None: (
+        state["bambu_words"].append(Path(path)) or {"enable_arc_fitting": "0"}
+    )
+    slicer_profiles.slicer_name = lambda path: {"orca": "OrcaSlicer", "bambu": "Bambu Studio"}.get(
+        slicer_kind(path), Path(str(path)).name
+    )
+
+    def check_slot_assignments(path, detected):
+        state["slot_checks"].append({"path": Path(path), "material_count": len(detected)})
+        if state.get("slot_mismatch"):
+            raise RuntimeError("Filament assignments do not match Fusion: 'Body2' prints with slot 1")
+        return len(detected)
+
+    slicer_profiles.check_slot_assignments = check_slot_assignments
 
     openfilament = types.ModuleType("openfilament")
     openfilament.load_user_catalog = lambda path=None: []
@@ -481,6 +504,28 @@ def main() -> int:
         and bool(export_result.get("warning")),
         "unprepared export lists materials and warns that no printer profile was applied",
     )
+    check(
+        state["slot_checks"] == [{"path": out_path, "material_count": 2}],
+        "the unprepared 3MF is checked against the Fusion slots",
+    )
+    state["slot_mismatch"] = True
+    real_launch = bridge._launch_orca
+    bridge._launch_orca = lambda executable, path: state.setdefault("launched", []).append(path) or True
+    palette.sent.clear()
+    bridge.dispatch(
+        "export_3mf",
+        json.dumps({"output_path": str(out_path), "orca": {"enabled": True, "executable": "/fake/OrcaSlicer"}}),
+        palette,
+    )
+    mismatch = palette.last("exportResult")
+    check(
+        mismatch.get("ok") is False
+        and "do not match Fusion" in str(mismatch.get("error"))
+        and not state.get("launched"),
+        "a slot mismatch stops the export before the slicer opens",
+    )
+    bridge._launch_orca = real_launch
+    state["slot_mismatch"] = False
 
     # --- target printer preparation -----------------------------------------
     prepared_path = Path("/tmp/filamatch_auto_prepared.3mf")
@@ -530,6 +575,78 @@ def main() -> int:
         and saved.get("prepare_enabled") is True,
         "prepared export persists the target settings",
     )
+
+    # --- the chosen slicer: OrcaSlicer prepares, the chosen app opens -------
+    apps = Path(tempfile.mkdtemp(prefix="filamatch_apps_"))
+    bambu_app, prusa_app = apps / "BambuStudio", apps / "PrusaSlicer"
+    bambu_app.write_text("fake Bambu Studio")
+    prusa_app.write_text("fake PrusaSlicer")
+
+    def send_to(app: Path, vendor: str = "bambu_local") -> Dict[str, Any]:
+        palette.sent.clear()
+        bridge.dispatch(
+            "export_3mf",
+            json.dumps(
+                {
+                    "output_path": str(prepared_path),
+                    "orca": {"enabled": False, "executable": str(app)},
+                    "target": {
+                        "prepare": True,
+                        "slicer_path": str(app),
+                        "vendor": vendor,
+                        "printer": "Bambu Lab X1 Carbon 0.4 nozzle",
+                        "process": "0.20mm Standard @BBL X1C",
+                    },
+                }
+            ),
+            palette,
+        )
+        return palette.last("exportResult")
+
+    bambu_result = send_to(bambu_app)
+    check(
+        bambu_result.get("ok") is True
+        and bambu_result.get("prepared") is True
+        and state["prepare_calls"][-1]["slicer_exe"] == str(bambu_app)
+        and (bambu_result.get("settings") or {}).get("slicer_path") == str(bambu_app)
+        and state["bambu_words"] == [],
+        "Send to Bambu with a Bambu Lab printer: Bambu Studio prepares by itself",
+    )
+    other_printer = send_to(bambu_app, vendor="Prusa")
+    check(
+        other_printer.get("ok") is True
+        and state["prepare_calls"][-1]["slicer_exe"] == sys.executable
+        and state["bambu_words"] == [prepared_path]
+        and (other_printer.get("settings") or {}).get("slicer_path") == str(bambu_app),
+        "Send to Bambu with another printer: OrcaSlicer prepares and Bambu Studio's words are written",
+    )
+    prepare_count = len(state["prepare_calls"])
+    prusa_result = send_to(prusa_app)
+    check(
+        prusa_result.get("ok") is True
+        and prusa_result.get("prepared") is False
+        and len(state["prepare_calls"]) == prepare_count
+        and prepared_path.read_text() == "exported 3MF"
+        and not prepared_path.with_name(prepared_path.stem + ".base.3mf").exists(),
+        "Send to PrusaSlicer: the plain 3MF, because PrusaSlicer cannot open prepared projects",
+    )
+    fake_slicers = sys.modules["{}.slicer_profiles".format(LIB)]
+    installed = fake_slicers.find_installed_slicers
+    fake_slicers.find_installed_slicers = lambda: []
+    try:
+        no_orca = send_to(bambu_app)
+        no_orca_other = send_to(bambu_app, vendor="Prusa")
+    finally:
+        fake_slicers.find_installed_slicers = installed
+    check(
+        no_orca.get("ok") is True and state["prepare_calls"][-1]["slicer_exe"] == str(bambu_app),
+        "Send to Bambu needs no OrcaSlicer for a Bambu Lab printer",
+    )
+    check(
+        no_orca_other.get("ok") is False and "needs OrcaSlicer" in str(no_orca_other.get("error")),
+        "Send to Bambu with another printer and no OrcaSlicer explains why",
+    )
+    shutil.rmtree(apps, ignore_errors=True)
 
     # --- profiles and Open Filament Database handlers ------------------------
     palette.sent.clear()

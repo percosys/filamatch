@@ -1560,6 +1560,52 @@ def _usable_slicer_path(candidate: str, installs: Sequence[Any]) -> str:
     return ""
 
 
+def _slicer_kind(path: str) -> str:
+    """``orca``, ``bambu`` or ``""`` for a slicer path."""
+    from . import slicer_profiles
+
+    return slicer_profiles.slicer_kind(path)
+
+
+def _slicer_display_name(path: str) -> str:
+    """Display name of the slicer at ``path``."""
+    from . import slicer_profiles
+
+    return slicer_profiles.slicer_name(path)
+
+
+def _installed_slicer(installs: Sequence[Any], kind: str) -> str:
+    """Path of the first installed slicer of ``kind`` ("" when none)."""
+    for item in installs:
+        path = str(getattr(item, "path", "") or "").strip()
+        if getattr(item, "kind", "") == kind and path:
+            try:
+                if Path(path).exists():
+                    return path
+            except OSError:
+                continue
+    return ""
+
+
+def _prepare_slicer_path(chosen: str, installs: Sequence[Any], vendor: str = "") -> str:
+    """Return the slicer whose command line prepares the project ("" when none).
+
+    The chosen slicer prepares its own project: OrcaSlicer always, Bambu
+    Studio for printers from its own presets (``bambu_local``).  Other
+    printers sent to Bambu Studio, and slicers that cannot prepare, use an
+    installed OrcaSlicer; the chosen slicer then only opens the result.
+    """
+    from . import slicer_profiles
+
+    kind = slicer_profiles.slicer_kind(chosen)
+    if kind == "orca" or (kind == "bambu" and vendor in ("", "bambu_local")):
+        return chosen
+    orca = _installed_slicer(installs, "orca")
+    if orca or kind == "bambu" or vendor not in ("", "bambu_local"):
+        return orca
+    return _installed_slicer(installs, "bambu")
+
+
 def _profiles_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
     """Build the full profile listing for the palette (vendors/printers/processes)."""
     from . import slicer_profiles
@@ -1573,6 +1619,8 @@ def _profiles_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
     ).strip()
     installs = slicer_profiles.find_installed_slicers()
     slicer_exe = _usable_slicer_path(requested_slicer, installs)
+    # An installed OrcaSlicer picks the matching online profile version.
+    slicer_exe = _installed_slicer(installs, "orca") or slicer_exe
 
     vendors = slicer_profiles.list_vendors(slicer_exe) if slicer_exe else []
     vendor = str(
@@ -1853,6 +1901,16 @@ def _resolve_profile_target(data: Mapping[str, Any]) -> Any:
     vendor = str(target.get("vendor") or settings.get("target_vendor") or "").strip()
     printer = str(target.get("printer") or settings.get("target_printer") or "").strip()
     process = str(target.get("process") or settings.get("target_process") or "").strip()
+    prepare_exe = _prepare_slicer_path(slicer_exe, installs, vendor)
+    if not prepare_exe:
+        name = slicer_profiles.slicer_name(slicer_exe)
+        raise RuntimeError(
+            "Preparing the project for {0} with this printer needs OrcaSlicer: {0} can "
+            "prepare only printers from Bambu Studio's own list. Install OrcaSlicer, pick "
+            "a Bambu Lab printer, or turn off Advanced > Prepare to send a plain "
+            "3MF.".format(name)
+        )
+    slicer_exe = prepare_exe
     if not vendor or not printer:
         raise RuntimeError(
             "Choose a target vendor and printer in the Target Printer section before "
@@ -1885,14 +1943,61 @@ def _resolve_profile_target(data: Mapping[str, Any]) -> Any:
     )
 
 
+def _slot_nozzles(rows: Sequence[Mapping[str, Any]], slots_by_key: Mapping[str, Any]) -> List[Optional[str]]:
+    """Return the nozzle feeding each row's slot ("left"/"right"), None when unknown."""
+    from . import slicer_profiles
+
+    sides = {
+        bambu_lan.EXTRUDER_LEFT: slicer_profiles.NOZZLE_LEFT,
+        bambu_lan.EXTRUDER_RIGHT: slicer_profiles.NOZZLE_RIGHT,
+    }
+    nozzles: List[Optional[str]] = []
+    for row in rows:
+        slot = slots_by_key.get(str(row.get("slot_key") or ""))
+        nozzles.append(sides.get(getattr(slot, "extruder", None)))
+    return nozzles
+
+
+def _pin_slot_nozzles(output_path: Path, nozzles: Sequence[Optional[str]]) -> None:
+    """Pin the prepared project's filaments to their slots' nozzles (never fails the export)."""
+    from . import slicer_profiles
+
+    try:
+        if slicer_profiles.apply_nozzle_map(output_path, nozzles):
+            log_message("Each filament uses the nozzle its slot feeds: {}".format(", ".join(nozzles)))
+    except Exception as exc:
+        LOGGER.exception("Could not pin the filaments to their nozzles")
+        log_message("The slicer picks the nozzles itself: {}".format(_error_text(exc)))
+
+
+def _use_bambu_studio_words(output_path: Path, target: Any) -> None:
+    """Write Bambu Studio's words in an OrcaSlicer project (never fails the export)."""
+    from . import slicer_profiles
+
+    try:
+        changed = slicer_profiles.use_bambu_studio_words(
+            output_path, getattr(target, "process_path", None)
+        )
+        if changed:
+            log_message("Wrote Bambu Studio's words for: {}".format(", ".join(sorted(changed))))
+    except Exception as exc:
+        LOGGER.exception("Could not write Bambu Studio's words")
+        log_message("Bambu Studio may show 'Some values have been replaced': {}".format(_error_text(exc)))
+
+
 def _attach_bambuddy_slot_manifest(
-    output_path: Path, detected: Sequence[Any], settings: Mapping[str, Any]
+    output_path: Path,
+    detected: Sequence[Any],
+    settings: Mapping[str, Any],
+    pin_nozzles: bool = False,
 ) -> Optional[Dict[str, Any]]:
     """Attach the Bambuddy/AMS slot association manifest to an exported 3MF.
 
-    The export must never fail just because Bambuddy is offline; errors are
-    logged and reported separately.  Returns the manifest payload (None when
-    Bambuddy is not configured or no material is mapped).
+    With ``pin_nozzles`` (a prepared project) each filament is also pinned to
+    the nozzle its slot feeds.  The export must never fail just because
+    Bambuddy is offline; errors are logged and reported separately.  Returns
+    the manifest payload (None when Bambuddy is not configured or no material
+    is mapped).
     """
     from . import inventory_sync
     from . import printer_sources
@@ -1913,6 +2018,8 @@ def _attach_bambuddy_slot_manifest(
         )
         mapped_rows = [row for row in rows if row.get("slot_key")]
         slots_by_key = {slot.key: slot for slot in slots}
+        if pin_nozzles:
+            _pin_slot_nozzles(output_path, _slot_nozzles(rows, slots_by_key))
         entries = []
         seen_spools = set()
         for row in mapped_rows:
@@ -2186,10 +2293,25 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
             or ""
         ).strip(),
     }
-    if job["prepare_enabled"]:
+    prepare = bool(job["prepare_enabled"])
+    open_app = str(
+        orca.get("executable") or outcome["resolved_slicer_path"] or ""
+    ).strip()
+    if prepare and open_app and _slicer_kind(open_app) not in ("orca", "bambu"):
+        # Prepared projects are in the Bambu Studio/OrcaSlicer format only.
+        log_message(
+            "{} cannot open prepared projects; sending the plain 3MF.".format(
+                _slicer_display_name(open_app)
+            )
+        )
+        prepare = False
+        if base_output != output:
+            shutil.move(str(base_output), str(output))
+    if prepare:
         try:
             slicer_profiles, slicer_exe, prepared_target = _resolve_profile_target(data)
-            outcome["resolved_slicer_path"] = str(slicer_exe or outcome["resolved_slicer_path"])
+            # slicer_exe prepares (OrcaSlicer); the saved slicer stays the one the user picked.
+            outcome["resolved_slicer_path"] = str(outcome["resolved_slicer_path"] or slicer_exe)
             log_message(
                 "Preparing project for {!r} / {!r} via {!r}".format(
                     prepared_target.printer_name, prepared_target.process_name, slicer_exe
@@ -2198,6 +2320,9 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
             prepared_result = slicer_profiles.prepare_project(
                 base_output, output, prepared_target, slicer_exe, detected
             )
+            if _slicer_kind(open_app) == "bambu" and _slicer_kind(slicer_exe) != "bambu":
+                # OrcaSlicer prepared this file for Bambu Studio.
+                _use_bambu_studio_words(output, prepared_target)
             outcome.update(
                 prepared=True,
                 prepared_target=prepared_target,
@@ -2234,9 +2359,16 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
                 "printer profile was kept at {})".format(_error_text(exc), preserved),
                 extra,
             ) from exc
+    else:
+        # prepare_project checks prepared projects; the plain 3MF gets the same check.
+        from . import slicer_profiles
+
+        slicer_profiles.check_slot_assignments(output, detected)
 
     try:
-        outcome["slot_manifest"] = _attach_bambuddy_slot_manifest(output, detected, settings)
+        outcome["slot_manifest"] = _attach_bambuddy_slot_manifest(
+            output, detected, settings, pin_nozzles=bool(outcome["prepared"])
+        )
     except Exception:
         LOGGER.exception("Unexpected slot-manifest failure during export")
 
@@ -3289,6 +3421,21 @@ def _self_test() -> int:
         )
     finally:
         testing.sibling_pop(__package__, "favorites")
+
+    # Each filament's nozzle comes from the slot chosen for it (H2D: AMS 2 feeds the right).
+    slots_by_key = {
+        "1:1:3": types.SimpleNamespace(extruder=bambu_lan.EXTRUDER_RIGHT),
+        "1:0:0": types.SimpleNamespace(extruder=bambu_lan.EXTRUDER_LEFT),
+        "1:2:0": types.SimpleNamespace(extruder=None),
+    }
+    _check(
+        _slot_nozzles(
+            [{"slot_key": "1:1:3"}, {"slot_key": "1:0:0"}, {"slot_key": "1:2:0"}, {"slot_key": ""}],
+            slots_by_key,
+        )
+        == ["right", "left", None, None],
+        "slot nozzles follow the AMS side; unknown or unmapped slots stay None",
+    )
 
     print()
     if _FAILED:

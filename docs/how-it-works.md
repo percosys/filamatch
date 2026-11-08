@@ -75,17 +75,33 @@ A 3MF file is a zip archive. Filamatch adds or changes these parts:
 | `Metadata/project_settings.config` | Written by the slicer during preparation, then corrected so the filament colours, types, densities and names match the design. Filamatch also picks a build plate every filament accepts and moves the wipe tower inside the printable area. |
 | `Metadata/filamatch.json` | A small record of the printer and which spool is in which slot (schema `filamatch.slot_manifest.v1`). Slicers ignore it. |
 
-**Preparation** runs the slicer's command line:
+**Preparation** runs the command line of the slicer you send to:
 
 ```
 orca-slicer --load-settings "<printer>;<process>" --load-filaments "<f1>;<f2>;…"
             --export-3mf <name> --outputdir <folder> [--assemble] <base.3mf>
 ```
 
-Bodies that touch are kept as one multi-part object (`--assemble`), so the
-parts stay in place; separate bodies are arranged on one plate. If
-preparation fails, the tagged 3MF without printer settings is kept and the
-palette shows the slicer's log.
+- **Which slicer prepares.** OrcaSlicer prepares its own projects. Bambu
+  Studio prepares Bambu Lab printers from its own presets; for other
+  printers an installed OrcaSlicer prepares and Bambu Studio opens the file.
+  Other slicers get the plain 3MF.
+- **Presets.** Bambu Studio's presets hold only what differs from their
+  parents. Filamatch merges each one with its parents into a stand-alone
+  copy, because neither command line reads Bambu Studio's parents reliably.
+- **Colours and purge.** Every filament slot gets its own preset copy with
+  the filament's colour, so the slicer works out purge volumes that fit
+  the real colours.
+- **Layout.** Bodies that touch are kept as one multi-part object
+  (`--assemble`), so the parts stay in place; separate bodies are arranged
+  on one plate.
+- **After the slicer.** Filamatch sets the colours, types and densities,
+  fits the build plate and prime tower, gives each H2D nozzle its flow
+  type, pins each filament to the nozzle its AMS slot feeds, and checks
+  that every body uses the slot and colour it has in Fusion.
+
+If preparation fails, the tagged 3MF without printer settings is kept and
+the palette shows the slicer's log.
 
 ## Filaments in Fusion
 

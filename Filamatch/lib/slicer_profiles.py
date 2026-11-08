@@ -36,6 +36,7 @@ import logging
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -137,6 +138,7 @@ CURATED_VENDORS: Tuple[Tuple[str, str], ...] = (
 )
 
 _PROJECT_SETTINGS_PART = "Metadata/project_settings.config"
+_MODEL_SETTINGS_PART = "Metadata/model_settings.config"
 _KIND_TO_PLURAL = {"machine": "machines", "process": "processes", "filament": "filaments"}
 _PROFILE_KIND_ALIASES = {
     "machine": "machine",
@@ -899,6 +901,30 @@ def _kind_from_path(path: str) -> str:
     return ""
 
 
+def slicer_kind(path: Any) -> str:
+    """Return ``orca``, ``bambu`` or ``""`` for a slicer path (executable or ``.app``)."""
+    text = str(path or "").strip()
+    if not text:
+        return ""
+    bundle = re.search(r"([^/\\]+)\.app(?:[/\\]|$)", text, re.IGNORECASE)
+    return _kind_from_path(bundle.group(1) if bundle else text)
+
+
+def slicer_name(path: Any) -> str:
+    """Return a slicer's display name (``Bambu Studio``) from its path."""
+    text = str(path or "").strip()
+    kind = slicer_kind(text)
+    if kind == "orca":
+        return "OrcaSlicer"
+    if kind == "bambu":
+        return "Bambu Studio"
+    bundle = re.search(r"([^/\\]+)\.app(?:[/\\]|$)", text, re.IGNORECASE)
+    if bundle:
+        return bundle.group(1)
+    name = re.sub(r"\.exe$", "", re.split(r"[/\\]", text)[-1], flags=re.IGNORECASE)
+    return name or "the slicer"
+
+
 def _slicer_identity(slicer_exe: Any) -> Tuple[str, str]:
     """Return ``(version, kind)`` of an installed slicer, parsed from ``--help``.
 
@@ -1191,6 +1217,107 @@ def _write_flattened_profile(directory: Path, name: str, data: Dict[str, Any]) -
     path = Path(directory) / (_safe_filename(name) + ".json")
     _write_json_atomic(path, data)
     return path
+
+
+def _local_preset_path(directory: Path, name: str) -> Path:
+    """Find the preset called ``name`` in a local preset folder."""
+    candidate = directory / (name + ".json")
+    if candidate.is_file():
+        return candidate
+    for path in sorted(directory.glob("*.json")):
+        data = _read_json_file(path)
+        if data is not None and str(data.get("name") or "").strip() == name:
+            return path
+    raise SlicerProfilesError(
+        "Could not find the parent preset {!r} in {!r}. Bambu Studio's presets may be "
+        "incomplete; open Bambu Studio once so it updates them.".format(name, str(directory))
+    )
+
+
+def _flatten_local_preset(path: Path) -> Dict[str, Any]:
+    """Merge a local preset with its ``inherits`` parent and ``include`` files."""
+
+    def flatten(current: Path, chain: List[str]) -> Dict[str, Any]:
+        data = _read_json_file(current)
+        if data is None:
+            raise SlicerProfilesError("Preset {!r} could not be read".format(str(current)))
+        merged: Dict[str, Any] = {}
+        parents = [str(data.get("inherits") or "").strip()]
+        includes = data.get("include") if isinstance(data.get("include"), list) else []
+        for name in parents + [str(item).strip() for item in includes]:
+            if not name:
+                continue
+            if name in chain:
+                raise SlicerProfilesError(
+                    "Circular preset inheritance: {}".format(" -> ".join(chain + [name]))
+                )
+            merged.update(flatten(_local_preset_path(current.parent, name), chain + [name]))
+        merged.update({key: value for key, value in data.items() if key not in ("inherits", "include")})
+        return merged
+
+    return flatten(Path(path), [str(Path(path).stem)])
+
+
+def _standalone_bambu_preset(path: Any, for_bambu_studio: bool = False) -> str:
+    """Return a stand-alone copy of a Bambu Studio system preset for the CLI.
+
+    Bambu Studio's system presets hold only what differs from their parents,
+    and neither command line resolves them reliably: OrcaSlicer 2.5 refuses
+    Bambu Studio 2.9's vendor bundle ("Vendor bundle contains invalid
+    presets"), and Bambu Studio's own command line does not read parents at
+    all (a generic start G-code, 100 mm height and PLA temperatures).  The
+    merged copy is ``from: user``.  For Bambu Studio it names itself in
+    ``inherits`` (without that Bambu Studio reports "process not compatible
+    with printer"); for OrcaSlicer it inherits nothing, like the flattened
+    remote presets.  Other presets are returned unchanged.
+    """
+    preset_path = Path(str(path))
+    system = _bambu_system_dir()
+    if system is None:
+        return str(preset_path)
+    try:
+        relative = preset_path.resolve().relative_to(system.resolve())
+    except (OSError, ValueError):
+        return str(preset_path)
+    if _read_json_file(preset_path) is None:
+        return str(preset_path)
+    flattened = _flatten_local_preset(preset_path)
+    flattened["from"] = "user"
+    name = _preset_name(flattened, preset_path)
+    if for_bambu_studio:
+        flattened["inherits"] = name
+    folder = "for_bambu_studio" if for_bambu_studio else "for_orca"
+    output_dir = _cache_root() / "flattened" / "bambu_local" / folder / _safe_filename(relative.parts[0])
+    return str(_write_flattened_profile(output_dir, name, flattened))
+
+
+def _coloured_filament_presets(paths: Sequence[str], materials: Sequence[Any]) -> List[str]:
+    """Give every filament slot its own preset copy carrying the material's colour.
+
+    The slicer works out the purge volumes (``flush_volumes_matrix``) from the
+    filament presets' colours.  Bambu Studio's presets have none, so the
+    slicers used placeholder colours (OrcaSlicer: orange and white) and the
+    purge volumes did not fit the real filaments.
+    """
+    directory = _cache_root() / "prepare" / "filaments"
+    directory.mkdir(parents=True, exist_ok=True)
+    for old in directory.glob("*.json"):
+        _remove_file_quietly(old)
+    coloured: List[str] = []
+    for index, path in enumerate(paths):
+        data = _read_json_file(Path(path))
+        if data is None or index >= len(materials):
+            coloured.append(str(path))
+            continue
+        colour = _normalize_color_hex(_material_field(materials[index], "color_hex", "#FFFFFF"))
+        data["default_filament_colour"] = [colour]
+        data["filament_colour"] = [colour]
+        target = directory / "{:02d} {}.json".format(
+            index + 1, _safe_filename(_preset_name(data, Path(path)))
+        )
+        _write_json_atomic(target, data)
+        coloured.append(str(target))
+    return coloured
 
 
 # ---------------------------------------------------------------------------
@@ -2485,6 +2612,7 @@ def _postprocess_project_settings(
         ]
     _fit_wipe_tower(settings)
     _fit_bed_type(settings)
+    _fit_nozzle_volume_types(settings)
     payload = (json.dumps(settings, indent=2) + "\n").encode("utf-8")
     replacements: Dict[str, Optional[bytes]] = dict(extra_entries or {})
     replacements[_PROJECT_SETTINGS_PART] = payload
@@ -2589,6 +2717,272 @@ def _fit_wipe_tower(settings: Dict[str, Any]) -> None:
         settings[key] = fitted
 
 
+def _fit_nozzle_volume_types(settings: Dict[str, Any]) -> None:
+    """Give every nozzle its own flow type (Standard, High Flow, ...).
+
+    OrcaSlicer writes one ``nozzle_volume_type`` for the two Bambu Lab H2D
+    nozzles; Bambu Studio 2.9 then shows both nozzles as "High Flow".  Missing
+    entries take the printer preset's default for that nozzle.
+    """
+    current = settings.get("nozzle_volume_type")
+    diameters = settings.get("nozzle_diameter")
+    if not isinstance(current, list) or not current or not isinstance(diameters, list):
+        return
+    if len(current) >= len(diameters):
+        return
+    defaults = settings.get("default_nozzle_volume_type")
+    defaults = defaults if isinstance(defaults, list) else []
+    fitted = [str(value) for value in current]
+    for index in range(len(current), len(diameters)):
+        fitted.append(str(defaults[index] if index < len(defaults) else current[-1]))
+    logger.info("Nozzle flow types %s -> %s (one per nozzle).", current, fitted)
+    settings["nozzle_volume_type"] = fitted
+
+
+# OrcaSlicer 2.5 words these Bambu Studio settings its own way; Bambu Studio
+# 2.9 translates them on load and shows "Some values have been replaced".
+# The pairs are what OrcaSlicer writes for Bambu Studio's values and what
+# Bambu Studio writes back.
+_BAMBU_STUDIO_WORDS = {
+    "enable_arc_fitting": {"enabled": "1", "disabled": "0"},
+    "ensure_vertical_shell_thickness": {"ensure_all": "enabled"},
+    "ironing_pattern": {"rectilinear": "zig-zag", "concentric": "concentric"},
+    "support_ironing_pattern": {"rectilinear": "zig-zag", "concentric": "concentric"},
+}
+
+
+def use_bambu_studio_words(project_3mf: Path, process_path: Any = None) -> Dict[str, str]:
+    """Write Bambu Studio's words for the settings OrcaSlicer words its own way.
+
+    A project prepared by OrcaSlicer and opened in Bambu Studio then loads
+    without the "Some values have been replaced" notice.  The value in the
+    Bambu Studio process preset (``process_path``, when it is one of Bambu
+    Studio's system presets) wins, because OrcaSlicer turns every Bambu
+    "ensure vertical shell thickness" value into "ensure_all"; otherwise the
+    OrcaSlicer word is translated.  Unknown words are left for Bambu Studio.
+
+    Returns:
+        The changed settings (key -> new value).
+    """
+    preset: Dict[str, Any] = {}
+    system = _bambu_system_dir()
+    if process_path and system is not None:
+        try:
+            Path(str(process_path)).resolve().relative_to(system.resolve())
+            preset = _flatten_local_preset(Path(str(process_path)))
+        except (OSError, ValueError, SlicerProfilesError):
+            preset = {}
+    with zipfile.ZipFile(str(project_3mf), "r") as archive:
+        if _PROJECT_SETTINGS_PART not in archive.namelist():
+            return {}
+        settings = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
+    changed: Dict[str, str] = {}
+    for key, words in _BAMBU_STUDIO_WORDS.items():
+        value = settings.get(key)
+        if not isinstance(value, str) or value in words.values():
+            continue
+        own = preset.get(key)
+        word = own.strip() if isinstance(own, str) and own.strip() else words.get(value, value)
+        if word != value:
+            changed[key] = word
+    if changed:
+        settings.update(changed)
+        rewrite_zip_entries(
+            project_3mf,
+            {_PROJECT_SETTINGS_PART: (json.dumps(settings, indent=2) + "\n").encode("utf-8")},
+        )
+        logger.info("Wrote Bambu Studio's words for %s.", changed)
+    return changed
+
+
+NOZZLE_LEFT = "left"
+NOZZLE_RIGHT = "right"
+# ``filament_map`` numbers the nozzles 1 = left, 2 = right (Bambu Studio 2.9.1,
+# Bambu Lab H2D); OrcaSlicer reads the same keys.
+_FILAMENT_MAP_VALUES = {NOZZLE_LEFT: "1", NOZZLE_RIGHT: "2"}
+
+
+def apply_nozzle_map(project_3mf: Path, nozzles: Sequence[Optional[str]]) -> bool:
+    """Pin each filament to the nozzle its printer slot feeds.
+
+    On a printer with two nozzles (Bambu Lab H2D) each AMS feeds one nozzle.
+    Left alone, the slicer picks the nozzles itself ("Auto For Flush") and
+    can put a filament on the nozzle whose AMS does not hold it.  ``nozzles``
+    has one entry per filament in slot order: :data:`NOZZLE_LEFT`,
+    :data:`NOZZLE_RIGHT` or ``None`` when the printer does not say.
+
+    Returns:
+        True when the map was written (``filament_map_mode`` "Manual" in the
+        project and in every plate); False for a one-nozzle printer, a project
+        without settings or a filament whose nozzle is unknown.
+
+    Raises:
+        SlicerProfilesError: If the filament count does not match or the
+            written map does not read back.
+    """
+    wanted = [str(nozzle or "").strip().lower() for nozzle in nozzles]
+    with zipfile.ZipFile(str(project_3mf), "r") as archive:
+        names = archive.namelist()
+        if _PROJECT_SETTINGS_PART not in names or _MODEL_SETTINGS_PART not in names:
+            return False
+        settings = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
+        model_root = ET.fromstring(archive.read(_MODEL_SETTINGS_PART))
+    diameters = settings.get("nozzle_diameter")
+    if not isinstance(diameters, list) or len(diameters) != 2:
+        return False
+    if not wanted or any(nozzle not in _FILAMENT_MAP_VALUES for nozzle in wanted):
+        logger.info("A filament's nozzle is unknown (%s); the slicer picks the nozzles.", wanted)
+        return False
+    colours = settings.get("filament_colour")
+    if not isinstance(colours, list) or len(colours) != len(wanted):
+        raise SlicerProfilesError(
+            "The project has {} filament(s) but {} nozzle(s) were given".format(
+                len(colours) if isinstance(colours, list) else 0, len(wanted)
+            )
+        )
+    values = [_FILAMENT_MAP_VALUES[nozzle] for nozzle in wanted]
+    settings["filament_map"] = values
+    settings["filament_map_mode"] = "Manual"
+    for plate in model_root.findall("plate"):
+        for key, value in (("filament_map_mode", "Manual"), ("filament_maps", " ".join(values))):
+            item = next((meta for meta in plate.findall("metadata") if meta.get("key") == key), None)
+            if item is None:
+                item = ET.SubElement(plate, "metadata", {"key": key})
+            item.set("value", value)
+    rewrite_zip_entries(
+        project_3mf,
+        {
+            _PROJECT_SETTINGS_PART: (json.dumps(settings, indent=2) + "\n").encode("utf-8"),
+            _MODEL_SETTINGS_PART: ET.tostring(model_root, encoding="utf-8", xml_declaration=True),
+        },
+    )
+    with zipfile.ZipFile(str(project_3mf), "r") as archive:
+        written = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
+        plates = ET.fromstring(archive.read(_MODEL_SETTINGS_PART)).findall("plate")
+    plate_maps = {
+        meta.get("value")
+        for plate in plates
+        for meta in plate.findall("metadata")
+        if meta.get("key") == "filament_maps"
+    }
+    if written.get("filament_map") != values or plate_maps - {" ".join(values)}:
+        raise SlicerProfilesError("The nozzle map did not read back from {}".format(project_3mf))
+    logger.info("Pinned the filaments to the nozzles %s in %s.", wanted, project_3mf)
+    return True
+
+
+def _model_slot_assignments(archive: zipfile.ZipFile) -> List[Tuple[str, int]]:
+    """Return ``(name, slot)`` for every named object and part in model_settings.
+
+    A part without its own ``extruder`` prints with its object's slot; an
+    object without one prints with slot 1 (the slicers' default).
+    """
+    if _MODEL_SETTINGS_PART not in archive.namelist():
+        return []
+    try:
+        root = ET.fromstring(archive.read(_MODEL_SETTINGS_PART))
+    except ET.ParseError as exc:
+        raise SlicerProfilesError(
+            "The slicer wrote an unreadable {!r}: {}".format(_MODEL_SETTINGS_PART, exc)
+        ) from exc
+
+    def metadata(element: Any) -> Dict[str, str]:
+        return {
+            str(item.get("key")): str(item.get("value") or "")
+            for item in element.findall("metadata")
+            if item.get("key")
+        }
+
+    def slot_of(values: Mapping[str, str], fallback: int) -> int:
+        try:
+            slot = int(values.get("extruder", "") or 0)
+        except ValueError:
+            return fallback
+        return slot if slot > 0 else fallback
+
+    assignments: List[Tuple[str, int]] = []
+    for element in root.findall("object"):
+        values = metadata(element)
+        object_slot = slot_of(values, 1)
+        if values.get("name"):
+            assignments.append((values["name"], object_slot))
+        for part in element.findall("part"):
+            part_values = metadata(part)
+            if part_values.get("name"):
+                assignments.append((part_values["name"], slot_of(part_values, object_slot)))
+    return assignments
+
+
+def check_slot_assignments(project_3mf: Path, materials: Sequence[Any]) -> int:
+    """Check that every body prints with the filament Fusion gave it.
+
+    Every slicer output is checked the same way: each body named in a
+    material's ``body_names`` must use that material's ``slot`` (default: its
+    1-based position) in ``Metadata/model_settings.config``, and when the
+    project has ``filament_colour`` that slot must show the material's colour.
+
+    Returns:
+        The number of bodies whose slot was checked.
+
+    Raises:
+        SlicerProfilesError: If a body or colour does not match, or no named
+            body was found in the 3MF at all.
+    """
+    with zipfile.ZipFile(str(project_3mf), "r") as archive:
+        assignments = _model_slot_assignments(archive)
+        colours: Optional[List[Any]] = None
+        if _PROJECT_SETTINGS_PART in archive.namelist():
+            try:
+                settings = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                settings = {}
+            value = settings.get("filament_colour") if isinstance(settings, dict) else None
+            colours = value if isinstance(value, list) else None
+
+    slots_by_name: Dict[str, set] = {}
+    for name, slot in assignments:
+        slots_by_name.setdefault(name, set()).add(slot)
+    problems: List[str] = []
+    checked = 0
+    expected_bodies = 0
+    for index, material in enumerate(materials):
+        label = _material_display_name(material, index)
+        try:
+            slot = int(_material_field(material, "slot", index + 1))
+        except (TypeError, ValueError):
+            slot = index + 1
+        if colours is not None:
+            wanted = _normalize_color_hex(_material_field(material, "color_hex", "#FFFFFF"))
+            actual = colours[slot - 1] if 0 < slot <= len(colours) else None
+            if not isinstance(actual, str) or actual.strip().upper() != wanted:
+                problems.append(
+                    "slot {} is {} in the slicer, but {} is {}".format(
+                        slot, actual or "missing", label, wanted
+                    )
+                )
+        for body_name in _material_field(material, "body_names", ()) or ():
+            expected_bodies += 1
+            found = slots_by_name.get(str(body_name))
+            if not found:
+                logger.info("Body %r is not in %s; its slot was not checked.", body_name, project_3mf)
+                continue
+            checked += 1
+            if found != {slot}:
+                problems.append(
+                    "{!r} prints with slot {}, but Fusion gives it {} (slot {})".format(
+                        body_name, "/".join(str(item) for item in sorted(found)), label, slot
+                    )
+                )
+    if expected_bodies and not checked:
+        problems.append("none of the Fusion bodies were found in the 3MF")
+    if problems:
+        raise SlicerProfilesError(
+            "Filament assignments do not match Fusion: {}.".format("; ".join(problems))
+        )
+    logger.info("Slot check passed for %d bod(ies) in %s.", checked, project_3mf)
+    return checked
+
+
 def _read_log_tail(log_path: Path, lines: int = LOG_TAIL_LINES) -> str:
     """Return the last ``lines`` lines of a slicer log file, or ``""``."""
     try:
@@ -2691,10 +3085,16 @@ def _prepare_remote_profiles(
 
 
 def _prepare_profile_paths(
-    target: ProfileTarget, slicer_exe: Any
+    target: ProfileTarget, slicer_exe: Any, for_bambu_studio: bool = False
 ) -> Tuple[Path, Path]:
     """Return the machine/process preset files to pass to the slicer CLI."""
     if target.source == "orca_remote":
+        if for_bambu_studio:
+            raise SlicerProfilesError(
+                "Bambu Studio cannot prepare a project with OrcaSlicer's online "
+                "profiles ({}). Pick a Bambu Lab printer from Bambu Studio's own "
+                "presets, or send to OrcaSlicer.".format(target.printer_name)
+            )
         return _prepare_remote_profiles(target, slicer_exe)
     machine_path = Path(str(target.machine_path))
     process_path = Path(str(target.process_path))
@@ -2708,7 +3108,10 @@ def _prepare_profile_paths(
                 "The {} preset file does not exist: {!r}. Refresh the printer list "
                 "and pick the target again.".format(label, str(preset_path))
             )
-    return machine_path, process_path
+    return (
+        Path(_standalone_bambu_preset(machine_path, for_bambu_studio)),
+        Path(_standalone_bambu_preset(process_path, for_bambu_studio)),
+    )
 
 
 def _material_display_name(material: Any, index: int) -> str:
@@ -2734,7 +3137,10 @@ def prepare_project(
     ``--load-filaments``, ``--export-3mf <basename>``, ``--outputdir``,
     ``--logfile``, ``--debug 4``) and the resulting project's
     ``Metadata/project_settings.config`` filament arrays are post-processed from
-    the detected materials.
+    the detected materials.  Bambu Studio's CLI has no ``--logfile``: it
+    exports into the cache, its output becomes the log and the project is
+    moved to ``output_3mf``.  Every filament preset carries its material's
+    colour, so the slicer works out fitting purge volumes.
 
     Args:
         base_3mf: Filamatch 3MF (model_settings, optionally no
@@ -2801,9 +3207,14 @@ def prepare_project(
     log_path = log_directory / "slicer_cli.log"
     _remove_file_quietly(log_path)
 
-    machine_path, process_path = _prepare_profile_paths(target, slicer_exe)
+    for_bambu_studio = _slicer_identity(slicer_exe)[1] == "bambu"
+    machine_path, process_path = _prepare_profile_paths(target, slicer_exe, for_bambu_studio)
     filament_paths = _choose_filament_paths(material_list, target.printer_name)
     filament_identities = _filament_preset_identities(filament_paths)
+    filament_paths = _coloured_filament_presets(
+        [_standalone_bambu_preset(path, for_bambu_studio) for path in filament_paths],
+        material_list,
+    )
 
     temporary_base: Optional[Path] = None
     try:
@@ -2820,6 +3231,16 @@ def prepare_project(
             )
         else:
             _remove_file_quietly(output_path)
+        # Bambu Studio has no --logfile and writes result.json next to the
+        # project, so it exports into the cache and its output is the log.
+        export_dir = output_path.parent
+        log_flags = ["--logfile", str(log_path), "--debug", "4"]
+        if for_bambu_studio:
+            export_dir = _cache_root() / "prepare" / "bambu_studio_out"
+            export_dir.mkdir(parents=True, exist_ok=True)
+            for old in export_dir.iterdir():
+                _remove_file_quietly(old)
+            log_flags = ["--debug", "3"]
         command = [
             str(slicer_exe),
             "--load-settings",
@@ -2830,15 +3251,13 @@ def prepare_project(
             output_path.name,
             str(cli_base),
             "--outputdir",
-            str(output_path.parent),
-            "--logfile",
-            str(log_path),
-            "--debug",
-            "4",
-        ] + _layout_flags(cli_base)
+            str(export_dir),
+        ] + log_flags + _layout_flags(cli_base)
         logger.info("Running slicer CLI: %s", _command_text(command))
         try:
             result = _run_command(command, CLI_TIMEOUT_SECONDS)
+            if for_bambu_studio:
+                log_path.write_text(_result_text(result), encoding="utf-8")
         except subprocess.TimeoutExpired as exc:
             raise SlicerProfilesError(
                 "Slicer CLI timed out after {} seconds. {}".format(
@@ -2862,11 +3281,14 @@ def prepare_project(
 
         returncode = _safe_get(result, "returncode", "a slicer CLI result")
         if returncode not in (0, None):
-            raise SlicerProfilesError(
-                _cli_error_message(
-                    "the slicer exited with an error", command, result, log_path
-                )
-            )
+            reason = "the slicer exited with an error"
+            report = _read_json_file(export_dir / "result.json") if for_bambu_studio else None
+            if report and report.get("error_string"):
+                reason += ": {}".format(report["error_string"])
+            raise SlicerProfilesError(_cli_error_message(reason, command, result, log_path))
+        exported = export_dir / output_path.name
+        if for_bambu_studio and exported.is_file():
+            shutil.move(str(exported), str(output_path))
         try:
             output_exists = output_path.is_file() and output_path.stat().st_size > 0
         except OSError:
@@ -2889,6 +3311,7 @@ def prepare_project(
             preset_identities=filament_identities,
             extra_entries=extra_entries,
         )
+        check_slot_assignments(output_path, material_list)
         log_tail = _read_log_tail(log_path)
         filament_names = tuple(
             _material_display_name(material, index)
@@ -3544,6 +3967,7 @@ def _write_prepared_3mf(
     path: Path,
     printer_settings_id: str = "Bambu Lab X1 Carbon 0.4 nozzle",
     include_printer_id: bool = True,
+    model_settings: Optional[bytes] = None,
 ) -> None:
     """Write a slicer-like prepared project 3MF for the self-test."""
     settings: Dict[str, Any] = {
@@ -3566,6 +3990,8 @@ def _write_prepared_3mf(
         archive.writestr("3D/3dmodel.model", b"<model/>")
         archive.writestr(_PROJECT_SETTINGS_PART, json.dumps(settings).encode("utf-8"))
         archive.writestr("Metadata/thumbnail.png", b"slicer-thumb")
+        if model_settings is not None:
+            archive.writestr(_MODEL_SETTINGS_PART, model_settings)
 
 
 def _prepare_command_handler(
@@ -3573,6 +3999,7 @@ def _prepare_command_handler(
     include_printer_settings_id: bool = True,
     returncode: int = 0,
     write_output: bool = True,
+    model_settings: Optional[bytes] = None,
 ) -> Callable[[List[str], _FakeRunner], _FakeCompletedProcess]:
     """Build a fake CLI handler that records the command and writes a project."""
 
@@ -3603,6 +4030,7 @@ def _prepare_command_handler(
             _write_prepared_3mf(
                 Path(output_dir) / output_name,
                 include_printer_id=include_printer_settings_id,
+                model_settings=model_settings,
             )
         return _FakeCompletedProcess(returncode, "slicer stdout", "slicer stderr")
 
@@ -3680,10 +4108,12 @@ def _check_prepare_local(environment: _TestEnvironment) -> None:
         _flag_value(command, "--outputdir") == str(output.parent),
         "--outputdir must be the output directory",
     )
+    settings_paths = (_flag_value(command, "--load-settings") or "").split(";")
+    loaded = [json.loads(Path(path).read_text(encoding="utf-8")) for path in settings_paths]
     _expect(
-        _flag_value(command, "--load-settings")
-        == "{};{}".format(target.machine_path, target.process_path),
-        "--load-settings must be machine;process",
+        [preset.get("name") for preset in loaded] == [target.printer_name, target.process_name]
+        and all(preset.get("from") == "user" and "inherits" not in preset for preset in loaded),
+        "--load-settings must be stand-alone machine;process copies for OrcaSlicer: {}".format(loaded),
     )
     _expect(_flag_value(command, "--debug") == "4", "--debug 4 must be requested")
     _expect(command[-1] == "4", "the CLI command must end with --debug 4")
@@ -3704,6 +4134,14 @@ def _check_prepare_local(environment: _TestEnvironment) -> None:
     _expect(
         "Bambu PLA Basic @BBL X1C" in filament_arg,
         "PLA material must select the matching Bambu filament preset",
+    )
+    preset_colours = [
+        json.loads(Path(path).read_text(encoding="utf-8")).get("filament_colour")
+        for path in filament_arg.split(";")
+    ]
+    _expect(
+        preset_colours == [["#161616"], ["#FFFFFF"], ["#111111"]],
+        "every filament preset must carry its material's colour (purge volumes): {}".format(preset_colours),
     )
 
     settings = json.loads(
@@ -4027,6 +4465,381 @@ def _check_fit_wipe_tower(environment: _TestEnvironment) -> None:
     }
     _fit_bed_type(mixed)
     _expect(mixed["curr_bed_type"] == "High Temp Plate", "the first plate suiting all filaments wins")
+
+    orca_h2d = {
+        "nozzle_diameter": ["0.4", "0.4"],
+        "nozzle_volume_type": ["Standard"],
+        "default_nozzle_volume_type": ["Standard", "High Flow"],
+    }
+    _fit_nozzle_volume_types(orca_h2d)
+    _expect(
+        orca_h2d["nozzle_volume_type"] == ["Standard", "High Flow"],
+        "each H2D nozzle needs its own flow type: {}".format(orca_h2d),
+    )
+    no_default = {"nozzle_diameter": ["0.4", "0.4"], "nozzle_volume_type": ["High Flow"]}
+    _fit_nozzle_volume_types(no_default)
+    _expect(
+        no_default["nozzle_volume_type"] == ["High Flow", "High Flow"],
+        "without a preset default the last flow type repeats",
+    )
+    one_nozzle = {"nozzle_diameter": ["0.4"], "nozzle_volume_type": ["Standard"]}
+    _fit_nozzle_volume_types(one_nozzle)
+    _expect(one_nozzle["nozzle_volume_type"] == ["Standard"], "a single nozzle is left alone")
+
+
+def _check_prepare_bambu_studio(environment: _TestEnvironment) -> None:
+    """Bambu Studio prepares by itself: no --logfile, named presets, output moved, log kept."""
+    bambu_exe = environment.root / "BambuStudio"
+    bambu_exe.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    saved_help = environment.runner.help_text
+    environment.runner.help_text = "BambuStudio-2.9.1"
+    records: Dict[str, Any] = {}
+    environment.runner.cli_handler = _prepare_command_handler(records)
+    output = environment.root / "bambu_out" / "project.3mf"
+    base_3mf = _write_fixture_3mf(environment.root / "bambu_base.3mf")
+    try:
+        prepared = prepare_project(
+            base_3mf, output, _local_target(environment), bambu_exe, environment.materials
+        )
+        command = records["command"]
+        _expect(output.is_file() and prepared.output_path == output, "the project must reach the requested path")
+        _expect("--logfile" not in command, "Bambu Studio's CLI has no --logfile: {}".format(command))
+        _expect(_flag_value(command, "--outputdir") != str(output.parent), "Bambu Studio exports into the cache")
+        _expect(
+            not list(Path(_flag_value(command, "--outputdir") or "").glob("*.3mf")),
+            "the exported project must be moved out of the cache",
+        )
+        _expect("slicer stdout" in prepared.log_tail, "Bambu Studio's output is the log: {!r}".format(prepared.log_tail))
+        presets = [
+            json.loads(Path(path).read_text(encoding="utf-8"))
+            for path in (_flag_value(command, "--load-settings") or "").split(";")
+            + (_flag_value(command, "--load-filaments") or "").split(";")
+        ]
+        _expect(
+            all(preset.get("inherits") == preset.get("name") and preset.get("from") == "user" for preset in presets),
+            "Bambu Studio's presets must name themselves in inherits: {}".format(
+                [(preset.get("name"), preset.get("inherits")) for preset in presets]
+            ),
+        )
+
+        def failing(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
+            out_dir = Path(_flag_value(command, "--outputdir") or "")
+            (out_dir / "result.json").write_text(
+                json.dumps({"error_string": "process not compatible with printer", "return_code": -17})
+            )
+            return _FakeCompletedProcess(239, "run found error", "")
+
+        environment.runner.cli_handler = failing
+        try:
+            prepare_project(base_3mf, output, _local_target(environment), bambu_exe, environment.materials)
+        except SlicerProfilesError as exc:
+            _expect("process not compatible with printer" in str(exc), "result.json must explain: {}".format(exc))
+        else:
+            raise AssertionError("a failing Bambu Studio run must raise")
+
+        remote = ProfileTarget(
+            vendor="Prusa", printer_name="Prusa MK4", machine_path="", process_name="0.20mm", process_path="",
+            source="orca_remote",
+        )
+        try:
+            prepare_project(base_3mf, output, remote, bambu_exe, environment.materials)
+        except SlicerProfilesError as exc:
+            _expect("OrcaSlicer's online profiles" in str(exc), "unexpected error: {}".format(exc))
+        else:
+            raise AssertionError("Bambu Studio must refuse OrcaSlicer's online profiles")
+    finally:
+        environment.runner.help_text = saved_help
+
+
+def _check_bambu_studio_words(environment: _TestEnvironment) -> None:
+    """An OrcaSlicer project gets Bambu Studio's words for the settings it words its own way."""
+    orca_words = {
+        "enable_arc_fitting": "disabled",
+        "ensure_vertical_shell_thickness": "ensure_all",
+        "ironing_pattern": "rectilinear",
+        "support_ironing_pattern": "concentric",
+        "sparse_infill_density": "15%",
+    }
+
+    def project(name: str, settings: Dict[str, Any]) -> Path:
+        path = environment.root / "words" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(str(path), "w") as archive:
+            archive.writestr(_PROJECT_SETTINGS_PART, json.dumps(settings))
+        return path
+
+    def read(path: Path) -> Dict[str, Any]:
+        return json.loads(_read_archive_entry(path, _PROJECT_SETTINGS_PART).decode("utf-8"))
+
+    translated = project("translated.3mf", orca_words)
+    _expect(
+        use_bambu_studio_words(translated)
+        == {"enable_arc_fitting": "0", "ensure_vertical_shell_thickness": "enabled", "ironing_pattern": "zig-zag"},
+        "OrcaSlicer's words must be translated: {}".format(read(translated)),
+    )
+    _expect(read(translated)["sparse_infill_density"] == "15%", "other settings stay")
+    _expect(use_bambu_studio_words(translated) == {}, "a second run changes nothing")
+
+    process = _write_profile_json(
+        environment.bambu_system / "process" / "0.20mm Words @BBL H2D.json",
+        {"name": "0.20mm Words @BBL H2D", "type": "process", "ensure_vertical_shell_thickness": "partial"},
+    )
+    from_preset = project("preset.3mf", orca_words)
+    changed = use_bambu_studio_words(from_preset, process)
+    _expect(
+        changed.get("ensure_vertical_shell_thickness") == "partial" and changed.get("enable_arc_fitting") == "0",
+        "the Bambu Studio preset's own value wins: {}".format(changed),
+    )
+    process.unlink()
+    unknown = project("unknown.3mf", dict(orca_words, ensure_vertical_shell_thickness="ensure_moderate"))
+    _expect(
+        "ensure_vertical_shell_thickness" not in use_bambu_studio_words(unknown),
+        "an unknown OrcaSlicer word is left for Bambu Studio",
+    )
+
+
+def _check_slicer_names(environment: _TestEnvironment) -> None:
+    """Slicer kind and display name come from the executable or app path."""
+    cases = (
+        ("/Applications/BambuStudio.app/Contents/MacOS/BambuStudio", "bambu", "Bambu Studio"),
+        ("/Applications/OrcaSlicer.app", "orca", "OrcaSlicer"),
+        ("C:\\Program Files\\OrcaSlicer\\orca-slicer.exe", "orca", "OrcaSlicer"),
+        ("/Applications/Original Prusa Drivers/PrusaSlicer.app/Contents/MacOS/PrusaSlicer", "", "PrusaSlicer"),
+        ("C:\\Tools\\SuperSlicer\\superslicer.exe", "", "superslicer"),
+        ("", "", "the slicer"),
+    )
+    for path, kind, name in cases:
+        _expect(slicer_kind(path) == kind, "kind of {!r}: {!r}".format(path, slicer_kind(path)))
+        _expect(slicer_name(path) == name, "name of {!r}: {!r}".format(path, slicer_name(path)))
+
+
+def _check_nozzle_map(environment: _TestEnvironment) -> None:
+    """Each filament is pinned to the nozzle its slot feeds (two-nozzle printers only)."""
+    plates = (
+        '<plate><metadata key="plater_id" value="1"/>'
+        '<metadata key="filament_map_mode" value="Auto For Flush"/></plate>'
+        '<plate><metadata key="plater_id" value="2"/></plate>'
+    )
+
+    def project(name: str, diameters: List[str]) -> Path:
+        path = environment.root / "nozzles" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        settings = {
+            "nozzle_diameter": diameters,
+            "filament_colour": ["#000000", "#0ACC38"],
+            "filament_map": ["1", "1"],
+            "filament_map_mode": "Auto For Flush",
+        }
+        with zipfile.ZipFile(str(path), "w") as archive:
+            archive.writestr(_PROJECT_SETTINGS_PART, json.dumps(settings))
+            archive.writestr(_MODEL_SETTINGS_PART, "<config>{}</config>".format(plates))
+        return path
+
+    def read(path: Path) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
+        with zipfile.ZipFile(str(path), "r") as archive:
+            settings = json.loads(archive.read(_PROJECT_SETTINGS_PART).decode("utf-8"))
+            root = ET.fromstring(archive.read(_MODEL_SETTINGS_PART))
+        return settings, [
+            {meta.get("key"): meta.get("value") for meta in plate.findall("metadata")}
+            for plate in root.findall("plate")
+        ]
+
+    h2d = project("h2d.3mf", ["0.4", "0.4"])
+    _expect(apply_nozzle_map(h2d, [NOZZLE_RIGHT, NOZZLE_RIGHT]), "both AMS 2 slots feed the right nozzle")
+    settings, plate_values = read(h2d)
+    _expect(
+        settings["filament_map"] == ["2", "2"] and settings["filament_map_mode"] == "Manual",
+        "the project must pin both filaments to nozzle 2: {}".format(settings),
+    )
+    _expect(
+        all(plate.get("filament_map_mode") == "Manual" and plate.get("filament_maps") == "2 2" for plate in plate_values),
+        "every plate must use the manual map: {}".format(plate_values),
+    )
+    mixed = project("mixed.3mf", ["0.4", "0.4"])
+    _expect(apply_nozzle_map(mixed, [NOZZLE_LEFT, NOZZLE_RIGHT]), "a left and a right slot")
+    _expect(read(mixed)[0]["filament_map"] == ["1", "2"], "left is 1 and right is 2")
+
+    unknown = project("unknown.3mf", ["0.4", "0.4"])
+    _expect(not apply_nozzle_map(unknown, [NOZZLE_RIGHT, None]), "an unknown nozzle leaves the choice to the slicer")
+    _expect(read(unknown)[0]["filament_map_mode"] == "Auto For Flush", "the project must stay unchanged")
+    one_nozzle = project("x1c.3mf", ["0.4"])
+    _expect(not apply_nozzle_map(one_nozzle, [NOZZLE_LEFT, NOZZLE_LEFT]), "a one-nozzle printer has no nozzle map")
+    try:
+        apply_nozzle_map(project("count.3mf", ["0.4", "0.4"]), [NOZZLE_RIGHT])
+    except SlicerProfilesError as exc:
+        _expect("2 filament(s) but 1 nozzle(s)" in str(exc), "unexpected error: {}".format(exc))
+    else:
+        raise AssertionError("a nozzle list of the wrong length must be refused")
+
+
+def _check_standalone_bambu_presets(environment: _TestEnvironment) -> None:
+    """Bambu Studio system presets reach the CLI merged with their parents."""
+    filament_dir = environment.bambu_system / "filament"
+    _write_profile_json(
+        filament_dir / "fdm_filament_abs.json",
+        {"name": "fdm_filament_abs", "type": "filament", "filament_density": ["1.04"],
+         "nozzle_temperature": ["250"], "inherits": "fdm_filament_common"},
+    )
+    _write_profile_json(
+        filament_dir / "fdm_filament_common.json",
+        {"name": "fdm_filament_common", "type": "filament", "filament_diameter": ["1.75"],
+         "nozzle_temperature": ["200"]},
+    )
+    _write_profile_json(
+        filament_dir / "dual_template.json",
+        {"name": "fdm_filament_template_direct_dual", "type": "filament", "filament_extruder_variant": ["A", "B"]},
+    )
+    leaf = _write_profile_json(
+        filament_dir / "Bambu ABS-GF @BBL H2D.json",
+        {"name": "Bambu ABS-GF @BBL H2D", "type": "filament", "from": "system",
+         "inherits": "fdm_filament_abs", "include": ["fdm_filament_template_direct_dual"],
+         "nozzle_temperature": ["270"]},
+    )
+    standalone = Path(_standalone_bambu_preset(leaf))
+    _expect(standalone != leaf and standalone.is_file(), "an inheriting system preset must be copied")
+    data = json.loads(standalone.read_text(encoding="utf-8"))
+    _expect(
+        data.get("filament_diameter") == ["1.75"]
+        and data.get("filament_density") == ["1.04"]
+        and data.get("filament_extruder_variant") == ["A", "B"]
+        and data.get("nozzle_temperature") == ["270"],
+        "parents, includes and the preset's own keys must merge in that order: {}".format(data),
+    )
+    _expect(
+        data.get("from") == "user" and "inherits" not in data and "include" not in data,
+        "the copy must stand alone: {}".format(data),
+    )
+    for_bambu = json.loads(Path(_standalone_bambu_preset(leaf, for_bambu_studio=True)).read_text(encoding="utf-8"))
+    _expect(
+        for_bambu.get("inherits") == "Bambu ABS-GF @BBL H2D"
+        and for_bambu.get("from") == "user"
+        and for_bambu.get("filament_diameter") == ["1.75"],
+        "Bambu Studio's merged copy must name itself in inherits: {}".format(for_bambu),
+    )
+    plain = filament_dir / "Bambu PLA Basic @BBL X1C.json"
+    plain_copy = json.loads(Path(_standalone_bambu_preset(plain)).read_text(encoding="utf-8"))
+    _expect(
+        plain_copy.get("name") == "Bambu PLA Basic @BBL X1C" and plain_copy.get("from") == "user",
+        "a system preset without parents is still copied as a user preset: {}".format(plain_copy),
+    )
+    elsewhere = _write_profile_json(
+        environment.root / "imported" / "mine.json",
+        {"name": "Mine", "type": "filament", "inherits": "Somewhere Else"},
+    )
+    _expect(_standalone_bambu_preset(elsewhere) == str(elsewhere), "presets outside Bambu Studio are untouched")
+    broken = _write_profile_json(
+        filament_dir / "broken.json", {"name": "Broken", "type": "filament", "inherits": "Missing Parent"}
+    )
+    try:
+        _standalone_bambu_preset(broken)
+    except SlicerProfilesError as exc:
+        _expect("Missing Parent" in str(exc), "the error must name the missing parent: {}".format(exc))
+    else:
+        raise AssertionError("a missing parent must be reported")
+    for path in (filament_dir / "fdm_filament_abs.json", filament_dir / "fdm_filament_common.json",
+                 filament_dir / "dual_template.json", leaf, broken):
+        path.unlink()
+
+
+def _slot_fixture(
+    path: Path, assignments: str, colours: Optional[List[str]] = None
+) -> Path:
+    """Write a 3MF whose model_settings holds ``assignments`` (and ``colours``)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(str(path), "w") as archive:
+        archive.writestr(_MODEL_SETTINGS_PART, "<config>{}</config>".format(assignments))
+        if colours is not None:
+            archive.writestr(
+                _PROJECT_SETTINGS_PART, json.dumps({"filament_colour": colours}).encode("utf-8")
+            )
+    return path
+
+
+def _check_slot_assignments(environment: _TestEnvironment) -> None:
+    """Every body must print with the slot and colour Fusion gave it."""
+
+    def part(name: str, slot: Optional[int]) -> str:
+        extruder = '<metadata key="extruder" value="{}"/>'.format(slot) if slot else ""
+        return '<part id="1"><metadata key="name" value="{}"/>{}</part>'.format(name, extruder)
+
+    # Two components: the main body is black ABS-GF (slot 1), the TEF part is green (slot 2).
+    fusion = [
+        {"display_name": "ABS-GF Black", "color_hex": "#000000", "slot": 1, "body_names": ("Body1",)},
+        {"display_name": "PolyLite Green", "color_hex": "#0acc38", "slot": 2, "body_names": ("Body1 (TEF)",)},
+    ]
+    assembled = '<object id="3"><metadata key="name" value="Assembly"/>{}{}</object>'.format(
+        part("Body1 (TEF)", 2), part("Body1", 1)
+    )
+    good = _slot_fixture(environment.root / "slots" / "good.3mf", assembled, ["#000000", "#0ACC38"])
+    _expect(check_slot_assignments(good, fusion) == 2, "both bodies must be checked")
+
+    swapped_colours = _slot_fixture(
+        environment.root / "slots" / "colours.3mf", assembled, ["#0ACC38", "#000000"]
+    )
+    try:
+        check_slot_assignments(swapped_colours, fusion)
+    except SlicerProfilesError as exc:
+        _expect("slot 1 is #0ACC38" in str(exc), "the colour error must name the slot: {}".format(exc))
+    else:
+        raise AssertionError("swapped slot colours must be refused")
+
+    # The wrong test files: TEF on slot 2, but slot 2 held the black filament.
+    wrong_order = [
+        dict(fusion[1], slot=1, body_names=("Body1 (TEF)",)),
+        dict(fusion[0], slot=2, body_names=("Body1",)),
+    ]
+    try:
+        check_slot_assignments(good, wrong_order)
+    except SlicerProfilesError as exc:
+        _expect("'Body1 (TEF)' prints with slot 2" in str(exc), "body error must name the body: {}".format(exc))
+    else:
+        raise AssertionError("a body on the wrong slot must be refused")
+
+    plain = _slot_fixture(
+        environment.root / "slots" / "plain.3mf",
+        '<object id="1"><metadata key="name" value="Body1 (TEF)"/>'
+        '<metadata key="extruder" value="2"/></object>'
+        '<object id="2"><metadata key="name" value="Body1"/>{}</object>'.format(part("Body1", None)),
+    )
+    _expect(
+        check_slot_assignments(plain, fusion) == 2,
+        "a plain 3MF is checked by extruder only; a part without one uses its object's slot",
+    )
+    renamed = _slot_fixture(environment.root / "slots" / "renamed.3mf", part("Shape 1", 1))
+    try:
+        check_slot_assignments(renamed, fusion)
+    except SlicerProfilesError as exc:
+        _expect("none of the Fusion bodies" in str(exc), "unexpected error: {}".format(exc))
+    else:
+        raise AssertionError("a 3MF without any Fusion body must be refused")
+    _expect(
+        check_slot_assignments(good, [{"color_hex": "#000000"}, {"color_hex": "#0ACC38"}]) == 0,
+        "materials without body names only check the colours",
+    )
+
+    records: Dict[str, Any] = {}
+    environment.runner.cli_handler = _prepare_command_handler(
+        records,
+        model_settings="<config>{}</config>".format(
+            assembled.replace('value="2"', 'value="3"')
+        ).encode("utf-8"),
+    )
+    materials = [
+        dict(environment.materials[0], body_names=("Body1",)),
+        dict(environment.materials[1], body_names=("Body1 (TEF)",)),
+    ]
+    try:
+        prepare_project(
+            _write_fixture_3mf(environment.root / "slots" / "base.3mf"),
+            environment.root / "slots" / "out" / "project.3mf",
+            _local_target(environment),
+            environment.slicer_exe,
+            materials,
+        )
+    except SlicerProfilesError as exc:
+        _expect("'Body1 (TEF)' prints with slot 3" in str(exc), "unexpected error: {}".format(exc))
+    else:
+        raise AssertionError("prepare_project must refuse a slicer output with moved slots")
 
 
 def _check_layout_flags(environment: _TestEnvironment) -> None:
@@ -4397,7 +5210,16 @@ def _selftest() -> int:
         ("cached remote manifests keep working offline", _check_offline_cache),
         ("filament selection matches types and falls back", _check_filament_fallback),
         ("touching bodies are assembled, separate bodies share a plate", _check_layout_flags),
-        ("the prime tower and build plate are fitted to the printer", _check_fit_wipe_tower),
+        (
+            "the prime tower, build plate and nozzle flow types are fitted to the printer",
+            _check_fit_wipe_tower,
+        ),
+        ("every body prints with the slot and colour Fusion gave it", _check_slot_assignments),
+        ("Bambu Studio presets reach the CLI merged with their parents", _check_standalone_bambu_presets),
+        ("each filament is pinned to the nozzle its slot feeds", _check_nozzle_map),
+        ("slicer kind and name come from the app path", _check_slicer_names),
+        ("projects sent to Bambu Studio use Bambu Studio's words", _check_bambu_studio_words),
+        ("Bambu Studio prepares projects by itself", _check_prepare_bambu_studio),
         ("listings fail fast offline and cache missing files/tags", _check_network_failfast),
         ("failed version probes are not cached", _check_version_cache),
         ("remote paths stay in the cache and downloads are capped", _check_path_safety),

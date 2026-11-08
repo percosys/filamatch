@@ -83,9 +83,9 @@
           </div>
         </section>
 
-        <section class="send" aria-label="Send to Orca">
+        <section class="send" aria-label="Send to the slicer">
           <div id="export-readiness" class="readiness" role="status" aria-live="polite"></div>
-          <button id="export-btn" class="btn btn--primary btn--big" type="button">Send to Orca</button>
+          <button id="export-btn" class="btn btn--primary btn--big" type="button">Send to slicer</button>
           <p id="export-status" class="status status--muted" role="status" aria-live="polite"></p>
           <p class="save-line">
             <span id="output-file-label">Saves the 3MF next to your other exports</span>
@@ -271,7 +271,7 @@
                   <label class="field-label" for="bambu-lan-name">Name (optional)</label>
                   <input id="bambu-lan-name" class="text-input" type="text" placeholder="Filled in after Test" autocomplete="off" spellcheck="false">
                 </div>
-                <p class="faint">Find the IP address and access code on the printer screen (Settings &rarr; Network or WLAN). LAN Only Mode is not required.</p>
+                <p class="faint">Find the IP address and access code on the printer screen (Settings &rarr; Network or WLAN). Tested in LAN Only Mode.</p>
                 <div class="button-row">
                   <button id="bambu-lan-test-btn" class="btn btn--ghost" type="button">Test</button>
                   <button id="bambu-lan-save-btn" class="btn btn--primary" type="button">Save</button>
@@ -294,14 +294,19 @@
             <div class="card__row">
               <span id="slicer-dot" class="dot dot--off" aria-hidden="true"></span>
               <div class="card__main">
-                <div class="card__name">OrcaSlicer</div>
-                <div id="slicer-summary" class="faint">Looking for OrcaSlicer&hellip;</div>
+                <div id="slicer-name" class="card__name">Slicer</div>
+                <div id="slicer-summary" class="faint">Looking for a slicer&hellip;</div>
               </div>
               <button id="slicer-edit-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="slicer-edit">Change</button>
             </div>
             <div id="slicer-edit" class="card__body" hidden>
               <div class="field">
-                <label class="field-label" for="orca-path">OrcaSlicer app</label>
+                <label class="field-label" for="slicer-choice">Send to</label>
+                <select id="slicer-choice" class="select-input"><option value="">Looking for slicers&hellip;</option></select>
+              </div>
+              <p class="faint">The slicer you pick applies the print settings and opens the file. Bambu Studio does this for Bambu Lab printers; for other printers it needs OrcaSlicer installed. Other slicers get the plain 3MF.</p>
+              <div class="field">
+                <label class="field-label" for="orca-path">Slicer app</label>
                 <div class="input-with-button">
                   <input id="orca-path" class="text-input" type="text" placeholder="/Applications/OrcaSlicer.app" autocomplete="off" spellcheck="false">
                   <button id="browse-slicer-path-btn" class="btn btn--ghost" type="button">Browse&hellip;</button>
@@ -344,7 +349,7 @@
             </label>
             <label class="checkbox-field" for="orca-enabled">
               <input id="orca-enabled" type="checkbox" checked>
-              <span>Open Orca after export</span>
+              <span id="open-slicer-label">Open the slicer after export</span>
             </label>
             <label class="checkbox-field" for="write-project-settings">
               <input id="write-project-settings" type="checkbox" checked>

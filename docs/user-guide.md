@@ -85,12 +85,18 @@ OrcaSlicer or Bambu Studio, or from OrcaSlicer's online profile collection.
 **Ready check and Send to Orca.** Above the button you see "Ready to send" or
 a short list of problems, each with a button that fixes it. Warnings never
 block sending; only real blockers do (no open design, no filament assigned,
-no slicer found). **Send to Orca**:
+no slicer found). The button names the slicer you pick in Settings, for
+example **Send to Orca** or **Send to Bambu**. It:
 
 1. exports the design as a 3MF with each body assigned to its slot;
-2. prepares a complete project for the chosen printer and process;
+2. prepares a complete project for the chosen printer and process, with the
+   slicer you picked (Bambu Studio prepares Bambu Lab printers itself; for
+   other printers it needs OrcaSlicer installed);
 3. adds a small slot record (which spool is in which slot);
-4. opens the file in OrcaSlicer.
+4. opens the file in the slicer you picked.
+
+A slicer other than OrcaSlicer or Bambu Studio (for example PrusaSlicer)
+cannot open a prepared project, so it gets the plain 3MF.
 
 The line below the button shows where the file is saved; **Change** picks
 another place.
@@ -124,9 +130,10 @@ Select filaments and click **Add to Fusion**. You return to Home.
   - **Bambuddy:** address and API key. **Edit** changes them; **Remove key**
     deletes the saved key. Turn off **Verify the HTTPS certificate** only for
     a Bambuddy on your own network with a self-signed certificate.
-- **OrcaSlicer:** where the slicer is installed (found automatically when it
-  is in the usual place).
-- **Export folder:** where **Send to Orca** saves files.
+- **Slicer:** **Change > Send to** lists the slicers installed on your
+  computer; **Other app…** picks any other slicer. The send button shows the
+  name of the slicer you pick.
+- **Export folder:** where the send button saves files.
 - **Fusion library:** keep the Filamatch Library up to date after adding
   filaments, or rebuild it now.
 - **Advanced:**
@@ -138,11 +145,11 @@ Select filaments and click **Add to Fusion**. You return to Home.
 
 ## Which slicers can open the files
 
-Tested with Filamatch 0.2 on macOS:
+Tested on macOS:
 
 | File | OrcaSlicer | Bambu Studio | PrusaSlicer / SuperSlicer |
 |---|---|---|---|
-| **Send to Orca** (prepared project) | Opens with slots | Needs version 2.8 or newer | Does not open |
+| **Send to Orca / Send to Bambu** (prepared project) | Opens with slots | Opens with slots. Send to Bambu prepares with your own Bambu Studio; a file prepared by OrcaSlicer needs Bambu Studio 2.8 or newer | Does not open (gets the plain 3MF) |
 | **Export only** (Advanced) | Opens with slots | Opens with slots | Opens, but slots are not kept |
 
 PrusaSlicer support is on the [roadmap](roadmap.md).
@@ -165,6 +172,7 @@ are not OK. Log files: see [file locations](how-it-works.md#file-locations).
 | Colours in the Material Browser look white or grey | Fusion draws the material preview once and cannot redraw it through its API. The model, the palette and the export use the right colour. Editing the appearance once in Fusion refreshes the preview. |
 | `Template material ... was not found` | Filamatch copies a stock Fusion material. Make sure the *Fusion Material Library* is available in the Material Browser. |
 | Printer preparation failed | The tagged 3MF is still saved (the error names the file). Check that OrcaSlicer is installed and that the printer and process exist in **Print settings > Change**. |
+| "Filament assignments do not match Fusion" | Filamatch stopped the export because a body would print with another filament than in Fusion. The message names the body and the slot. Click Refresh and export again. If it happens again, run diagnostics and report it with the message. |
 | The slicer refuses to slice mixed materials | A slicer safety rule for very different print temperatures. Turn on the slicer's option to allow mixed temperatures, or print the materials separately. |
 | The profile list is empty | The online profile list needs internet. Installed OrcaSlicer/Bambu Studio profiles work offline, and you can import your own profile files in Advanced. |
 | An unwanted favorite | Fusion's API cannot remove favorites. Remove it in Fusion: Physical Material > Favorites > right-click > Remove. |

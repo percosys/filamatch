@@ -148,8 +148,15 @@ def main() -> int:
         "app.js navigates screens instead of a step wizard",
     )
     check(
-        "Send to Orca" in html and 'id="export-readiness"' in html,
-        "Home has the ready check and one Send to Orca button",
+        html.count('id="export-btn"') == 1 and 'id="export-readiness"' in html,
+        "Home has the ready check and one send button",
+    )
+    check(
+        'id="slicer-choice"' in html
+        and "'Send to ' + names.short" in js
+        and "[/bambu/i, 'Bambu Studio', 'Bambu']" in js
+        and "[/orca/i, 'OrcaSlicer', 'Orca']" in js,
+        "the send button names the chosen slicer (Send to Orca / Send to Bambu)",
     )
     materials_handler = js.split("function handleMaterialsData", 1)[-1].split("\n  }\n", 1)[0]
     refresh = js.split("function scheduleBambuddyRefresh", 1)[-1].split("\n  }\n", 1)[0]

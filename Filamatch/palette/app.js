@@ -593,6 +593,8 @@
     favorites: { count: 0, names: [] },
     settings: normalizeSettings(null),
     settingsLoaded: false,
+    /** Installed slicers {kind, name, path, version} from the last profile listing. */
+    slicers: [],
     /** Visible screen and Home data. */
     ui: {
       screen: 'home',
@@ -2031,7 +2033,7 @@
         addLine('project_settings.config written: ' + (payload.project_settings_written === true ? 'yes' : 'no'));
       }
       if (payload.orca_launched !== undefined) {
-        addLine('Orca Slicer launched: ' + (payload.orca_launched === true ? 'yes' : 'no'));
+        addLine(slicerNames().full + ' launched: ' + (payload.orca_launched === true ? 'yes' : 'no'));
       }
       if (payload.prepared === true) {
         var preparedPrinter = asString(payload.printer_name) || 'unknown printer';
@@ -3360,6 +3362,8 @@
       setStatus(status, demoSuffix('Slicer executable selected: ' + path), 'success');
       appendLog('Slicer executable selected via Browse: ' + path, 'info');
       renderSlicerSummary();
+      renderSlicerChoice();
+      renderExportButton();
       scheduleSettingsSave();
       /* The chosen install supplies the printer/process profiles. */
       if (!isActionPending('get_profiles')) {
@@ -3989,6 +3993,8 @@
       input.value = path;
       state.settings.slicer_path = path;
       appendLog('Using slicer for profile preparation: ' + path, 'info');
+      renderSlicerSummary();
+      renderExportButton();
     }
   }
 
@@ -4004,6 +4010,7 @@
     var ctx = context || {};
 
     maybeAdoptSlicerPath(data.slicers);
+    renderSlicerChoice(data.slicers);
 
     var vendors = Array.isArray(data.vendors) ? data.vendors : [];
     var printers = Array.isArray(data.printers) ? data.printers : [];
@@ -4802,6 +4809,7 @@
     }
     syncPrepareUi();
     renderSlicerSummary();
+    renderSlicerChoice();
     renderSaveLine();
     renderExportButton();
   }
@@ -4940,7 +4948,7 @@
       (preparing ? ' (prepared for ' + targetPrinter + ')' : '') + '.', 'info');
     request('export_3mf', payload, {
       statusEl: byId('export-status'),
-      pendingText: payload.orca.enabled ? 'Exporting and opening Orca...' : 'Exporting the 3MF...',
+      pendingText: payload.orca.enabled ? 'Exporting and opening ' + slicerNames(slicerPath).full + '...' : 'Exporting the 3MF...',
       button: byId('export-btn'),
       timeoutMs: EXPORT_TIMEOUT_MS
     });
@@ -6230,12 +6238,129 @@
     label.title = path;
   }
 
-  /** The main button opens Orca unless that is turned off in Advanced. */
+  /** "Send to" list entry that opens the file dialog for another slicer app. */
+  var SLICER_CHOICE_BROWSE = '__browse__';
+
+  /** Known slicers by path: [pattern, full name, short name on the main button]. */
+  var SLICER_NAMES = [
+    [/bambu/i, 'Bambu Studio', 'Bambu'],
+    [/orca/i, 'OrcaSlicer', 'Orca'],
+    [/superslicer/i, 'SuperSlicer', 'SuperSlicer'],
+    [/prusa/i, 'PrusaSlicer', 'PrusaSlicer'],
+    [/cura/i, 'UltiMaker Cura', 'Cura']
+  ];
+
+  /**
+   * Names of the slicer at `path` (default: the chosen slicer app).
+   * @param {string} [path]
+   * @returns {{full: string, short: string}}
+   */
+  function slicerNames(path) {
+    if (path === undefined) {
+      var input = byId('orca-path');
+      path = input ? input.value.trim() : '';
+    }
+    path = asString(path).trim();
+    if (!path) {
+      return { full: 'the slicer', short: 'slicer' };
+    }
+    var bundle = /([^\\/]+)\.app(?:[\\/]|$)/i.exec(path);
+    var app = bundle ? bundle[1] : (path.split(/[\\/]/).pop() || path).replace(/\.exe$/i, '');
+    for (var i = 0; i < SLICER_NAMES.length; i += 1) {
+      if (SLICER_NAMES[i][0].test(app)) {
+        return { full: SLICER_NAMES[i][1], short: SLICER_NAMES[i][2] };
+      }
+    }
+    return { full: app, short: app };
+  }
+
+  /** The main button sends to the chosen slicer unless opening it is turned off in Advanced. */
   function renderExportButton() {
     var button = byId('export-btn');
     var orcaEnabled = byId('orca-enabled');
+    var names = slicerNames();
     if (button) {
-      button.textContent = orcaEnabled && !orcaEnabled.checked ? 'Export 3MF' : 'Send to Orca';
+      button.textContent = orcaEnabled && !orcaEnabled.checked ? 'Export 3MF' : 'Send to ' + names.short;
+    }
+    var openLabel = byId('open-slicer-label');
+    if (openLabel) {
+      openLabel.textContent = 'Open ' + names.full + ' after export';
+    }
+  }
+
+  /**
+   * Fill the "Send to" list with the installed slicers (and a custom app path).
+   * @param {object[]} [slicers] installed slicers; default: the last reported list
+   */
+  function renderSlicerChoice(slicers) {
+    if (Array.isArray(slicers)) {
+      state.slicers = slicers;
+    }
+    var select = byId('slicer-choice');
+    if (!select) {
+      return;
+    }
+    var input = byId('orca-path');
+    var current = input ? input.value.trim() : '';
+    var rows = (state.slicers || []).filter(function (item) {
+      return item && asString(item.path).trim();
+    });
+    select.innerHTML = '';
+    var found = false;
+    rows.forEach(function (item) {
+      var path = asString(item.path).trim();
+      var option = document.createElement('option');
+      option.value = path;
+      var version = asString(item.version).trim();
+      if (/^\d+(\.\d+)+$/.test(version)) {
+        /* Bambu Studio pads its version with zeros (02.09.01...); show 2.9.1. */
+        version = version.split('.').slice(0, 3).map(Number).join('.');
+      }
+      option.textContent = slicerNames(path).full + (version ? ' ' + version : '');
+      if (path === current) {
+        option.selected = true;
+        found = true;
+      }
+      select.appendChild(option);
+    });
+    if (current && !found) {
+      var custom = document.createElement('option');
+      custom.value = current;
+      custom.textContent = slicerNames(current).full;
+      custom.selected = true;
+      select.appendChild(custom);
+    }
+    var browse = document.createElement('option');
+    browse.value = SLICER_CHOICE_BROWSE;
+    browse.textContent = 'Other app…';
+    select.appendChild(browse);
+    if (!current) {
+      browse.selected = !rows.length;
+    }
+  }
+
+  /** "Send to" list change: use that slicer, or browse for another app. */
+  function onSlicerChoiceChange() {
+    var select = byId('slicer-choice');
+    var input = byId('orca-path');
+    if (!select || !input) {
+      return;
+    }
+    if (select.value === SLICER_CHOICE_BROWSE) {
+      renderSlicerChoice();
+      onBrowseSlicerPathClick();
+      return;
+    }
+    input.value = select.value;
+    appendLog('Slicer chosen: ' + slicerNames().full + ' (' + select.value + ')', 'info');
+    renderSlicerSummary();
+    renderExportButton();
+    scheduleSettingsSave();
+    if (!isActionPending('get_profiles')) {
+      requestProfiles({
+        vendor: selectValue('target-vendor'),
+        printer: selectValue('target-printer')
+      });
     }
   }
 
@@ -6309,7 +6434,7 @@
     if (state.connectionReady && !(selectValue('target-printer') && selectValue('target-process')) &&
         !isActionPending('get_profiles')) {
       fixes.push({
-        text: 'Choose the printer and process for Orca.',
+        text: 'Choose the printer and process.',
         action: 'Choose',
         run: function () { toggleCardBody('print-settings-toggle', true); }
       });
@@ -6396,17 +6521,21 @@
     dot.className = 'dot' + (kind === 'ok' ? '' : ' dot--' + kind);
   }
 
-  /** OrcaSlicer card in Settings. */
+  /** Slicer card in Settings. */
   function renderSlicerSummary() {
     var input = byId('orca-path');
     var dot = byId('slicer-dot');
     var summary = byId('slicer-summary');
+    var name = byId('slicer-name');
     if (!dot || !summary) {
       return;
     }
     var path = input ? input.value.trim() : '';
+    if (name) {
+      name.textContent = path ? slicerNames(path).full : 'Slicer';
+    }
     if (!path) {
-      summary.textContent = 'Not found. Choose the OrcaSlicer app.';
+      summary.textContent = 'Not found. Choose a slicer app.';
       dot.className = 'dot dot--warn';
       return;
     }
@@ -6799,8 +6928,17 @@
     if (orcaPath) {
       orcaPath.addEventListener('input', function () {
         renderSlicerSummary();
+        renderExportButton();
         scheduleSettingsSave();
       });
+      orcaPath.addEventListener('change', function () {
+        renderSlicerChoice();
+      });
+    }
+
+    var slicerChoice = byId('slicer-choice');
+    if (slicerChoice) {
+      slicerChoice.addEventListener('change', onSlicerChoiceChange);
     }
 
     var orcaProfileDir = byId('orca-profile-dir');
