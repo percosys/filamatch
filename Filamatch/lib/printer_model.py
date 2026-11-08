@@ -71,6 +71,29 @@ _HEX_RE = re.compile(r"^[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$")
 #: Bambu-style unit id of the external spool holder.
 EXTERNAL_UNIT_ID = 255
 
+#: The slicers' flow types by the second letter of a Bambu Lab nozzle type
+#: code ("HH01": hardened steel, High Flow; "HS01": Standard).
+NOZZLE_FLOWS = {"S": "Standard", "H": "High Flow"}
+
+
+def nozzle_flow(type_code: Any) -> str:
+    """The flow type of a Bambu Lab nozzle type code ("HH01" -> "High Flow"), or ""."""
+    text = str(type_code or "").strip().upper()
+    if re.fullmatch(r"[A-Z]{2}\d{2}", text):
+        return NOZZLE_FLOWS.get(text[1], "")
+    return ""
+
+
+@dataclass(frozen=True)
+class NozzleInfo:
+    """One nozzle installed on a printer."""
+
+    #: The printer's own extruder id (Bambu Lab H2D: 0 is the right nozzle, 1 the left).
+    id: int
+    diameter: float
+    #: The slicers' flow type ("Standard", "High Flow"); "" when the printer does not say.
+    flow: str = ""
+
 
 @dataclass(frozen=True)
 class PrinterInfo:
@@ -87,6 +110,8 @@ class PrinterInfo:
     #: AMS auto refill (switch to a spool of the same filament when one runs
     #: out): True/False when the printer reports it, else None.
     auto_refill: Optional[bool] = None
+    #: The installed nozzles, by extruder id; empty when the printer does not say.
+    nozzles: Tuple[NozzleInfo, ...] = ()
 
     @property
     def label(self) -> str:
@@ -317,6 +342,9 @@ def _check_helpers() -> None:
     _expect(default_template_material("PETG-CF") == "PET Plastic", "PETG-CF template")
     _expect(default_template_material("PA6") == "Nylon Plastic", "PA6 falls back to the PA family")
     _expect(default_template_material("PA-CF") == "Nylon Plastic", "PA uses nylon")
+    _expect(nozzle_flow("HH01") == "High Flow" and nozzle_flow("hs01") == "Standard", "nozzle type codes")
+    _expect(nozzle_flow("hardened_steel") == "" and nozzle_flow("") == "" and nozzle_flow("HX01") == "",
+            "a material name or an unknown code gives no flow")
 
 
 def _check_slots() -> None:

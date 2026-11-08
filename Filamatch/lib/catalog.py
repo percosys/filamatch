@@ -24,7 +24,7 @@ import math
 import re
 import sys
 import traceback
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Pattern, Sequence, Tuple
 
@@ -48,7 +48,7 @@ REQUIRED_FIELDS: Tuple[str, ...] = (
 )
 
 #: Optional fields; missing or ``null`` values are normalised to ``None``.
-OPTIONAL_FIELDS: Tuple[str, ...] = ("category", "adsklib_path", "orca_filament_profile")
+OPTIONAL_FIELDS: Tuple[str, ...] = ("category", "adsklib_path", "orca_filament_profile", "slicer_data")
 
 #: Entry ids double as Fusion material names, so keep them identifier-safe.
 ENTRY_ID_PATTERN: Pattern[str] = re.compile(r"^[a-z0-9][a-z0-9_]*$")
@@ -93,6 +93,9 @@ class FilamentEntry:
     category: str = ""
     adsklib_path: Optional[str] = None
     orca_filament_profile: Optional[str] = None
+    #: Values a slicer preset can be built from (Open Filament Database
+    #: temperatures, fans, flow and slicer preset names); see filament_presets.
+    slicer_data: Optional[Dict[str, Any]] = dataclass_field(default=None, compare=False, hash=False)
 
     @property
     def display_name(self) -> str:
@@ -154,6 +157,18 @@ def _optional_text(raw: Dict[str, Any], field: str, index: int, source: str) -> 
     if not value:
         raise _entry_error(source, index, field, "must be a non-empty string or null")
     return value
+
+
+def _optional_object(raw: Dict[str, Any], field: str, index: int, source: str) -> Optional[Dict[str, Any]]:
+    """Return an optional JSON object field as ``dict`` or ``None``."""
+    if field not in raw or raw[field] is None:
+        return None
+    value = raw[field]
+    if not isinstance(value, dict):
+        raise _entry_error(
+            source, index, field, "expected a JSON object or null, got {}".format(type(value).__name__)
+        )
+    return dict(value)
 
 
 def _validated_density(raw: Dict[str, Any], index: int, source: str) -> float:
@@ -231,6 +246,7 @@ def validate_entry(raw: Any, index: int, source: str) -> FilamentEntry:
         category=category,
         adsklib_path=_optional_text(raw, "adsklib_path", index, source),
         orca_filament_profile=_optional_text(raw, "orca_filament_profile", index, source),
+        slicer_data=_optional_object(raw, "slicer_data", index, source),
     )
 
     unknown_fields = set(raw) - set(REQUIRED_FIELDS) - set(OPTIONAL_FIELDS)

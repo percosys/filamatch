@@ -1,5 +1,88 @@
 # Changelog
 
+## 0.7.0 – Filament presets and printer nozzles
+
+**Fixed**
+- Bodies that touch now keep their exact places in a prepared project.
+  The slicer's "assemble" step centred every body on its own middle, so a
+  part could move: in a real design an inlay moved 1 mm up inside its body,
+  and four cubes in a row ended up in one spot. Filamatch now joins touching
+  bodies into one object with one part per body before the slicer runs, so
+  every part stays where it is in Fusion and keeps its filament. Checked
+  with OrcaSlicer 2.5 and Bambu Studio 2.9.1 (an inlay design and stacked
+  test cubes). The inlay design was opened in Bambu Studio for a real H2D
+  with no problem seen; not yet opened in OrcaSlicer.
+- A prepared project now uses the slicer preset of the spool that is
+  loaded, not the one the design names. A design with Bambu ABS, sent to a
+  slot with PolyLite ABS, gets "PolyLite ABS @BBL H2D", so Bambu Studio's
+  sync window shows the same filament on both sides. Only when the spool is
+  the same material type. Checked with the Bambu Studio 2.9.1 command line;
+  not yet opened in the app.
+- The print estimate counts every plate. Bambu Studio puts bodies on plates
+  of their own when one filament's bed is too hot for another (ABS at
+  90 °C and PETG); the estimate showed only plate 1's time and weight but
+  every plate's grams per filament ("3.6 g of filament (3.6 g + 3.0 g)").
+  It now adds the plates up and says "on 2 plates". Checked with the Bambu
+  Studio 2.9.1 and OrcaSlicer 2.5 command lines and seen working in Fusion.
+
+**New**
+- The printer's nozzles. Filamatch reads the installed nozzles (size and,
+  over the LAN connection, Standard or High Flow) and shows them under
+  Print settings ("Printer nozzles: Left 0.4 mm High Flow · Right 0.4 mm
+  High Flow"). The ready check warns when the printer settings are for
+  another size and can switch to the right printer settings. A prepared
+  project gets each nozzle's flow type, as Bambu Studio's printer sync
+  does. Checked with a real H2D (two 0.4 High Flow nozzles, seen working in
+  Fusion) and X1C over the LAN, and with the Bambu Studio 2.9.1 and
+  OrcaSlicer 2.5 command lines (Bambu Studio slices with High Flow). Over
+  Bambuddy only the size is known, so the flow type is left as the printer
+  settings have it.
+- Slicer presets for filaments from the Open Filament Database. When the
+  slicer has no preset for such a filament, Filamatch makes one from the
+  slicer's generic preset for that type and printer, with the database's
+  temperatures (the middle of a range), bed temperatures, fan speeds,
+  fastest flow, flow ratio and brand, and the project carries it (for
+  example "addnorth ABS rABS @Bambu Lab H2D 0.4 nozzle" at 245 °C). Filaments
+  added earlier get the data from the downloaded database. A new setting,
+  **Save new filament presets in the slicer** (off by default), also saves
+  it as your own preset in Bambu Studio or OrcaSlicer, never over one you
+  have. A slicer preset counts as the filament only when it is the same
+  brand, so a Voxel PETG gets its own "Voxel PLA PETG" preset, not Bambu
+  PETG Basic. A spool set on the printer to a preset you made yourself (in
+  either slicer) now gets that preset. Checked with the Bambu Studio 2.9.1
+  and OrcaSlicer 2.5 command lines (prepare and estimate). A Voxel PETG
+  from the database was sent from Fusion and opened in Bambu Studio with
+  its own preset, and saving put it in Bambu Studio's and OrcaSlicer's
+  user presets. Bambu Studio shows its usual "Customized Preset" note for a
+  preset it does not ship; whether the note stays away once the preset is
+  saved is not known. Not yet confirmed in the OrcaSlicer app.
+- On Home, a filament row says which filament is loaded when its slot holds
+  another one than the design names ("≠ Loaded: PolyLite ABS"). Point at it
+  for the details. Colours are not compared here: the two swatches show
+  them. Checked in the palette's demo; not yet seen in Fusion.
+- **Save printer report** (Settings > Advanced): saves the connected
+  printer's status as a JSON file with serial numbers, access codes, IP
+  addresses, Wi-Fi names, keys and camera links removed, to attach to a
+  printer-support issue. Checked with test data and in the palette's demo;
+  not yet run against a real printer.
+- A bug-report form on GitHub, and [docs/triage.md](docs/triage.md): how an
+  issue becomes a fix and when a printer counts as tested.
+- For developers: a slicer test matrix (`scripts/slicer_matrix.py`) that
+  prepares and estimates every supported printer with the real slicers,
+  checks that touching parts stay in place, and compares the results with
+  the last release (releases include its table); printer facts in one data
+  file (`Filamatch/data/printers.json`) that also writes the README's
+  printer tables; a linked development install
+  (`scripts/install_addin_macos.sh --dev`); `tests/run_all.py --changed`.
+
+**What is tested:** a real Bambu Lab H2D (two 0.4 High Flow nozzles, AMS 2
+Pro, AMS HT) and X1 Carbon over the LAN; Fusion on macOS; Bambu Studio
+2.9.1 and OrcaSlicer 2.5 (their command lines for every change, the Bambu
+Studio app for the made preset and the inlay design); the slicer test
+matrix against 0.6.1 (in the release notes). Not tested: Windows, a made
+preset in the OrcaSlicer app, Save printer report from the palette on a
+real printer, and printing.
+
 ## 0.6.1 – Snapmaker U1
 
 **New**

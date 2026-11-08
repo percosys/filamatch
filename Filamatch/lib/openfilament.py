@@ -54,7 +54,7 @@ import traceback
 import urllib.error
 import urllib.request
 import zlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
@@ -171,6 +171,8 @@ class OnlineFilament:
     material_slug: str = ""
     filament_slug: str = ""
     variant_slug: str = ""
+    #: Values a slicer preset can be built from (see :func:`_slicer_data`).
+    slicer_data: Mapping[str, Any] = field(default_factory=dict, compare=False, hash=False)
 
     def __post_init__(self) -> None:
         """Fill slugs and the result key from the joined names when missing."""
@@ -203,7 +205,7 @@ class OnlineFilament:
         material_name = _text_value(self.material).strip()
         material_upper = material_name.upper() or "PLA"
         color_hex = normalize_color_hex(self.color_hex, _DEFAULT_COLOR_HEX)
-        return {
+        entry: Dict[str, Any] = {
             "id": _catalog_id(self),
             "manufacturer": _text_value(self.brand).strip() or "Unknown Brand",
             "product_line": _text_value(self.filament).strip() or "Filament",
@@ -220,6 +222,51 @@ class OnlineFilament:
             "source_license": DATA_LICENSE,
             "attribution": ATTRIBUTION,
         }
+        if self.slicer_data:
+            entry["slicer_data"] = json.loads(json.dumps(self.slicer_data))
+        return entry
+
+
+#: Filament fields kept for building a slicer preset.
+_SLICER_FIELDS: Tuple[str, ...] = (
+    "min_print_temperature", "max_print_temperature", "min_bed_temperature", "max_bed_temperature",
+    "min_fan_speed", "max_fan_speed", "max_volumetric_speed", "chamber_temperature",
+)
+#: Temperature keys a material's ``default_slicer_settings`` may give its filaments.
+_DEFAULT_TEMPERATURE_KEYS: Tuple[str, ...] = (
+    "nozzle_temp", "first_layer_nozzle_temp", "bed_temp", "first_layer_bed_temp",
+)
+
+
+def _slicer_data(filament: Mapping[str, Any], material: Mapping[str, Any]) -> Dict[str, Any]:
+    """The values a slicer preset can be built from, for one dataset filament.
+
+    ``slicers`` holds the filament's own ``slicer_settings`` by slicer
+    (``bambustudio``, ``orcaslicer``, ``generic``: preset name, filament ids,
+    temperatures, ``overrides``).  A material's ``default_slicer_settings``
+    add their temperatures only: their preset names are not this filament's.
+    """
+    data: Dict[str, Any] = {}
+    for key in _SLICER_FIELDS:
+        value = filament.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            data[key] = value
+    slicers: Dict[str, Dict[str, Any]] = {}
+    defaults = material.get("default_slicer_settings")
+    if isinstance(defaults, Mapping):
+        for slicer, values in defaults.items():
+            if isinstance(values, Mapping):
+                temperatures = {key: values[key] for key in _DEFAULT_TEMPERATURE_KEYS if key in values}
+                if temperatures:
+                    slicers[str(slicer)] = temperatures
+    own = filament.get("slicer_settings")
+    if isinstance(own, Mapping):
+        for slicer, values in own.items():
+            if isinstance(values, Mapping):
+                slicers.setdefault(str(slicer), {}).update(values)
+    if slicers:
+        data["slicers"] = slicers
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -864,6 +911,7 @@ def _build_online_filaments(dataset: Mapping[str, Any]) -> List[OnlineFilament]:
         min_bed = _coerce_int(filament.get("min_bed_temperature"))
         max_bed = _coerce_int(filament.get("max_bed_temperature"))
         discontinued = _variant_discontinued(filament)
+        slicer_data = _slicer_data(filament, material)
         for variant in variants:
             variant_name = _text_value(variant.get("name")).strip()
             variant_slug = _text_value(variant.get("slug")).strip() or _slugify(variant_name)
@@ -884,6 +932,7 @@ def _build_online_filaments(dataset: Mapping[str, Any]) -> List[OnlineFilament]:
                 material_slug=material_slug,
                 filament_slug=filament_slug,
                 variant_slug=variant_slug,
+                slicer_data=slicer_data,
             )
             records.append(record)
             if discontinued or _variant_discontinued(variant):
@@ -1068,6 +1117,26 @@ def get_entries(keys: Sequence[str]) -> List[Dict[str, Any]]:
     return entries
 
 
+def slicer_data_for_catalog_id(entry_id: str) -> Dict[str, Any]:
+    """The slicer data of an ``ofd_...`` catalog entry, from the cached dataset.
+
+    For filaments added before catalog entries kept their slicer data.  Uses
+    only a dataset that is already cached (never a first download) and never
+    raises: ``{}`` when the id or the dataset is unknown.
+    """
+    if not str(entry_id or "").startswith("ofd_"):
+        return {}
+    try:
+        if _DATASET_CACHE is None and not _cache_file_path().is_file():
+            return {}
+        for record in _online_filaments():
+            if _catalog_id(record) == entry_id:
+                return json.loads(json.dumps(record.slicer_data))
+    except (OpenFilamentError, OSError, ValueError):
+        LOGGER.warning("Could not read the slicer data of %r from the cached dataset", entry_id, exc_info=True)
+    return {}
+
+
 # ---------------------------------------------------------------------------
 # Persistent user catalog
 # ---------------------------------------------------------------------------
@@ -1211,7 +1280,8 @@ _SELFTEST_DATASET: Dict[str, Any] = {
     ],
     "materials": [
         {"id": 10, "brand_id": 1, "material": "PLA", "material_class": "PLA"},
-        {"id": 11, "brand_id": 2, "material": "PETG", "material_class": "PETG"},
+        {"id": 11, "brand_id": 2, "material": "PETG", "material_class": "PETG",
+         "default_slicer_settings": {"orcaslicer": {"profile_name": "PETG", "nozzle_temp": 240}}},
     ],
     "filaments": [
         {
@@ -1223,6 +1293,12 @@ _SELFTEST_DATASET: Dict[str, Any] = {
             "max_print_temperature": 230,
             "min_bed_temperature": 60,
             "max_bed_temperature": 65,
+            "max_fan_speed": 100,
+            "max_volumetric_speed": 15,
+            "slicer_settings": {
+                "bambustudio": {"profile_name": "Prusament PLA", "generic_id": "GFL99", "id": "GF_PRPLA"},
+                "orcaslicer": {"profile_name": "Prusament PLA", "overrides": {"filament_flow_ratio": 0.97}},
+            },
             "brand_id": 1,
             "material_id": 10,
             "material": "PLA",
@@ -1532,6 +1608,15 @@ def _self_test_cases(base_dir: Path) -> List[Tuple[str, Callable[[Path], None]]]
             assert entry["source_version"] == _SELFTEST_DATASET["version"], entry
             assert entry["source_repository"] == SOURCE_REPOSITORY, entry
             assert entry["source_license"] == DATA_LICENSE, entry
+            slicer_data = entry["slicer_data"]
+            assert slicer_data["min_print_temperature"] == 215 and slicer_data["max_volumetric_speed"] == 15, entry
+            assert slicer_data["slicers"]["bambustudio"]["generic_id"] == "GFL99", slicer_data
+            assert slicer_data["slicers"]["orcaslicer"]["overrides"] == {"filament_flow_ratio": 0.97}, slicer_data
+            assert slicer_data_for_catalog_id(entry["id"]) == slicer_data, "an older entry finds its slicer data"
+            assert slicer_data_for_catalog_id("bambu_pla_basic_black") == {}, "only database entries"
+            petg = [item for item in search("petg", limit=5) if item.material == "PETG"][0].to_catalog_entry()
+            assert petg["slicer_data"]["slicers"] == {"orcaslicer": {"nozzle_temp": 240}}, (
+                "a material default gives its temperatures, not its preset name", petg)
 
             fallback = OnlineFilament(
                 key="fallback",

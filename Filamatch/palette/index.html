@@ -63,6 +63,7 @@
             <div class="card__main">
               <div id="print-settings-label" class="card__label">Print settings</div>
               <div id="print-settings-summary" class="card__value">Loading printer profiles&hellip;</div>
+              <p id="print-settings-nozzles" class="faint" hidden></p>
             </div>
             <button id="print-settings-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="print-settings-body">Change</button>
           </div>
@@ -334,6 +335,11 @@
             <input id="estimate-enabled" type="checkbox" checked>
           </label>
           <p class="faint">Slices a copy in the background after the slicer opens. Turn it off on a slow computer.</p>
+          <label class="switch-field" for="save-slicer-presets">
+            <span>Save new filament presets in the slicer</span>
+            <input id="save-slicer-presets" type="checkbox">
+          </label>
+          <p class="faint">When the slicer has no preset for a filament from the Open Filament Database, Filamatch makes one from the database values. The project always gets it. With this on, Bambu Studio or OrcaSlicer also keeps it as your own preset (shown after the slicer restarts). A preset you already have is never replaced.</p>
         </section>
 
         <section class="group" aria-labelledby="library-title">
@@ -374,11 +380,13 @@
             <h3 class="advanced__title">Diagnostics and log</h3>
             <div class="button-row">
               <button id="diagnostics-btn" class="btn btn--ghost btn--small" type="button">Run diagnostics</button>
+              <button id="printer-report-btn" class="btn btn--ghost btn--small" type="button">Save printer report</button>
               <button id="refresh-log-btn" class="btn btn--ghost btn--small" type="button">Refresh log</button>
               <button id="clear-log-btn" class="btn btn--ghost btn--small" type="button">Clear log</button>
             </div>
             <p id="custom-library-message" class="faint" hidden></p>
             <p id="diagnostics-status" class="status status--muted" role="status" aria-live="polite"></p>
+            <p id="printer-report-status" class="status status--muted" role="status" aria-live="polite"></p>
             <pre id="diagnostics-output" class="diagnostics-output" tabindex="0" hidden></pre>
             <div id="log-list" class="log-list" role="log" aria-live="polite" aria-relevant="additions" tabindex="0">
               <p class="log-empty">No log entries yet.</p>

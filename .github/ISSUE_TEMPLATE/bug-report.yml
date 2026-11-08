@@ -1,0 +1,76 @@
+name: Bug report
+description: Something in Filamatch does not work as it should.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The diagnostics report and the end of the log usually show the cause.
+
+        **Remove private values before you post:** serial numbers, access codes, IP addresses, API keys,
+        Wi-Fi names, user names and private file paths.
+  - type: input
+    id: filamatch
+    attributes:
+      label: Filamatch version
+      description: Shown at the top of the diagnostics report.
+      placeholder: "0.7.0"
+    validations:
+      required: true
+  - type: input
+    id: fusion
+    attributes:
+      label: Fusion version and operating system
+      placeholder: "Fusion 2706.1.17, macOS 26.1"
+    validations:
+      required: true
+  - type: input
+    id: slicer
+    attributes:
+      label: Slicer and version
+      placeholder: "OrcaSlicer 2.5.0"
+  - type: input
+    id: printer
+    attributes:
+      label: Printer
+      placeholder: "Bambu Lab H2D, connected over LAN"
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you did
+      description: The steps, so we can do the same.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: The message in the palette, a screenshot, or what is wrong in the slicer.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: In the Filamatch palette, Settings > Advanced > Run diagnostics. Paste the report.
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: End of the log file
+      description: The last 50 lines of `filamatch.log` (macOS ~/Library/Logs/Filamatch, Windows %LOCALAPPDATA%\Filamatch\Logs).
+      render: text
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Private values
+      options:
+        - label: I removed serial numbers, access codes, IP addresses, API keys, Wi-Fi names, user names and private file paths from everything above.
+          required: true

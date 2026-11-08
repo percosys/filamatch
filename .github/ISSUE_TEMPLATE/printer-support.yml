@@ -83,7 +83,8 @@ body:
       label: Printer status report (optional, helps a lot)
       description: |
         The printer's own status data with spools loaded:
-        - Bambu Lab: the JSON answer to a `pushall` request (for example with MQTT Explorer), or in Bambuddy open `/docs` and run `GET /api/v1/printers/{id}/status`.
+        - Easiest: in the Filamatch palette, Settings > Advanced > **Save printer report** (Bambu Lab printers over LAN or Bambuddy). It removes private values; check the file, then drag it here.
+        - Bambu Lab without Filamatch: the JSON answer to a `pushall` request (for example with MQTT Explorer), or in Bambuddy open `/docs` and run `GET /api/v1/printers/{id}/status`.
         - Prusa: PrusaLink `GET /api/v1/info` and `GET /api/v1/status`.
         - Klipper / Moonraker: `GET /printer/objects/list`, then `GET /printer/objects/query?...` for the tool changer, MMU or spool objects.
         - Other printers: whatever the local API returns for loaded spools and tools.

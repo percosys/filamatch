@@ -61,6 +61,7 @@ def check_shipped_files() -> None:
         "palette/style.css",
         "palette/filamatch.svg",
         "data/filaments.json",
+        "data/printers.json",
         "lib/__init__.py",
     ):
         assert (ADDIN_DIR / relative).is_file(), "missing " + relative

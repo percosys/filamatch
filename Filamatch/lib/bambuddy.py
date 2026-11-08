@@ -41,6 +41,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from .. import config
 
 from .printer_model import (  # noqa: F401 - re-exported for older callers
+    NozzleInfo,
     PrinterContext,
     PrinterInfo,
     SlotInfo,
@@ -49,6 +50,7 @@ from .printer_model import (  # noqa: F401 - re-exported for older callers
     default_template_material,
     material_family,
     normalize_color_hex,
+    nozzle_flow,
 )
 
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
@@ -517,6 +519,9 @@ class BambuddyClient:
             refill = status.get("ams_filament_backup")
             if isinstance(refill, bool):
                 printer = printers[index] = replace(printer, auto_refill=refill)
+            nozzles = status_nozzles(status)
+            if nozzles:
+                printer = printers[index] = replace(printer, nozzles=nozzles)
             for slot in live_slots(printer, status):
                 link = linked.pop(slot.key, None)
                 if link is not None:
@@ -537,6 +542,36 @@ class BambuddyClient:
         )
 
 
+def status_nozzles(status: Mapping[str, Any]) -> Tuple[NozzleInfo, ...]:
+    """The installed nozzles in a Bambuddy printer status, by extruder id.
+
+    Bambuddy lists two nozzles for single-nozzle printers too; only a
+    dual-nozzle printer (see :func:`_status_is_dual`) keeps the second.  Its
+    ``nozzle_type`` is the material ("hardened_steel"), so the flow is known
+    only when a type code ("HH01") is given.
+    """
+    raw = [item for item in status.get("nozzles") or [] if isinstance(item, Mapping)]
+    nozzles: List[NozzleInfo] = []
+    for index, item in enumerate(raw[: 2 if _status_is_dual(status) else 1]):
+        diameter = _safe_float(item.get("nozzle_diameter"))
+        if diameter and diameter > 0:
+            nozzles.append(NozzleInfo(index, diameter, nozzle_flow(item.get("nozzle_type"))))
+    return tuple(nozzles)
+
+
+def _status_is_dual(status: Mapping[str, Any]) -> bool:
+    """True for a dual-nozzle printer: a right external spool (255) or an AMS on the left nozzle."""
+    from . import bambu_lan
+
+    raw_map = status.get("ams_extruder_map")
+    on_left = any(
+        _safe_int(value, -1) == bambu_lan.EXTRUDER_LEFT
+        for value in (raw_map.values() if isinstance(raw_map, Mapping) else ())
+    )
+    externals = [tray for tray in status.get("vt_tray") or [] if isinstance(tray, Mapping)]
+    return on_left or any(_safe_int(tray.get("id"), -1) == bambu_lan.VIRTUAL_MAIN_ID for tray in externals)
+
+
 def live_slots(printer: PrinterInfo, status: Mapping[str, Any]) -> List[SlotInfo]:
     """Every AMS and external slot in a Bambuddy live printer status.
 
@@ -553,13 +588,7 @@ def live_slots(printer: PrinterInfo, status: Mapping[str, Any]) -> List[SlotInfo
             extruders[unit_id] = extruder
     units = [unit for unit in status.get("ams") or [] if isinstance(unit, Mapping)]
     externals = [tray for tray in status.get("vt_tray") or [] if isinstance(tray, Mapping)]
-    # Bambuddy lists two nozzles for single-nozzle printers too, so look at
-    # what only a dual-nozzle printer reports: a right external spool (255)
-    # or an AMS on the left nozzle.
-    dual = bambu_lan.EXTRUDER_LEFT in extruders.values() or any(
-        _safe_int(tray.get("id"), -1) == bambu_lan.VIRTUAL_MAIN_ID for tray in externals
-    )
-    return bambu_lan.build_slots(printer, units, externals, extruders, dual)
+    return bambu_lan.build_slots(printer, units, externals, extruders, _status_is_dual(status))
 
 
 def merge_linked_slot(live: SlotInfo, link: SlotInfo) -> SlotInfo:
@@ -745,6 +774,19 @@ def _check_context_fetch() -> None:
         all(request[2].get("X-API-Key") == "bb_test" for request in transport.requests),
         "every request must carry the API key header",
     )
+
+
+def _check_status_nozzles() -> None:
+    """Nozzle sizes from a Bambuddy status: two for an H2D, one for a single-nozzle printer."""
+    from pathlib import Path
+
+    fixtures = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
+    status = json.loads((fixtures / "bambuddy" / "h2d_status.json").read_text(encoding="utf-8"))
+    _expect(status_nozzles(status) == (NozzleInfo(0, 0.4, ""), NozzleInfo(1, 0.4, "")),
+            "H2D: two 0.4 nozzles, flow unknown: {}".format(status_nozzles(status)))
+    single = {"nozzles": [{"nozzle_type": "HS01", "nozzle_diameter": "0.6"}, {"nozzle_diameter": "0.4"}],
+              "ams_extruder_map": {"0": 0}, "vt_tray": [{"id": 254}]}
+    _expect(status_nozzles(single) == (NozzleInfo(0, 0.6, "Standard"),), "one nozzle, a type code gives the flow")
 
 
 def _check_live_slots() -> None:
@@ -963,6 +1005,7 @@ def _selftest() -> int:
         ("spool/printer/slot payloads normalise correctly", _check_parsing),
         ("printers, spools and assignments are fetched and joined", _check_context_fetch),
         ("live slots list every loaded tray; linked spools win", _check_live_slots),
+        ("installed nozzles from the printer status", _check_status_nozzles),
         ("SSO and rejected-key responses raise actionable errors", _check_auth_proxy_errors),
         ("unreachable Bambuddy raises a connection error", _check_connection_error),
         ("error messages strip user:password from URLs", _check_url_redaction),

@@ -24,11 +24,12 @@
  *                          target{prepare, slicer_path, vendor, printer, process},
  *                          bambuddy_slot_map, bambuddy_printer_id } -> exportResult
  *   run_diagnostics      {}                                  -> diagnosticsResult
+ *   save_printer_report  {}                                  -> printerReportResult
  *   save_settings        { output_path, write_project_settings, orca_enabled,
  *                          orca_path, orca_profile_dir, prepare_enabled,
  *                          target_vendor, target_printer, target_process,
  *                          slicer_path, auto_library_update, estimate_enabled,
- *                          custom_library_path, bambuddy_printer_id,
+ *                          save_slicer_presets, custom_library_path, bambuddy_printer_id,
  *                          bambuddy_slot_map, bambuddy_verify_tls } -> settingsSaved
  *   clear_bambuddy_key   {}                                  -> settingsSaved
  *   get_log              {}                                  -> logData
@@ -94,6 +95,7 @@
  *                    project_settings_written, orca_launched,
  *                    error, log[], log_tail[] }
  *   diagnosticsResult { ok, text }
+ *   printerReportResult { ok, path, printers, error? }
  *   settingsSaved  { ok, settings{..., printer_source}, printer_configured?, log[] }
  *   logData        { log[] }
  *   exportPathData { ok, path, error?, cancelled? }
@@ -162,6 +164,7 @@
     refresh_materials: 'materialsData',
     export_3mf: 'exportResult',
     run_diagnostics: 'diagnosticsResult',
+    save_printer_report: 'printerReportResult',
     save_settings: 'settingsSaved',
     clear_bambuddy_key: 'settingsSaved',
     get_log: 'logData',
@@ -187,6 +190,7 @@
     refresh_materials: 'refresh materials',
     export_3mf: 'export 3MF',
     run_diagnostics: 'run diagnostics',
+    save_printer_report: 'save the printer report',
     save_settings: 'save settings',
     clear_bambuddy_key: 'remove the Bambuddy API key',
     get_log: 'refresh log',
@@ -476,6 +480,7 @@
       slicer_path: '/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer',
       auto_library_update: true,
       estimate_enabled: true,
+      save_slicer_presets: false,
       custom_library_path: '/Users/demo/Documents/Filamatch/Filamatch Library.adsklib',
       bambuddy_url: 'http://192.168.1.20:8000',
       bambuddy_printer_id: 1,
@@ -528,7 +533,8 @@
   /** Demo printer for the preview: Bambuddy printer with six loaded slots. */
   var DEMO_BAMBUDDY = {
     printers: [
-      { id: 1, name: 'Workshop H2D', model: 'H2D', label: 'Workshop H2D - H2D' },
+      { id: 1, name: 'Workshop H2D', model: 'H2D', label: 'Workshop H2D - H2D',
+        nozzles: [{ side: 'right', diameter: 0.4, flow: 'High Flow' }, { side: 'left', diameter: 0.4, flow: 'High Flow' }] },
       { id: 2, name: 'Studio P1S', model: 'P1S', label: 'Studio P1S - P1S' }
     ],
     slots: [
@@ -840,6 +846,7 @@
       slicer_path: asString(settings.slicer_path),
       auto_library_update: settings.auto_library_update !== false,
       estimate_enabled: settings.estimate_enabled !== false,
+      save_slicer_presets: settings.save_slicer_presets === true,
       custom_library_path: asString(settings.custom_library_path),
       bambuddy_url: asString(settings.bambuddy_url),
       bambuddy_printer_id: printerIdValue(settings.bambuddy_printer_id),
@@ -1630,6 +1637,9 @@
         case 'diagnosticsResult':
           handleDiagnosticsResult(payload);
           break;
+        case 'printerReportResult':
+          handlePrinterReportResult(payload);
+          break;
         case 'settingsSaved':
           handleSettingsSaved(payload, entry);
           break;
@@ -2074,7 +2084,7 @@
   /**
    * `printEstimate`: print time and filament of the sent project, worked out
    * in the background by slicing a copy.
-   * @param {object} payload {ok, minutes, grams, filament_grams[]}
+   * @param {object} payload {ok, minutes, grams, plates, filament_grams[]}
    */
   function handlePrintEstimate(payload) {
     if (!payload || payload.ok !== true) {
@@ -2086,7 +2096,10 @@
     var parts = Array.isArray(payload.filament_grams) && payload.filament_grams.length > 1
       ? ' (' + payload.filament_grams.map(function (grams) { return Number(grams).toFixed(1) + ' g'; }).join(' + ') + ')'
       : '';
-    var text = 'About ' + time + ' and ' + Number(payload.grams).toFixed(1) + ' g of filament' + parts;
+    var plates = Math.round(Number(payload.plates) || 1);
+    // Bambu Studio puts bodies on plates of their own when one filament's bed is too hot for another.
+    var onPlates = plates > 1 ? ', on ' + plates + ' plates' : '';
+    var text = 'About ' + time + ' and ' + Number(payload.grams).toFixed(1) + ' g of filament' + parts + onPlates;
     setPrintEstimate(text);
     renderSpoolCheck(payload.spools, typeof payload.auto_refill === 'boolean' ? payload.auto_refill : null);
     appendLog('Print estimate: ' + text, 'info');
@@ -3338,6 +3351,23 @@
     } else {
       setStatus(status, demoSuffix('Diagnostics found problems - see the output below.'), 'error');
       appendLog(demoSuffix('Diagnostics failed: ' + replyError(payload)), 'error');
+    }
+  }
+
+  /**
+   * `printerReportResult`: say where the printer report was saved.
+   * @param {object} payload { ok, path, printers, error? }
+   */
+  function handlePrinterReportResult(payload) {
+    var status = byId('printer-report-status');
+    if (payload.ok === true) {
+      var text = 'Saved the printer report: ' + asString(payload.path) +
+        '. Private values are removed; check the file, then attach it to a printer support issue.';
+      setStatus(status, demoSuffix(text), 'success');
+      appendLog(demoSuffix('Saved the printer report: ' + asString(payload.path)), 'info');
+    } else {
+      setStatus(status, demoSuffix('Could not save the printer report: ' + replyError(payload)), 'error');
+      appendLog(demoSuffix('Printer report failed: ' + replyError(payload)), 'error');
     }
   }
 
@@ -4905,6 +4935,10 @@
     if (estimateEnabled) {
       estimateEnabled.checked = settings.estimate_enabled !== false;
     }
+    var saveSlicerPresets = byId('save-slicer-presets');
+    if (saveSlicerPresets) {
+      saveSlicerPresets.checked = settings.save_slicer_presets === true;
+    }
     var verifyTls = byId('bambuddy-verify-tls');
     if (verifyTls) {
       verifyTls.checked = settings.bambuddy_verify_tls !== false;
@@ -4929,6 +4963,7 @@
     var prepareEnabled = byId('prepare-enabled');
     var autoLibraryUpdate = byId('auto-library-update');
     var estimateEnabled = byId('estimate-enabled');
+    var saveSlicerPresets = byId('save-slicer-presets');
     var verifyTls = byId('bambuddy-verify-tls');
     var slicerPath = orcaPath ? orcaPath.value.trim() : '';
     var payload = {
@@ -4944,6 +4979,7 @@
       slicer_path: slicerPath,
       auto_library_update: autoLibraryUpdate ? autoLibraryUpdate.checked : true,
       estimate_enabled: estimateEnabled ? estimateEnabled.checked : true,
+      save_slicer_presets: saveSlicerPresets ? saveSlicerPresets.checked : false,
       custom_library_path: (state.customLibrary && state.customLibrary.path) ||
         state.settings.custom_library_path || '',
       bambuddy_printer_id: state.bambuddy.selectedPrinterId || 0,
@@ -5384,6 +5420,14 @@
           ? ['Prepared project for ' + asString(target.printer) + ' (' + asString(target.process) + ').',
              'Wrote project_settings.config from the printer profile.']
           : ['Exported without a printer profile (base-only project).']
+      };
+    },
+
+    save_printer_report: function () {
+      return {
+        ok: true,
+        path: '/Users/demo/Documents/Filamatch/printer-report-H2D-20261108-101500.json',
+        printers: 1
       };
     },
 
@@ -6171,6 +6215,21 @@
       sub.title = 'Bodies: ' + bodies.join(', ');
     }
     main.appendChild(sub);
+    var slot = kind !== 'unknown' && row && row.slot_key ? slotsByKey()[asString(row.slot_key)] : null;
+    var other = differentLoadedFilament(material, slot);
+    if (other) {
+      var note = document.createElement('div');
+      note.className = 'frow__note';
+      var icon = document.createElement('span');
+      icon.className = 'frow__note-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = '≠';
+      note.appendChild(icon);
+      note.appendChild(document.createTextNode('Loaded: ' + other.loaded));
+      note.title = 'The design names ' + other.design + '. This slot holds ' + other.loaded +
+        (other.usesSpool ? ', so the slicer project uses its settings.' : '.');
+      main.appendChild(note);
+    }
     element.appendChild(main);
 
     var arrow = document.createElement('span');
@@ -6182,6 +6241,46 @@
     element.appendChild(createSlotChip(material, row, kind));
     element.appendChild(createMatchBadge(row, kind));
     return element;
+  }
+
+  /**
+   * The loaded filament when the slot holds another filament than the one the
+   * design names (a "Bambu Lab - ABS - Bambu Green" design on a PolyLite ABS
+   * spool).  Colours are left out: the two swatches show them.
+   * @param {object} material design material
+   * @param {object|null} slot printer slot
+   * @returns {{loaded: string, design: string, usesSpool: boolean}|null} usesSpool: the
+   *   slicer project uses the spool's preset (same type, and not a generic preset
+   *   standing in for a branded design filament)
+   */
+  function differentLoadedFilament(material, slot) {
+    if (!slot) {
+      return null;
+    }
+    /* "Brand - Product - Colour" -> "Brand Product". */
+    function withoutColour(name) {
+      var parts = asString(name).split(' - ');
+      return (parts.length >= 2 ? parts.slice(0, -1) : parts).join(' ').trim();
+    }
+    var loaded = asString(slot.spool_preset).split(' @')[0].trim() || withoutColour(slot.display_name);
+    var design = withoutColour(material.display_name) || asString(material.filament_type);
+    if (!loaded || !design) {
+      return null;
+    }
+    var designWords = design.toUpperCase().split(/\s+/);
+    var differs = loaded.toUpperCase().split(/\s+/).some(function (word) {
+      return word && designWords.indexOf(word) === -1;
+    });
+    if (!differs) {
+      return null;
+    }
+    return {
+      loaded: loaded,
+      design: design,
+      usesSpool: asString(material.filament_type).toUpperCase() === asString(slot.filament_type).toUpperCase() &&
+        !(/\bgeneric\b/i.test(loaded) && /\S/.test(splitDisplayName(material.display_name).brand) &&
+          !/^(generic|unknown)$/i.test(splitDisplayName(material.display_name).brand))
+    };
   }
 
   /**
@@ -6336,6 +6435,81 @@
     } else {
       summary.textContent = 'Not chosen yet';
     }
+    var nozzleLine = byId('print-settings-nozzles');
+    if (nozzleLine) {
+      var nozzles = selectedNozzles();
+      nozzleLine.textContent = nozzles.length ? 'Printer nozzles: ' + nozzleSummary(nozzles) : '';
+      nozzleLine.hidden = !nozzles.length;
+    }
+  }
+
+  /** @returns {object[]} the selected printer's installed nozzles ({side, diameter, flow}), left first. */
+  function selectedNozzles() {
+    var printer = selectedPrinter();
+    var nozzles = printer && Array.isArray(printer.nozzles) ? printer.nozzles.slice() : [];
+    return nozzles.sort(function (a, b) {
+      return (asString(a.side) === 'left' ? 0 : 1) - (asString(b.side) === 'left' ? 0 : 1);
+    });
+  }
+
+  /**
+   * "Left 0.4 mm High Flow · Right 0.4 mm High Flow", or "0.4 mm" when the
+   * printer does not say the flow.
+   * @param {object[]} nozzles
+   * @returns {string}
+   */
+  function nozzleSummary(nozzles) {
+    return nozzles.map(function (nozzle) {
+      var side = asString(nozzle.side);
+      return [side ? side.charAt(0).toUpperCase() + side.slice(1) : '', Number(nozzle.diameter) + ' mm',
+        asString(nozzle.flow)].filter(Boolean).join(' ');
+    }).join(' · ');
+  }
+
+  /**
+   * The installed nozzle size when the chosen printer settings are for
+   * another one ("H2D 0.4 nozzle" with a 0.6 nozzle on the printer), with the
+   * printer option of the installed size when the list has one.
+   * @returns {{installed: number, chosen: number, mixed: boolean, option: HTMLOptionElement|null}|null}
+   */
+  function nozzleMismatch() {
+    var nozzles = selectedNozzles();
+    var select = byId('target-printer');
+    var target = selectValue('target-printer');
+    var chosen = (target + ' ' + selectedOptionLabel(select)).match(/(\d+(?:\.\d+)?)\s*(?:mm\s*)?nozzle/i);
+    if (!nozzles.length || !chosen) {
+      return null;
+    }
+    var size = Number(chosen[1]);
+    var other = nozzles.filter(function (nozzle) { return Math.abs(Number(nozzle.diameter) - size) > 0.01; })[0];
+    if (!other) {
+      return null;
+    }
+    var installed = Number(other.diameter);
+    var mixed = nozzles.some(function (nozzle) { return Math.abs(Number(nozzle.diameter) - installed) > 0.01; });
+    var option = null;
+    if (!mixed && select) {
+      var name = target.replace(chosen[1], String(installed));
+      option = Array.prototype.filter.call(select.options, function (item) { return item.value === name; })[0] || null;
+    }
+    return { installed: installed, chosen: size, mixed: mixed, option: option };
+  }
+
+  /** Switch the print settings to the printer option of the installed nozzle size. */
+  function useInstalledNozzle(option) {
+    return function () {
+      var select = byId('target-printer');
+      if (!select || !option) {
+        toggleCardBody('print-settings-toggle', true);
+        return;
+      }
+      select.value = option.value;
+      appendLog('Printer settings changed to ' + asString(option.textContent).trim() + ' for the installed nozzle.', 'info');
+      onTargetPrinterChange();
+      renderPrintSummary();
+      renderReadiness();
+      scheduleSettingsSave();
+    };
   }
 
   /** "Saves <file> to <folder>" under the main button. */
@@ -6550,6 +6724,16 @@
           run: focusSlotPicker(full)
         });
       }
+    }
+    var mismatch = nozzleMismatch();
+    if (mismatch) {
+      fixes.push({
+        text: mismatch.mixed
+          ? printerName + ' has nozzles of different sizes; the print settings are for ' + mismatch.chosen + ' mm.'
+          : printerName + ' has a ' + mismatch.installed + ' mm nozzle; the print settings are for ' + mismatch.chosen + ' mm.',
+        action: mismatch.option ? 'Use ' + mismatch.installed + ' mm' : 'Change',
+        run: useInstalledNozzle(mismatch.option)
+      });
     }
     if (state.connectionReady && !(selectValue('target-printer') && selectValue('target-process')) &&
         !isActionPending('get_profiles')) {
@@ -6918,6 +7102,11 @@
       estimateEnabled.addEventListener('change', scheduleSettingsSave);
     }
 
+    var saveSlicerPresets = byId('save-slicer-presets');
+    if (saveSlicerPresets) {
+      saveSlicerPresets.addEventListener('change', scheduleSettingsSave);
+    }
+
     var refreshMaterials = byId('refresh-materials-btn');
     if (refreshMaterials) {
       refreshMaterials.addEventListener('click', onRefreshMaterialsClick);
@@ -7019,6 +7208,10 @@
     var diagnosticsButton = byId('diagnostics-btn');
     if (diagnosticsButton) {
       diagnosticsButton.addEventListener('click', onDiagnosticsClick);
+    }
+    var printerReportButton = byId('printer-report-btn');
+    if (printerReportButton) {
+      printerReportButton.addEventListener('click', onPrinterReportClick);
     }
 
     var outputPath = byId('output-path');
@@ -7215,6 +7408,18 @@
       statusEl: byId('diagnostics-status'),
       pendingText: 'Running diagnostics...',
       button: byId('diagnostics-btn')
+    });
+  }
+
+  /**
+   * "Save printer report" click handler: read the printer and save its status.
+   */
+  function onPrinterReportClick() {
+    request('save_printer_report', {}, {
+      statusEl: byId('printer-report-status'),
+      pendingText: 'Reading the printer...',
+      button: byId('printer-report-btn'),
+      timeoutMs: BAMBU_LAN_TIMEOUT_MS
     });
   }
 

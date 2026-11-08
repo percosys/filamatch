@@ -3,7 +3,14 @@
 #
 # Usage:
 #   scripts/install_addin_macos.sh            # copy/update the add-in
+#   scripts/install_addin_macos.sh --dev      # link the add-in to this repository
 #   scripts/install_addin_macos.sh --dry-run  # show what would happen
+#
+# --dev makes Fusion's add-in folder a link to the repository's Filamatch
+# folder: after a code change, stop and run the add-in in Fusion (Shift+S);
+# no reinstall. Running without --dev turns a link back into a copy.
+# FILAMATCH_ADDINS_DIR replaces Fusion's AddIns folder (for tests) and
+# FILAMATCH_TRASH_DIR the Trash.
 #
 # Current Autodesk Fusion releases (2025/2026+, version-numbered builds) load
 # Python add-ins from:
@@ -17,17 +24,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ADDIN_SRC="$REPO_ROOT/Filamatch"
-ADDIN_DST="$HOME/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns/Filamatch"
+ADDINS_DIR="${FILAMATCH_ADDINS_DIR:-$HOME/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns}"
+TRASH_DIR="${FILAMATCH_TRASH_DIR:-$HOME/.Trash}"
+ADDIN_DST="$ADDINS_DIR/Filamatch"
 # The add-in was called FusionFilament Bridge before 0.2.0. Fusion would load
 # both copies, so the old one is moved to the Trash.
-LEGACY_DST="$HOME/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns/FusionFilamentBridge"
+LEGACY_DST="$ADDINS_DIR/FusionFilamentBridge"
 DRY_RUN=""
+DEV=""
 
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
+    --dev) DEV=1 ;;
+    --copy) DEV="" ;;
     -h|--help)
-      sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -85,6 +97,10 @@ if not data["description"].get(""):
 print("Manifest OK: {} {} ({})".format(data["autodeskProduct"], data["version"], data["type"]))
 PY
 
+if [[ -n "$DRY_RUN" && -n "$DEV" ]]; then
+  echo "Dry run: $ADDIN_DST would become a link to $ADDIN_SRC"
+  exit 0
+fi
 if [[ -n "$DRY_RUN" ]]; then
   echo "Dry run: files that would be installed:"
   find "$ADDIN_SRC" -type f ! -name ".DS_Store" ! -path "*/__pycache__/*" ! -name "*.pyc" -print | sed "s#^$ADDIN_SRC/#  #"
@@ -100,6 +116,33 @@ if [[ -d "$LEGACY_DST" ]]; then
   echo "Moved the old FusionFilament Bridge add-in to the Trash: $TRASHED"
 fi
 
+if [[ -n "$DEV" ]]; then
+  mkdir -p "$ADDINS_DIR"
+  if [[ -L "$ADDIN_DST" ]]; then
+    rm "$ADDIN_DST"
+  elif [[ -e "$ADDIN_DST" ]]; then
+    mkdir -p "$TRASH_DIR"
+    TRASHED="$TRASH_DIR/Filamatch-installed-$(date +%Y%m%d-%H%M%S)"
+    mv "$ADDIN_DST" "$TRASHED"
+    echo "Moved the installed copy to the Trash: $TRASHED"
+  fi
+  ln -s "$ADDIN_SRC" "$ADDIN_DST"
+  if [[ "$(cd "$ADDIN_DST" && pwd -P)" != "$(cd "$ADDIN_SRC" && pwd -P)" || ! -f "$ADDIN_DST/Filamatch.manifest" ]]; then
+    echo "error: the link does not reach the add-in: $ADDIN_DST" >&2
+    exit 1
+  fi
+  echo
+  echo "Development install: $ADDIN_DST -> $ADDIN_SRC"
+  echo "After a code change, stop and run Filamatch in Scripts and Add-Ins (Shift+S)."
+  echo "Run this script without --dev to go back to a normal copy."
+  exit 0
+fi
+
+# A development link is removed first, so the copy below never writes into the repository.
+if [[ -L "$ADDIN_DST" ]]; then
+  rm "$ADDIN_DST"
+  echo "Removed the development link; installing a copy."
+fi
 mkdir -p "$ADDIN_DST"
 # Mirror the add-in folder, dropping caches and macOS metadata only.
 rsync -a --delete \

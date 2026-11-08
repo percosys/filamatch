@@ -1061,6 +1061,19 @@ code {
   white-space: nowrap;
 }
 
+.frow__note {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frow__note-icon {
+  margin-right: 4px;
+  color: var(--warning);
+}
+
 .frow__arrow {
   flex: 0 0 auto;
   color: var(--text-faint);

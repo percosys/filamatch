@@ -1,0 +1,53 @@
+{
+  "comment": "What Filamatch knows about printers, in one place. lib/printer_catalog.py reads it. To add a printer: its name token (and alias), a serial prefix for Bambu Lab printers, whether OrcaSlicer can slice it, its test level for the README (scripts/printer_docs.py writes the README tables from this file), and a case in tests/slicer_matrix.json.",
+  "printer_aliases": [
+    ["X1 CARBON", "X1C"],
+    ["A1 MINI", "A1M"],
+    ["H2D PRO", "H2DP"]
+  ],
+  "printer_tokens": ["X1C", "X1E", "X1", "P1S", "P1P", "A1M", "A1", "H2DP", "H2D", "H2S", "H2C", "H3C", "X2D", "XL", "P2S", "A2L", "MK4", "CORE ONE", "K1"],
+  "orca_unsupported_tokens": {
+    "H3C": "OrcaSlicer 2.5 has no H3C profile (OrcaSlicer issue #17218)"
+  },
+  "bambu_serial_prefixes": {
+    "00M": "X1C",
+    "00W": "X1",
+    "03W": "X1E",
+    "01S": "P1P",
+    "01P": "P1S",
+    "030": "A1 mini",
+    "039": "A1",
+    "094": "H2D"
+  },
+  "levels": {
+    "validated": {
+      "title": "1. Tested and validated on a real printer:",
+      "printers": [
+        {"name": "Bambu Lab H2D (AMS 2 Pro, AMS HT)", "tested": "Loaded spools (LAN-only mode and Bambuddy), Send to Orca (OrcaSlicer 2.5), Send to Bambu (Bambu Studio 2.9.1), each filament on the nozzle its AMS feeds, print estimate and spool check, installed nozzles (size and flow type over LAN), filament presets made from the Open Filament Database"},
+        {"name": "Bambu Lab X1 Carbon (AMS)", "tested": "Loaded spools, installed nozzle size"}
+      ]
+    },
+    "checked": {
+      "title": "2. Checked in the slicers with test files, not yet on a real printer:",
+      "printers": [
+        {"name": "Bambu Lab H2C", "tested": "Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side and slices it; the estimate works", "not_tested": "Loaded spools, printing"},
+        {"name": "Bambu Lab H3C", "tested": "Send to Bambu prepares the project; Bambu Studio 2.9.1 opens it with its 9 nozzles and slices it; the estimate works. OrcaSlicer 2.5 cannot slice the H3C, so Filamatch refuses it", "not_tested": "Loaded spools, printing"},
+        {"name": "Bambu Lab X2D", "tested": "Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side; the estimate works", "not_tested": "Slicing in the app, loaded spools, printing; the \"(L)\" / \"(R)\" labels may be swapped (Bambu Studio says \"Main\" and \"Auxiliary\")"},
+        {"name": "Prusa XL 5T", "tested": "Send to Orca prepares the project with Prusa's filament presets; OrcaSlicer 2.5 opens and slices it; the estimate matches", "not_tested": "Loaded spools (not read from Prusa printers), printing"},
+        {"name": "Prusa CORE One INDX 4T / 8T, MMU3", "tested": "Send to Orca prepares the project and estimates it (OrcaSlicer 2.5 command line)", "not_tested": "Opening in the app; the INDX 8T estimate often fails because OrcaSlicer crashes; printing"},
+        {"name": "Snapmaker U1 (0.4 nozzles, and 0.4 + 0.6 nozzles)", "tested": "Send to Orca prepares the project with each body on its tool and estimates it (OrcaSlicer 2.5 command line). The 0.4 set gets Snapmaker's filament presets; the mixed set gets OrcaSlicer's generic ones, because Snapmaker's presets list only the 0.4 U1", "not_tested": "Opening in the app, the Snapmaker Orca app, loaded spools, printing"},
+        {"name": "Any printer in PrusaSlicer", "tested": "Send to PrusaSlicer keeps each body on its extruder (PrusaSlicer 2.6.0)", "not_tested": "PrusaSlicer 2.9, SuperSlicer"}
+      ]
+    },
+    "expected": {
+      "title": "3. Expected to work, not tested yet:",
+      "items": [
+        "Other Bambu Lab printers with one nozzle and an AMS (P1S, P1P, A1, A1 mini, X1E, H2S, P2S): the same printer connection and slicer presets as the tested printers.",
+        "Printers whose slicer is OrcaSlicer or based on it (for example Creality Print, ElegooSlicer, Anycubic Slicer Next, Snapmaker Orca, QIDI Studio): these use the same project layout, so the slots should be kept. Filamatch does not read the loaded spools of these printers yet."
+      ]
+    },
+    "plain": {
+      "text": "Other tool changers (Klipper tool changers, IDEX printers) get the plain 3MF with each body's filament; Filamatch does nothing printer-specific for them yet."
+    }
+  }
+}

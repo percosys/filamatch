@@ -6,7 +6,7 @@
   "description": {
     "": "Filamatch: give each body a real filament, match it to the slots on your printer, and send the design to OrcaSlicer ready to print."
   },
-  "version": "0.6.1",
+  "version": "0.7.0",
   "runOnStartup": true,
   "supportedOS": "windows|mac",
   "editEnabled": true,

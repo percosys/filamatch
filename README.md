@@ -20,6 +20,16 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.7:** filaments from the Open Filament Database bring their
+> slicer settings: when your slicer has no preset for one, Filamatch makes
+> it from the database's temperatures, fans and flow (and can save it in
+> your slicer). The project uses the preset of the spool that is really
+> loaded, and Home says when that spool is another filament than the
+> design names. Filamatch reads the printer's nozzles (size, Standard or
+> High Flow), shows them and warns when the print settings are for
+> another size. The print estimate counts every plate, and bodies that
+> touch keep their exact places. See the [changelog](CHANGELOG.md).
+>
 > **New in 0.6:** printers with several nozzles (Bambu Lab H2C, H3C, X2D,
 > Prusa XL, CORE One INDX, and in 0.6.1 the Snapmaker U1) and **Send to
 > PrusaSlicer** with each body on its
@@ -59,7 +69,11 @@ by hand, every time. Filamatch keeps that information in the design:
   "Not loaded"). Change a slot with one click.
 - The list follows your changes: assigning a material, undo/redo and
   switching designs update it without a refresh button.
-- A ready check before you send, with a fix button for each problem.
+- A ready check before you send, with a fix button for each problem, for
+  example when the printer's nozzle is another size than the print
+  settings.
+- A note under a filament when its slot holds another filament than the
+  design names ("≠ Loaded: PolyLite ABS").
 
 **Filaments**
 - Add filaments from three places: the spools **on your printer**, the
@@ -68,6 +82,13 @@ by hand, every time. Filamatch keeps that information in the design:
 - Each filament becomes a Fusion physical material with the right colour
   and density (so mass and weight estimates are correct), saved in your
   Fusion Favorites and in a "Filamatch Library" material library.
+- Filaments from the database bring their slicer settings. When your
+  slicer has no preset for one, Filamatch makes it from the slicer's
+  generic preset for that type and printer, with the database's
+  temperatures, fan speeds and flow ("addnorth ABS rABS @Bambu Lab H2D 0.4
+  nozzle" at 245 °C). The project carries it; with **Save new filament
+  presets in the slicer** on, it is also saved as your own preset in Bambu
+  Studio or OrcaSlicer.
 
 **Printer and slicer**
 - Reads the filaments loaded in your Bambu Lab printers: every AMS, AMS 2
@@ -83,7 +104,12 @@ by hand, every time. Filamatch keeps that information in the design:
     show grams left.
 - Filament names come from the filament id the printer reports, looked up
   in your installed Bambu Studio and OrcaSlicer presets (your own presets
-  too).
+  too). The prepared project uses the preset of the spool that is loaded
+  (a PolyLite ABS spool gets "PolyLite ABS", even when the design says
+  Bambu ABS).
+- Reads the installed nozzles: size and, over the direct connection,
+  Standard or High Flow. Home shows them, and the prepared project gets each
+  nozzle's flow type, like Bambu Studio's printer sync.
 - Prepares a complete OrcaSlicer project: printer, process and filament
   presets from your installed OrcaSlicer (or Bambu Studio) or downloaded from
   OrcaSlicer's profile collection. Picks a build plate and wipe tower position
@@ -118,12 +144,14 @@ already has its filament, and the slicer does the rest. Reading the loaded
 spools, choosing the nozzle for each filament and the spool check depend on
 the printer.
 
+<!-- printers:start (written by scripts/printer_docs.py from Filamatch/data/printers.json) -->
+
 **1. Tested and validated on a real printer:**
 
 | Printer | What is tested |
 |---|---|
-| Bambu Lab H2D (AMS 2 Pro, AMS HT) | Loaded spools (LAN-only mode and Bambuddy), Send to Orca (OrcaSlicer 2.5), Send to Bambu (Bambu Studio 2.9.1), each filament on the nozzle its AMS feeds, print estimate and spool check |
-| Bambu Lab X1 Carbon (AMS) | Loaded spools |
+| Bambu Lab H2D (AMS 2 Pro, AMS HT) | Loaded spools (LAN-only mode and Bambuddy), Send to Orca (OrcaSlicer 2.5), Send to Bambu (Bambu Studio 2.9.1), each filament on the nozzle its AMS feeds, print estimate and spool check, installed nozzles (size and flow type over LAN), filament presets made from the Open Filament Database |
+| Bambu Lab X1 Carbon (AMS) | Loaded spools, installed nozzle size |
 
 **2. Checked in the slicers with test files, not yet on a real printer:**
 
@@ -138,17 +166,19 @@ the printer.
 | Any printer in PrusaSlicer | Send to PrusaSlicer keeps each body on its extruder (PrusaSlicer 2.6.0) | PrusaSlicer 2.9, SuperSlicer |
 
 **3. Expected to work, not tested yet:**
-- Other Bambu Lab printers with one nozzle and an AMS (P1S, P1P, A1,
-  A1 mini, X1E, H2S, P2S): the same printer connection and slicer presets
-  as the tested printers.
-- Printers whose slicer is OrcaSlicer or based on it (for example
-  Creality Print, ElegooSlicer, Anycubic Slicer Next, Snapmaker Orca,
-  QIDI Studio): these use the same project layout, so the slots should be
-  kept. Filamatch does not read the loaded spools of these printers yet.
+- Other Bambu Lab printers with one nozzle and an AMS (P1S, P1P, A1, A1
+  mini, X1E, H2S, P2S): the same printer connection and slicer presets as
+  the tested printers.
+- Printers whose slicer is OrcaSlicer or based on it (for example Creality
+  Print, ElegooSlicer, Anycubic Slicer Next, Snapmaker Orca, QIDI Studio):
+  these use the same project layout, so the slots should be kept. Filamatch
+  does not read the loaded spools of these printers yet.
 
-Other tool changers (Klipper tool changers, IDEX printers) get the plain
-3MF with each body's filament; Filamatch does nothing printer-specific for
-them yet.
+Other tool changers (Klipper tool changers, IDEX printers) get the plain 3MF
+with each body's filament; Filamatch does nothing printer-specific for them
+yet.
+
+<!-- printers:end -->
 
 The plan for multi-nozzle and tool-changer printers is in
 [docs/design/multi-nozzle.md](docs/design/multi-nozzle.md).
@@ -161,6 +191,8 @@ Do you own a printer that is not in the tested list? You can help add it:
 2. The form asks for the printer model and firmware, your slicer and its
    version, the diagnostics report, a small project saved by your slicer
    with your printer selected, and (if you can) the printer's status report.
+   **Settings > Advanced > Save printer report** in the palette writes that
+   report for Bambu Lab printers, with private values removed.
 3. Remove serial numbers, access codes, IP addresses and API keys before
    you post anything.
 
@@ -206,7 +238,10 @@ Filamatch has no account, no analytics and no telemetry. It only connects to:
 - **api.openfilamentdatabase.org**, when you search online filaments.
 
 Settings live in your user folder (see
-[file locations](docs/how-it-works.md#file-locations)).
+[file locations](docs/how-it-works.md#file-locations)). Filamatch writes
+into your slicer's own folders only when you turn on **Save new filament
+presets in the slicer**: it then adds filament presets to Bambu Studio's or
+OrcaSlicer's user presets and never replaces one.
 
 ## Documentation
 

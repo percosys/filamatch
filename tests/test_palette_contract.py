@@ -72,6 +72,7 @@ def main() -> int:
         "exportResult",
         "printEstimate",
         "diagnosticsResult",
+        "printerReportResult",
         "settingsSaved",
         "logData",
         "import_selected",
@@ -80,6 +81,7 @@ def main() -> int:
         "browse_export_path",
         "browse_slicer_path",
         "run_diagnostics",
+        "save_printer_report",
         "save_settings",
         "get_log",
         "exportPathData",
@@ -160,11 +162,34 @@ def main() -> int:
         "Settings can turn off the print estimate; the spool check has its own line",
     )
     check(
+        'id="print-settings-nozzles"' in html
+        and "function nozzleMismatch" in js
+        and "'Printer nozzles: ' + nozzleSummary(nozzles)" in js
+        and "run: useInstalledNozzle(mismatch.option)" in js,
+        "Home shows the printer's nozzles and the ready check warns when the size does not match",
+    )
+    check(
+        "', on ' + plates + ' plates'" in js,
+        "the print estimate says when the project has more than one plate",
+    )
+    check(
+        'id="save-slicer-presets"' in html
+        and "save_slicer_presets: saveSlicerPresets ? saveSlicerPresets.checked : false" in js
+        and "save_slicer_presets: settings.save_slicer_presets === true" in js,
+        "Settings can save built filament presets in the slicer (off unless turned on)",
+    )
+    check(
         "row.enough_with_backup" in js
         and "payload.auto_refill" in js
         and "AMS auto refill is on." in js
         and "AMS auto refill is off on the printer." in js,
         "the spool check counts backup spools and says if AMS auto refill is on",
+    )
+    check(
+        "function differentLoadedFilament" in js
+        and "'Loaded: ' + other.loaded" in js
+        and ".frow__note" in css,
+        "a filament row names the loaded filament when the slot holds another one than the design",
     )
     check(
         'id="slicer-choice"' in html

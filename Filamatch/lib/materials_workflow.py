@@ -37,7 +37,7 @@ import sys
 import traceback
 import types
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Set, Tuple
 
 from . import fusion_helpers as _fh
 from . import testing
@@ -132,6 +132,9 @@ class DetectedMaterial:
     product_line: str = ""
     color_name: str = ""
     orca_filament_profile: str = ""
+    #: The catalog entry's slicer data (Open Filament Database), for a preset
+    #: built when the slicer has none for this filament.
+    slicer_data: Mapping[str, Any] = field(default_factory=dict, compare=False, hash=False)
 
 
 @dataclass(frozen=True)
@@ -843,6 +846,7 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
         product_line = ""
         color_name = ""
         orca_filament_profile = ""
+        slicer_data: Mapping[str, Any] = {}
         if entry is not None:
             color_hex = _entry_color_hex(entry)
             filament_type = _entry_field(entry, "slicer_filament_type") or DEFAULT_FILAMENT_TYPE
@@ -853,6 +857,8 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
             product_line = str(_entry_field(entry, "product_line") or "")
             color_name = str(_entry_field(entry, "color_name") or "")
             orca_filament_profile = str(_entry_field(entry, "orca_filament_profile") or "")
+            raw_slicer_data = _entry_field(entry, "slicer_data")
+            slicer_data = dict(raw_slicer_data) if isinstance(raw_slicer_data, Mapping) else {}
         else:
             color_hex = group.color_hex or DEFAULT_APPEARANCE_COLOR
             filament_type = DEFAULT_FILAMENT_TYPE
@@ -874,6 +880,7 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
                 product_line=product_line,
                 color_name=color_name,
                 orca_filament_profile=orca_filament_profile,
+                slicer_data=slicer_data,
             )
         )
 

@@ -1,0 +1,45 @@
+{
+  "comment": "Cases for scripts/slicer_matrix.py. A material row is name, colour, type, preset hint and optionally catalog fields (manufacturer, product_line, slicer_data from the Open Filament Database). Optional case keys: nozzles (pins per filament), model (separate or touching), ignore_keys with ignore_why (settings the slicer writes differently on every run). Each case prepares the four-cube test model for one printer with one slicer, then slices a copy for the estimate. Add a case for every printer Filamatch supports; keep flaky cases out (the Prusa CORE One INDX 8T crashes OrcaSlicer 2.5 about half the time).",
+  "materials": {
+    "pla4": [
+      ["Black cube", "#000000", "PLA", "Bambu PLA Basic"],
+      ["Green cube", "#0ACC38", "PLA", "Bambu PLA Basic"],
+      ["White cube", "#FFFFFF", "PLA", "Bambu PLA Basic"],
+      ["Red cube", "#C12E1F", "PLA", "Bambu PLA Basic"]
+    ],
+    "pla_petg": [
+      ["Black cube", "#000000", "PLA", "Bambu PLA Basic"],
+      ["Green cube", "#0ACC38", "PLA", "Bambu PLA Basic"],
+      ["White cube", "#FFFFFF", "PETG", "Bambu PETG HF"],
+      ["Red cube", "#C12E1F", "PLA", "Bambu PLA Basic"]
+    ],
+    "database_abs": [
+      ["Black cube", "#000000", "PLA", "Bambu PLA Basic"],
+      ["Grey cube", "#4D4D4D", "ABS", "", {"manufacturer": "Add-North", "product_line": "rABS", "slicer_data": {"min_print_temperature": 230, "max_print_temperature": 260, "min_bed_temperature": 100, "max_bed_temperature": 110, "slicers": {"bambustudio": {"generic_id": "GFB99", "id": "GF_ANRA", "profile_name": "addnorth ABS rABS"}, "orcaslicer": {"generic_id": "GFB99", "id": "GF_ANRA", "profile_name": "addnorth ABS rABS"}}}}],
+      ["White cube", "#FFFFFF", "PETG", "Bambu PETG HF"],
+      ["Red cube", "#C12E1F", "PLA", "Bambu PLA Basic"]
+    ]
+  },
+  "cases": [
+    {"id": "h2d-bambu", "vendor": "bambu_local", "printer": "Bambu Lab H2D 0.4 nozzle", "process": "0.20mm Standard @BBL H2D", "slicer": "bambu", "materials": "pla_petg", "nozzles": ["left", "right", "right", "left"]},
+    {"id": "h2d-orca", "vendor": "bambu_local", "printer": "Bambu Lab H2D 0.4 nozzle", "process": "0.20mm Standard @BBL H2D", "slicer": "orca", "materials": "pla_petg", "nozzles": ["left", "right", "right", "left"]},
+    {"id": "h2d-database-bambu", "vendor": "bambu_local", "printer": "Bambu Lab H2D 0.4 nozzle", "process": "0.20mm Standard @BBL H2D", "slicer": "bambu", "materials": "database_abs"},
+    {"id": "h2d-database-orca", "vendor": "bambu_local", "printer": "Bambu Lab H2D 0.4 nozzle", "process": "0.20mm Standard @BBL H2D", "slicer": "orca", "materials": "database_abs"},
+    {"id": "h2d-touching-orca", "vendor": "bambu_local", "printer": "Bambu Lab H2D 0.4 nozzle", "process": "0.20mm Standard @BBL H2D", "slicer": "orca", "materials": "pla_petg", "model": "touching"},
+    {"id": "h2d-touching-bambu", "vendor": "bambu_local", "printer": "Bambu Lab H2D 0.4 nozzle", "process": "0.20mm Standard @BBL H2D", "slicer": "bambu", "materials": "pla_petg", "model": "touching"},
+    {"id": "x1c-touching-orca", "vendor": "bambu_local", "printer": "Bambu Lab X1 Carbon 0.4 nozzle", "process": "0.20mm Standard @BBL X1C", "slicer": "orca", "materials": "pla4", "model": "touching"},
+    {"id": "x1c-bambu", "vendor": "bambu_local", "printer": "Bambu Lab X1 Carbon 0.4 nozzle", "process": "0.20mm Standard @BBL X1C", "slicer": "bambu", "materials": "pla4"},
+    {"id": "x1c-orca", "vendor": "bambu_local", "printer": "Bambu Lab X1 Carbon 0.4 nozzle", "process": "0.20mm Standard @BBL X1C", "slicer": "orca", "materials": "pla4"},
+    {"id": "h2c-bambu", "vendor": "bambu_local", "printer": "Bambu Lab H2C 0.4 nozzle", "process": "0.20mm Standard @BBL H2C", "slicer": "bambu", "materials": "pla_petg", "nozzles": ["left", "right", "right", "left"]},
+    {"id": "h2c-orca", "vendor": "bambu_local", "printer": "Bambu Lab H2C 0.4 nozzle", "process": "0.20mm Standard @BBL H2C", "slicer": "orca", "materials": "pla_petg"},
+    {"id": "h3c-bambu", "vendor": "bambu_local", "printer": "Bambu Lab H3C 0.4 nozzle", "process": "0.20mm Standard @BBL H3C", "slicer": "bambu", "materials": "pla_petg"},
+    {"id": "x2d-bambu", "vendor": "bambu_local", "printer": "Bambu Lab X2D 0.4 nozzle", "process": "0.20mm Standard @BBL X2D", "slicer": "bambu", "materials": "pla_petg", "nozzles": ["left", "right", "right", "left"]},
+    {"id": "x2d-orca", "vendor": "bambu_local", "printer": "Bambu Lab X2D 0.4 nozzle", "process": "0.20mm Standard @BBL X2D", "slicer": "orca", "materials": "pla_petg"},
+    {"id": "prusa-xl5t-orca", "vendor": "Prusa", "printer": "Prusa XL 5T 0.4 nozzle", "slicer": "orca", "materials": "pla_petg"},
+    {"id": "prusa-indx4t-orca", "vendor": "Prusa", "printer": "Prusa CORE One INDX 4T HF 0.4 nozzle", "slicer": "orca", "materials": "pla_petg", "ignore_keys": ["flush_volumes_matrix"], "ignore_why": "OrcaSlicer 2.5 writes a different purge table for the INDX from run to run with the same input"},
+    {"id": "prusa-mmu3-orca", "vendor": "Prusa", "printer": "Prusa CORE One MMU3 0.4 nozzle", "slicer": "orca", "materials": "pla4"},
+    {"id": "u1-orca", "vendor": "Snapmaker", "printer": "Snapmaker U1 (0.4 nozzle)", "slicer": "orca", "materials": "pla_petg"},
+    {"id": "u1-mixed-orca", "vendor": "Snapmaker", "printer": "Snapmaker U1 (0.4+0.6 nozzle)", "slicer": "orca", "materials": "pla_petg"},
+    {"id": "prusaslicer-layout", "kind": "prusaslicer", "materials": "pla_petg", "model": "touching", "extruders": 4}
+  ]
+}

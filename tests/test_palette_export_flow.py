@@ -726,6 +726,27 @@ def main() -> int:
     )
     shutil.rmtree(apps, ignore_errors=True)
 
+    # --- printer report ---------------------------------------------------------
+    fake_report = types.ModuleType("printer_report")
+    fake_report.collect = lambda settings: {"printers": [{"model": "H2D"}], "source": "bambu_lan"}
+    fake_report.save = lambda report: Path("/tmp/printer-report-H2D-20261108-101500.json")
+    _install_module("printer_report", fake_report)
+    palette.sent.clear()
+    bridge.dispatch("save_printer_report", "{}", palette)
+    report_reply = palette.last("printerReportResult")
+    check(
+        report_reply.get("ok") is True and report_reply.get("printers") == 1
+        and report_reply.get("path", "").endswith("printer-report-H2D-20261108-101500.json"),
+        "Save printer report answers with the saved file",
+    )
+    fake_report.collect = lambda settings: (_ for _ in ()).throw(RuntimeError("No printer is connected."))
+    bridge.dispatch("save_printer_report", "{}", palette)
+    check(
+        palette.last("printerReportResult").get("ok") is False
+        and "No printer is connected" in str(palette.last("printerReportResult").get("error")),
+        "a failed printer report says why",
+    )
+
     # --- profiles and Open Filament Database handlers ------------------------
     palette.sent.clear()
     bridge.dispatch("get_profiles", json.dumps({"vendor": "bambu_local"}), palette)

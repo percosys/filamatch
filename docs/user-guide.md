@@ -66,7 +66,10 @@ reachable. The gear opens Settings.
 - the filament's colour, name and how many bodies use it;
 - the printer slot it is matched to, with that slot's colour;
 - a badge: **✓** the slot holds this filament, **≈** a close colour,
-  **Not loaded** no slot holds it.
+  **Not loaded** no slot holds it;
+- **≠ Loaded: …** under the name when the slot holds another filament than
+  the design names, for example "≠ Loaded: PolyLite ABS" for a Bambu ABS
+  design. Point at it for the details.
 
 Click a slot to choose another one; your choice is remembered for that
 filament. Rows that need attention are listed first.
@@ -81,6 +84,14 @@ bodies.
 **Print settings.** One line with the printer, process and plate. **Change**
 opens the printer, process and plate lists. They come from your installed
 OrcaSlicer or Bambu Studio, or from OrcaSlicer's online profile collection.
+Below it, the nozzles the printer reports, for example "Printer nozzles:
+Left 0.4 mm High Flow · Right 0.4 mm High Flow". When the printer
+settings are for another nozzle size, the ready check says so and offers
+**Use 0.6 mm** (or **Change** when the list has no printer of that size).
+A prepared project gets the flow type of each installed nozzle (Standard
+or High Flow), like Bambu Studio's printer sync, so the slicer and the
+estimate use the right speeds. The direct LAN connection reports size and
+flow; Bambuddy reports the size only.
 
 **Ready check and Send to Orca.** Above the button you see "Ready to send" or
 a short list of problems, each with a button that fixes it. Warnings never
@@ -95,6 +106,23 @@ example **Send to Orca** or **Send to Bambu**. It:
 3. adds a small slot record (which spool is in which slot);
 4. opens the file in the slicer you picked.
 
+**Which filament preset the project gets.** For each filament, in this
+order:
+
+1. the slicer's own preset of the filament the design names, or the preset
+   of the spool loaded in its slot when that spool is the same type (a
+   spool set to a generic preset does not replace a design filament with a
+   brand);
+2. a preset you made yourself in Bambu Studio or OrcaSlicer with that name
+   (for example the one a spool is set to on the printer);
+3. for a filament from the Open Filament Database: a preset Filamatch makes
+   from the slicer's generic preset for that type and printer, with the
+   database's temperatures, fan speeds, fastest flow and brand. Where the
+   database gives a range, Filamatch uses the middle (230–260 °C becomes
+   245 °C). The project carries this preset; the slicer says it is a
+   "customized preset" when it opens the file;
+4. else the slicer's generic preset for the type.
+
 A slicer other than OrcaSlicer or Bambu Studio cannot open a prepared
 project, so it gets the plain 3MF. PrusaSlicer and SuperSlicer get it in
 their own layout, so each body keeps its extruder; your printer and
@@ -107,7 +135,10 @@ After a prepared send, the palette shows the print time and filament under
 the button, for example "About 43 min and 6.9 g of filament (2.6 g + 4.3 g)".
 Filamatch works it out by slicing a copy in the background after the slicer
 has opened. The numbers come from the slicer, so they match what the slicer
-shows when you slice.
+shows when you slice. When the project has more than one plate, the line
+says so ("on 2 plates") and the numbers are for all plates: Bambu Studio
+puts bodies on plates of their own when one filament's bed is too hot for
+another, for example ABS and PETG.
 
 Below it, the spool check compares each filament with the grams left on its
 spool (from Bambuddy, or from the printer for Bambu RFID spools). It warns
@@ -164,11 +195,21 @@ Select filaments and click **Add to Fusion**. You return to Home.
 - **Print time, filament and spool check after sending:** on by default.
   It slices a copy in the background (about 1 to 5 seconds on a fast Mac,
   longer on a slow computer); turn it off there.
+- **Save new filament presets in the slicer:** off by default. With it on,
+  a preset Filamatch makes from the Open Filament Database is also saved as
+  your own preset in Bambu Studio or OrcaSlicer (in the slicer's local
+  presets, used when you are not signed in), so you can use it again. It
+  shows after the slicer restarts. A preset you already have is never
+  replaced.
 - **Fusion library:** keep the Filamatch Library up to date after adding
   filaments, or rebuild it now.
 - **Advanced:**
   - export only the 3MF without opening the slicer;
   - your own OrcaSlicer profile folder, or import profile files;
+  - **Save printer report:** saves the connected printer's status as a JSON
+    file in Documents/Filamatch, with serial numbers, access codes, IP
+    addresses and other private values removed. Attach it to a printer
+    support issue so your printer can be supported.
   - **Run diagnostics:** a report of versions, file locations and checks.
     Paste it into a bug report.
   - the session log.

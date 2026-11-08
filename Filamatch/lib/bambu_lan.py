@@ -43,13 +43,16 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from . import mqtt_lite
+from . import printer_catalog
 from .printer_model import (
     EXTERNAL_UNIT_ID,
+    NozzleInfo,
     PrinterContext,
     PrinterInfo,
     SlotInfo,
     SpoolInfo,
     normalize_color_hex,
+    nozzle_flow,
 )
 
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
@@ -94,16 +97,7 @@ READ_ONLY_REQUESTS: Dict[str, Dict[str, Any]] = {
 
 #: Model by the first three characters of the serial number.  The model name
 #: from ``get_version`` wins when the printer sends one.
-MODEL_BY_SERIAL_PREFIX: Dict[str, str] = {
-    "00M": "X1C",
-    "00W": "X1",
-    "03W": "X1E",
-    "01S": "P1P",
-    "01P": "P1S",
-    "030": "A1 mini",
-    "039": "A1",
-    "094": "H2D",
-}
+MODEL_BY_SERIAL_PREFIX: Dict[str, str] = printer_catalog.bambu_serial_prefixes()
 
 #: AMS HT units use ids 128-135; each has one slot.
 AMS_HT_FIRST_ID = 128
@@ -774,6 +768,29 @@ def auto_refill_of(report: Mapping[str, Any]) -> Optional[bool]:
     return None
 
 
+def nozzles_of(report: Mapping[str, Any]) -> Tuple[NozzleInfo, ...]:
+    """The installed nozzles in a full report, by extruder id.
+
+    Newer printers list them in ``device.nozzle.info`` (H2D: id 0 right, 1
+    left, ``type`` "HH01" for High Flow); older ones report one
+    ``nozzle_diameter`` and ``nozzle_type`` ("hardened_steel", no flow).
+    """
+    device = report.get("device")
+    nozzle = device.get("nozzle") if isinstance(device, Mapping) else None
+    info = nozzle.get("info") if isinstance(nozzle, Mapping) else None
+    found: List[NozzleInfo] = []
+    for item in info if isinstance(info, list) else []:
+        if isinstance(item, Mapping):
+            diameter = _float(item.get("diameter"))
+            if diameter and diameter > 0:
+                found.append(NozzleInfo(_int(item.get("id"), len(found)), diameter, nozzle_flow(item.get("type"))))
+    if not found:
+        diameter = _float(report.get("nozzle_diameter"))
+        if diameter and diameter > 0:
+            found.append(NozzleInfo(0, diameter, nozzle_flow(report.get("nozzle_type"))))
+    return tuple(sorted(found, key=lambda item: item.id))
+
+
 def is_dual_nozzle(report: Mapping[str, Any]) -> bool:
     """True when the report lists two extruders (H2D)."""
     device = report.get("device")
@@ -1020,7 +1037,9 @@ class BambuLanSource:
         for printer, state, error in results:
             info = self._printer_info(printer)
             if state is not None:
-                info = dataclasses.replace(info, auto_refill=auto_refill_of(state.report))
+                info = dataclasses.replace(
+                    info, auto_refill=auto_refill_of(state.report), nozzles=nozzles_of(state.report)
+                )
             infos.append(info)
             if state is None:
                 warnings.append("{}: {}".format(printer.name, error))
@@ -1139,6 +1158,20 @@ def _with_test_presets() -> None:
     _reset_presets([root])
 
 
+def _check_nozzles() -> None:
+    # As the user's H2D and X1C report them (2026-11-08), private values left out.
+    h2d = {"device": {"nozzle": {"exist": 3, "info": [
+        {"id": 1, "diameter": 0.6, "type": "HS01", "wear": 0.0},
+        {"id": 0, "diameter": 0.4, "type": "HH01", "wear": 0.0},
+    ]}, "extruder": {"info": [{"id": 0}, {"id": 1}]}}, "nozzle_diameter": "0.4", "nozzle_type": "HH01"}
+    _expect(nozzles_of(h2d) == (NozzleInfo(0, 0.4, "High Flow"), NozzleInfo(1, 0.6, "Standard")),
+            "H2D: both nozzles by id: {}".format(nozzles_of(h2d)))
+    x1c = {"device": {"nozzle": {"0": {"info": 136, "temp": 26}, "info": 247}},
+           "nozzle_diameter": "0.4", "nozzle_type": "hardened_steel"}
+    _expect(nozzles_of(x1c) == (NozzleInfo(0, 0.4, ""),), "X1C: one nozzle, flow unknown")
+    _expect(nozzles_of({}) == (), "no nozzle data")
+
+
 def _check_auto_refill() -> None:
     _expect(auto_refill_of({"home_flag": 1 << 10}) is True, "home_flag bit 10 on")
     _expect(auto_refill_of({"home_flag": (1 << 7) | (1 << 11)}) is False, "other home_flag bits do not count")
@@ -1252,6 +1285,7 @@ def _selftest() -> int:
         ("a read sends only allowed requests", _check_session_sends_only_allowed),
         ("certificate common names", _check_der_common_names),
         ("model and nozzle detection", _check_models),
+        ("installed nozzles: size and flow type", _check_nozzles),
         ("H2D report: AMS, AMS HT, external L/R", _check_h2d_fixture),
         ("AMS auto refill from home_flag bit 10 or cfg bit 18", _check_auto_refill),
         ("X1C report: AMS and external", _check_x1c_fixture),

@@ -22,6 +22,7 @@ are only defined inside Fusion. Self-test: ``python3 -m Filamatch.lib.palette_br
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import logging
@@ -82,6 +83,9 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "auto_library_update": True,
     # Slice a copy after sending for print time, filament and the spool check.
     "estimate_enabled": True,
+    # Save filament presets built from the Open Filament Database in the
+    # slicer's own user presets (filament_presets.save_to_slicer).
+    "save_slicer_presets": False,
     "custom_library_path": "",
     "printer_source": "bambuddy",
     "bambuddy_url": "",
@@ -1038,6 +1042,15 @@ def _bambuddy_context_payload(
                 "model": printer.model,
                 "location": printer.location,
                 "label": printer.label,
+                # The installed nozzles; side "left"/"right" on a dual-nozzle printer.
+                "nozzles": [
+                    {
+                        "side": _nozzle_side(nozzle, len(printer.nozzles)),
+                        "diameter": nozzle.diameter,
+                        "flow": nozzle.flow,
+                    }
+                    for nozzle in getattr(printer, "nozzles", ()) or ()
+                ],
             }
             for printer in context.printers
         ],
@@ -1056,7 +1069,7 @@ def _bambuddy_context_payload(
                 "spool_display_name": slot.spool.display_name if slot.spool is not None else "",
 
                 "spool_id": slot.spool.id if slot.spool is not None else 0,
-                "spool_preset": slot.spool.slicer_filament_name if slot.spool is not None else "",
+                "spool_preset": _spool_preset_name(slot.spool) if slot.spool is not None else "",
                 "remaining_g": slot.spool.remaining_g if slot.spool is not None else None,
                 "remaining_percent": slot.remaining,
                 "location": slot.spool.location if slot.spool is not None else "",
@@ -2015,37 +2028,189 @@ def _use_bambu_studio_words(output_path: Path, target: Any) -> None:
         log_message("Bambu Studio may show 'Some values have been replaced': {}".format(_error_text(exc)))
 
 
-def _attach_bambuddy_slot_manifest(
-    output_path: Path,
-    detected: Sequence[Any],
-    settings: Mapping[str, Any],
-    pin_nozzles: bool = False,
-) -> Optional[Dict[str, Any]]:
-    """Attach the Bambuddy/AMS slot association manifest to an exported 3MF.
+def _read_slot_rows(detected: Sequence[Any], settings: Mapping[str, Any]) -> Optional[types.SimpleNamespace]:
+    """Read the printer's slots and match each design material to one (network).
 
-    With ``pin_nozzles`` (a prepared project) each filament is also pinned to
-    the nozzle its slot feeds.  The export must never fail just because
-    Bambuddy is offline; errors are logged and reported separately.  Returns
-    the manifest payload (None when Bambuddy is not configured or no material
-    is mapped).
+    Returns ``printers`` (by id), ``printer_id``, ``slots`` and ``rows`` (one
+    :func:`slot_mapping.build_mapping` row per material), or None when no
+    printer source is set up.
     """
-    from . import inventory_sync
     from . import printer_sources
     from . import slot_mapping
 
     if not printer_sources.is_configured(settings):
         return None
+    context = printer_sources.fetch_context(settings)
+    printer_id = int(settings.get("bambuddy_printer_id") or 0)
+    printers = {printer.id: printer for printer in context.printers}
+    if printer_id not in printers and context.printers:
+        printer_id = context.printers[0].id
+    slots = [slot for slot in context.slots if slot.printer_id == printer_id]
+    saved_map = settings.get("bambuddy_slot_map")
+    rows = slot_mapping.build_mapping(list(detected), slots, saved_map if isinstance(saved_map, dict) else {})
+    return types.SimpleNamespace(printers=printers, printer_id=printer_id, slots=slots, rows=rows)
+
+
+def _spool_preset_name(spool: Any) -> str:
+    """The slicer preset name of a loaded spool (``PolyLite ABS``), or ""."""
+    name = str(getattr(spool, "slicer_filament_name", "") or "").strip()
+    if not name:
+        preset = bambu_lan.filament_preset(str(getattr(spool, "slicer_filament", "") or "").strip())
+        name = preset.name if preset is not None else ""
+    return name
+
+
+def _same_filament_name(loaded: str, design_name: str) -> bool:
+    """True when every word of a spool's preset name ("Bambu PLA Basic") is in
+    the design's filament name without its colour ("Bambu Lab - PLA Basic")."""
+    parts = [part.strip() for part in str(design_name or "").split(" - ")]
+    design_words = " ".join(parts[:-1] if len(parts) >= 2 else parts).upper().split()
+    return all(word in design_words for word in str(loaded or "").split(" @")[0].upper().split())
+
+
+def _with_database_data(detected: Sequence[Any]) -> List[Any]:
+    """Open Filament Database filaments added before their catalog entries kept
+    slicer data get it from the cached dataset (see openfilament)."""
+    materials = list(detected)
+    for index, material in enumerate(materials):
+        name = str(getattr(material, "material_name", "") or "")
+        if not name.startswith("ofd_") or getattr(material, "slicer_data", None) or not dataclasses.is_dataclass(material):
+            continue
+        from . import openfilament
+
+        data = openfilament.slicer_data_for_catalog_id(name)
+        if data:
+            materials[index] = dataclasses.replace(material, slicer_data=data)
+    return materials
+
+
+def _with_spool_presets(detected: Sequence[Any], slot_rows: Optional[types.SimpleNamespace]) -> List[Any]:
+    """Give each design material the slicer preset of the spool it prints with.
+
+    The slicer project then names the filament that is loaded ("PolyLite
+    ABS"), not the one the design names ("Bambu ABS").  Only for a spool of
+    the same material type, and not for a spool set to a generic preset when
+    the design names a brand.  A spool of another filament than the design's
+    also drops the design's database data, which is not the spool's.
+    """
+    materials = list(detected)
+    if slot_rows is None:
+        return materials
+    slots_by_key = {slot.key: slot for slot in slot_rows.slots}
+    by_material = {str(row.get("material_id")): slots_by_key.get(str(row.get("slot_key"))) for row in slot_rows.rows}
+    changed = []
+    for index, material in enumerate(materials):
+        slot = by_material.get(str(getattr(material, "material_id", "")))
+        spool = getattr(slot, "spool", None)
+        if spool is None or not dataclasses.is_dataclass(material):
+            continue
+        wanted = str(getattr(material, "filament_type", "") or "").strip().upper()
+        loaded = str(getattr(slot, "filament_type", "") or spool.material or "").strip().upper()
+        name = _spool_preset_name(spool)
+        if not name or not wanted or wanted != loaded or name == getattr(material, "orca_filament_profile", ""):
+            continue
+        brand = str(getattr(material, "manufacturer", "") or "").strip().lower()
+        if "generic" in name.lower() and brand not in ("", "generic", "unknown"):
+            continue
+        changes: Dict[str, Any] = {"orca_filament_profile": name}
+        if getattr(material, "slicer_data", None) and not _same_filament_name(
+            name, str(getattr(material, "display_name", "") or "")
+        ):
+            changes["slicer_data"] = {}
+        materials[index] = dataclasses.replace(material, **changes)
+        changed.append("{} -> {}".format(getattr(material, "display_name", "") or wanted, name))
+    if changed:
+        log_message("Slicer presets of the loaded spools: {}".format(", ".join(changed)))
+    return materials
+
+
+def _nozzle_side(nozzle: Any, count: int) -> str:
+    """"left" or "right" for one of two nozzles (printer id 0 is the right one), else ""."""
+    if count != 2:
+        return ""
+    return "right" if int(getattr(nozzle, "id", -1)) == bambu_lan.EXTRUDER_RIGHT else "left"
+
+
+def _nozzle_text(nozzle: Any, count: int) -> str:
+    """"Left 0.4 High Flow" for one of two nozzles, "0.4 Standard" for a single one."""
+    side = _nozzle_side(nozzle, count).capitalize()
+    side = side + " " if side else ""
+    size = "{:g}".format(float(getattr(nozzle, "diameter", 0.0) or 0.0))
+    return (side + size + " " + str(getattr(nozzle, "flow", "") or "")).strip()
+
+
+def _apply_printer_nozzles(output: Path, slot_rows: Optional[types.SimpleNamespace]) -> None:
+    """Write the selected printer's nozzle flow types into the prepared project (never fails the export)."""
+    if slot_rows is None:
+        return
+    printer = slot_rows.printers.get(slot_rows.printer_id)
+    nozzles = tuple(getattr(printer, "nozzles", ()) or ())
+    if not nozzles:
+        return
+    from . import slicer_profiles
+
     try:
-        context = printer_sources.fetch_context(settings)
-        printer_id = int(settings.get("bambuddy_printer_id") or 0)
-        printers = {printer.id: printer for printer in context.printers}
-        if printer_id not in printers and context.printers:
-            printer_id = context.printers[0].id
-        slots = [slot for slot in context.slots if slot.printer_id == printer_id]
-        saved_map = settings.get("bambuddy_slot_map")
-        rows = slot_mapping.build_mapping(
-            list(detected), slots, saved_map if isinstance(saved_map, dict) else {}
-        )
+        if slicer_profiles.apply_printer_nozzles(output, nozzles):
+            log_message("The project uses the printer's nozzles: {}".format(
+                ", ".join(_nozzle_text(nozzle, len(nozzles)) for nozzle in nozzles)))
+    except Exception as exc:
+        LOGGER.exception("Could not write the printer's nozzles")
+        log_message("The project keeps the preset's nozzle flow: {}".format(_error_text(exc)))
+
+
+def _report_built_presets(paths: Sequence[str], kind: str, save: bool) -> None:
+    """Log the filament presets built from the Open Filament Database and, when
+    ``save`` (Settings), save them in the slicer (never fails the export)."""
+    from . import filament_presets
+
+    for path in paths:
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            name = str(data.get("name") or Path(path).stem)
+            if not save:
+                log_message("Made the filament preset {!r} from the Open Filament Database".format(name))
+                continue
+            status, saved = filament_presets.save_to_slicer(data, kind)
+            app = {"bambu": "Bambu Studio", "orca": "OrcaSlicer"}.get(kind, "this slicer")
+            if status == "saved":
+                log_message("Made the filament preset {!r} and saved it in {} (it shows after {} restarts)".format(
+                    name, app, app))
+            elif status == "exists":
+                log_message("Made the filament preset {!r}; {} already has one of that name".format(name, app))
+            else:
+                log_message("Made the filament preset {!r}; saving presets works for Bambu Studio and "
+                            "OrcaSlicer only".format(name))
+        except Exception as exc:
+            LOGGER.exception("Could not save the built filament preset %r", path)
+            log_message("Could not save the filament preset {}: {}".format(Path(path).stem, _error_text(exc)))
+
+
+def _attach_bambuddy_slot_manifest(
+    output_path: Path,
+    detected: Sequence[Any],
+    settings: Mapping[str, Any],
+    pin_nozzles: bool = False,
+    slot_rows: Optional[types.SimpleNamespace] = None,
+) -> Optional[Dict[str, Any]]:
+    """Attach the Bambuddy/AMS slot association manifest to an exported 3MF.
+
+    With ``pin_nozzles`` (a prepared project) each filament is also pinned to
+    the nozzle its slot feeds.  ``slot_rows`` (from :func:`_read_slot_rows`)
+    are read here when not given.  The export must never fail just because
+    Bambuddy is offline; errors are logged and reported separately.  Returns
+    the manifest payload (None when Bambuddy is not configured or no material
+    is mapped).
+    """
+    from . import inventory_sync
+    from . import slot_mapping
+
+    try:
+        if slot_rows is None:
+            slot_rows = _read_slot_rows(detected, settings)
+        if slot_rows is None:
+            return None
+        printers, printer_id = slot_rows.printers, slot_rows.printer_id
+        slots, rows = slot_rows.slots, slot_rows.rows
         mapped_rows = [row for row in rows if row.get("slot_key")]
         slots_by_key = {slot.key: slot for slot in slots}
         if pin_nozzles:
@@ -2353,6 +2518,13 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
         prepare = False
         if base_output != output:
             shutil.move(str(base_output), str(output))
+    # Read once: the prepared project names the loaded spools, the manifest records them.
+    try:
+        slot_rows = _read_slot_rows(detected, settings)
+    except Exception:
+        LOGGER.exception("Could not read the printer's slots")
+        log_message("Bambuddy slot manifest was not attached (export continued)")
+        slot_rows = None
     if prepare:
         try:
             slicer_profiles, slicer_exe, prepared_target = _resolve_profile_target(data)
@@ -2364,8 +2536,18 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
                 )
             )
             prepared_result = slicer_profiles.prepare_project(
-                base_output, output, prepared_target, slicer_exe, detected
+                base_output,
+                output,
+                prepared_target,
+                slicer_exe,
+                _with_spool_presets(_with_database_data(detected), slot_rows),
             )
+            _report_built_presets(
+                getattr(prepared_result, "built_presets", ()) or (),
+                _slicer_kind(open_app) or _slicer_kind(slicer_exe),
+                bool(settings.get("save_slicer_presets", False)),
+            )
+            _apply_printer_nozzles(output, slot_rows)
             if _slicer_kind(open_app) == "bambu" and _slicer_kind(slicer_exe) != "bambu":
                 # OrcaSlicer prepared this file for Bambu Studio.
                 _use_bambu_studio_words(output, prepared_target)
@@ -2413,9 +2595,10 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
         slicer_profiles.check_slot_assignments(output, detected)
 
     try:
-        outcome["slot_manifest"] = _attach_bambuddy_slot_manifest(
-            output, detected, settings, pin_nozzles=bool(outcome["prepared"])
-        )
+        if slot_rows is not None:
+            outcome["slot_manifest"] = _attach_bambuddy_slot_manifest(
+                output, detected, settings, pin_nozzles=bool(outcome["prepared"]), slot_rows=slot_rows
+            )
     except Exception:
         LOGGER.exception("Unexpected slot-manifest failure during export")
 
@@ -2603,7 +2786,8 @@ def _start_print_estimate(
             _send(palette, "printEstimate", {"ok": False, "output_path": str(project)})
             return
         spools = _spool_check(detected, manifest, result.get("filament_grams") or [])
-        log_message("Print estimate: {} min, {} g".format(result.get("minutes"), result.get("grams")))
+        log_message("Print estimate: {} min, {} g, {} plate(s)".format(
+            result.get("minutes"), result.get("grams"), result.get("plates", 1)))
         for spool in spools:
             if not spool["enough"]:
                 log_message(
@@ -2748,6 +2932,28 @@ def _handle_diagnostics(palette: Any) -> None:
     except Exception as exc:
         LOGGER.exception("Palette diagnostics action failed")
         _send_error(palette, "diagnosticsResult", _error_text(exc))
+
+
+def _handle_save_printer_report(palette: Any) -> None:
+    """Save the connected printer's raw status with private values removed (worker thread)."""
+    settings = load_settings()
+
+    def work() -> Dict[str, Any]:
+        from . import printer_report
+
+        report = printer_report.collect(settings)
+        path = printer_report.save(report)
+        return {"path": str(path), "printers": len(report.get("printers") or [])}
+
+    def finish(result: Optional[Dict[str, Any]], error: Optional[BaseException]) -> None:
+        if error is not None or result is None:
+            LOGGER.warning("Could not save the printer report: %s", _error_text(error))
+            _send_error(palette, "printerReportResult", _error_text(error))
+            return
+        log_message("Saved the printer report: {}".format(result["path"]))
+        _send(palette, "printerReportResult", dict(result, ok=True))
+
+    _run_job("printer-report", work, finish)
 
 
 def _handle_open_material_browser(palette: Any) -> None:
@@ -3064,6 +3270,8 @@ def dispatch(action: str, data: Any, palette: Any) -> None:
         _handle_openfilament_import(payload, palette)
     elif action == "run_diagnostics":
         _handle_diagnostics(palette)
+    elif action == "save_printer_report":
+        _handle_save_printer_report(palette)
     elif action == "clear_bambuddy_key":
         _handle_clear_bambuddy_key(palette)
     elif action == "save_settings":
@@ -3643,6 +3851,91 @@ def _self_test() -> int:
             {"slot_key": nearly_empty.key, "slot_label": nearly_empty.slot_label, "remaining_g": 40.0}
         ],
         "slot record: fullest identical spool used, the other listed as backup, auto refill passed on",
+    )
+
+    # The prepared project names the loaded spool's preset, not the design's.
+    @dataclasses.dataclass(frozen=True)
+    class Design:
+        material_id: str
+        display_name: str
+        filament_type: str
+        orca_filament_profile: str = ""
+        manufacturer: str = ""
+        slicer_data: Dict[str, Any] = dataclasses.field(default_factory=dict, compare=False)
+
+    polylite = printer_model.SlotInfo(
+        1, "H2D", 1, 0,
+        printer_model.SpoolInfo(9, "ABS", "Polymaker", "Green", "#00AE42", 900.0, 1000.0, None, "GFB60", ""),
+        "ABS", "#00AE42", extruder=1, vendor_filament_id="GFB60",
+    )
+    designs = [Design("m-abs", "Bambu Lab - ABS - Bambu Green", "ABS"), Design("m-pla", "PLA", "PLA"),
+               Design("m-petg", "PETG", "PETG"), Design("m-free", "ASA", "ASA")]
+    rows = types.SimpleNamespace(printers={}, printer_id=1, slots=[polylite, nearly_empty, full], rows=[
+        {"material_id": "m-abs", "slot_key": polylite.key},
+        {"material_id": "m-pla", "slot_key": nearly_empty.key},
+        {"material_id": "m-petg", "slot_key": full.key},
+        {"material_id": "m-free", "slot_key": ""},
+    ])
+    original_preset = bambu_lan.filament_preset
+    bambu_lan.filament_preset = lambda filament_id: (
+        bambu_lan.FilamentPreset("GFB60", "PolyLite ABS", "Polymaker") if filament_id == "GFB60" else None
+    )
+    try:
+        named = _with_spool_presets(designs, rows)
+    finally:
+        bambu_lan.filament_preset = original_preset
+    _check(
+        [item.orca_filament_profile for item in named] == ["PolyLite ABS", "Bambu PLA Basic", "", ""]
+        and _with_spool_presets(designs, None) == designs,
+        "the prepared project uses the loaded spool's preset (same type only)",
+    )
+
+    def spool_slot(key_tray: int, preset: str, kind: str = "ABS") -> Any:
+        spool = printer_model.SpoolInfo(20 + key_tray, kind, "Any", "Green", "#00AE42", 900.0, 1000.0, None, "", preset)
+        return printer_model.SlotInfo(1, "H2D", 3, key_tray, spool, kind, "#00AE42", extruder=1)
+
+    data = {"min_print_temperature": 240}
+    generic, other, same = spool_slot(0, "Generic ABS"), spool_slot(1, "Bambu ABS"), spool_slot(2, "PolyLite ABS")
+    branded = [Design("a", "Polymaker - PolyLite ABS - Green", "ABS", manufacturer="Polymaker", slicer_data=data)] * 3
+    branded = [dataclasses.replace(item, material_id=key) for item, key in zip(branded, "abc")]
+    rows = types.SimpleNamespace(printers={}, printer_id=1, slots=[generic, other, same], rows=[
+        {"material_id": "a", "slot_key": generic.key},
+        {"material_id": "b", "slot_key": other.key},
+        {"material_id": "c", "slot_key": same.key},
+    ])
+    named = _with_spool_presets(branded, rows)
+    _check(
+        named[0].orca_filament_profile == "" and named[0].slicer_data == data
+        and named[1].orca_filament_profile == "Bambu ABS" and named[1].slicer_data == {}
+        and named[2].orca_filament_profile == "PolyLite ABS" and named[2].slicer_data == data,
+        "a generic spool keeps the design's filament; another filament drops the design's database data",
+    )
+
+    from . import filament_presets
+
+    with tempfile.TemporaryDirectory(prefix="filamatch-built-") as temp:
+        built = Path(temp) / "built.json"
+        built.write_text(json.dumps({"name": "addnorth ABS rABS @Bambu Lab H2D 0.4 nozzle", "type": "filament",
+                                     "inherits": "addnorth ABS rABS @Bambu Lab H2D 0.4 nozzle"}), encoding="utf-8")
+        previous_root = filament_presets._CONF_ROOT_OVERRIDE
+        filament_presets._CONF_ROOT_OVERRIDE = Path(temp) / "support"
+        try:
+            _report_built_presets([str(built)], "bambu", False)
+            kept_out = not (Path(temp) / "support").exists()
+            _report_built_presets([str(built)], "bambu", True)
+            saved = list((Path(temp) / "support" / "BambuStudio" / "user" / "default" / "filament" / "base").glob("*.json"))
+        finally:
+            filament_presets._CONF_ROOT_OVERRIDE = previous_root
+    _check(
+        kept_out and len(saved) == 1,
+        "a built preset is saved in the slicer only when the setting is on",
+    )
+
+    two = (printer_model.NozzleInfo(0, 0.4, "High Flow"), printer_model.NozzleInfo(1, 0.6, "Standard"))
+    _check(
+        [_nozzle_text(nozzle, 2) for nozzle in two] == ["Right 0.4 High Flow", "Left 0.6 Standard"]
+        and _nozzle_text(printer_model.NozzleInfo(0, 0.4, ""), 1) == "0.4",
+        "nozzles read as Left/Right size flow",
     )
 
     # Each filament's nozzle comes from the slot chosen for it (H2D: AMS 2 feeds the right).

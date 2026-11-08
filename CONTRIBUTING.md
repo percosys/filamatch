@@ -7,7 +7,7 @@ are all welcome.
 
 1. In the palette open **Settings > Advanced > Run diagnostics** and copy the
    report.
-2. Open an [issue](https://github.com/percosys/filamatch/issues) with:
+2. Open a [bug report](https://github.com/percosys/filamatch/issues/new?template=bug-report.yml) with:
    - what you did, what you expected and what happened;
    - the diagnostics report;
    - the end of the log file (`filamatch.log`, see
@@ -30,6 +30,11 @@ If you own a printer that is not tested, open a
 The form says what to send and how to remove private values first.
 [docs/design/multi-nozzle.md](docs/design/multi-nozzle.md) says why each
 item is needed.
+
+## How issues are handled
+
+[docs/triage.md](docs/triage.md) shows how an issue becomes a fix: the data
+we ask for, how it becomes a test, and when a printer counts as tested.
 
 ## Change the code
 
