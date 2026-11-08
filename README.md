@@ -101,9 +101,57 @@ by hand, every time. Filamatch keeps that information in the design:
 |---|---|
 | **Autodesk Fusion** | Current release, macOS or Windows. Filamatch uses Fusion's built-in Python; nothing else to install. |
 | **OrcaSlicer or Bambu Studio** | Prepares the project (print settings, slots, nozzles, purge volumes) and opens it; the send button names the one you pick. Bambu Studio prepares Bambu Lab printers by itself; other printers need OrcaSlicer. Other slicers get the plain 3MF. Without a slicer you can still export a tagged 3MF. |
-| **A Bambu Lab printer** (optional) | To read the filaments loaded in the printer. Connect it directly (IP address and access code from the printer screen) or through [Bambuddy](https://github.com/maziggy/bambuddy). Tested with an H2D and an X1C. Without a printer, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. Other printer brands are on the [roadmap](docs/roadmap.md). |
+| **A Bambu Lab printer** (optional) | To read the filaments loaded in the printer. Connect it directly (IP address and access code from the printer screen) or through [Bambuddy](https://github.com/maziggy/bambuddy). See [Printers](#printers) for what is tested. Without a printer, an export puts the filaments in slots 1, 2, 3… in the order they appear in the design. Other printer brands are on the [roadmap](docs/roadmap.md). |
 
 Windows support is written but has been tested less than macOS.
+
+## Printers
+
+Any printer works for the basics: Filamatch writes a 3MF in which each body
+already has its filament, and the slicer does the rest. Reading the loaded
+spools, choosing the nozzle for each filament and the spool check depend on
+the printer.
+
+**Tested and validated** on real printers:
+
+| Printer | What is tested |
+|---|---|
+| Bambu Lab H2D (AMS 2 Pro, AMS HT) | Loaded spools (LAN-only mode and Bambuddy), Send to Orca (OrcaSlicer 2.5), Send to Bambu (Bambu Studio 2.9.1), each filament on the nozzle its AMS feeds, print estimate and spool check |
+| Bambu Lab X1 Carbon (AMS) | Loaded spools |
+
+**Expected to work, not tested yet:**
+- Other Bambu Lab printers with one nozzle and an AMS (P1S, P1P, A1,
+  A1 mini, X1E, H2S, P2S): the same printer connection and slicer presets
+  as the tested printers.
+- Printers whose slicer is OrcaSlicer or based on it (for example
+  Creality Print, ElegooSlicer, Anycubic Slicer Next, Snapmaker Orca,
+  QIDI Studio): these use the same project layout, so the slots should be
+  kept. Filamatch does not read the loaded spools of these printers yet.
+
+**Partly supported:**
+- Bambu Lab H2C, H3C and X2D: the slicer chooses the nozzle or tool for
+  each filament. Reading the loaded spools and the print estimate are not
+  tested on these printers.
+- Prusa XL, CORE One INDX and MMU3: PrusaSlicer opens the file but does not
+  keep the slots yet. OrcaSlicer has profiles for these printers and keeps
+  the slots.
+
+The plan for multi-nozzle and tool-changer printers is in
+[docs/design/multi-nozzle.md](docs/design/multi-nozzle.md).
+
+### Help add your printer
+
+Do you own a printer that is not in the tested list? You can help add it:
+
+1. Open a [printer support issue](https://github.com/percosys/filamatch/issues/new?template=printer-support.yml).
+2. The form asks for the printer model and firmware, your slicer and its
+   version, the diagnostics report, a small project saved by your slicer
+   with your printer selected, and (if you can) the printer's status report.
+3. Remove serial numbers, access codes, IP addresses and API keys before
+   you post anything.
+
+A printer moves to the tested list when an owner has confirmed the full
+flow: loaded spools, send, slots in the slicer and the print.
 
 ## Install
 

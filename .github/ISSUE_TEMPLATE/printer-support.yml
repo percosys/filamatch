@@ -1,0 +1,98 @@
+name: Printer support
+description: Send the data Filamatch needs to support a printer you own.
+title: "Printer support: "
+labels: ["printer support"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. Filamatch can only support a printer when someone who owns it sends real data.
+        Fill in what you can. The fields marked as required are enough to start.
+
+        **Remove private values before you post:** serial numbers (`sn`, `dev_id`), access codes,
+        IP addresses (also the `net` block of a Bambu Lab report), API keys, Wi-Fi names and user names.
+        Why each item is needed: [docs/design/multi-nozzle.md](https://github.com/percosys/filamatch/blob/main/docs/design/multi-nozzle.md).
+  - type: input
+    id: printer
+    attributes:
+      label: Printer
+      description: Brand and model.
+      placeholder: "Bambu Lab H2C"
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Nozzles, tools and spool units
+      description: How many nozzles or tools, their sizes and types, and which spool units (AMS, MMU3, CFS, ...) feed which tool.
+      placeholder: |
+        Left nozzle 0.4 Standard, right nozzle rack with 6 hotends (0.4 High Flow x2, 0.4 Standard x4).
+        AMS 2 Pro on the right, AMS HT on the left.
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Printer firmware version
+    validations:
+      required: true
+  - type: input
+    id: slicer
+    attributes:
+      label: Slicer and version
+      placeholder: "Bambu Studio 2.9.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How the printer can be reached on your network
+      multiple: true
+      options:
+        - Bambu Lab LAN-only mode
+        - Bambuddy
+        - PrusaLink
+        - Prusa Connect only
+        - Klipper / Moonraker
+        - OctoPrint
+        - Spoolman
+        - Other local API
+        - Cloud only / not on the network
+  - type: textarea
+    id: today
+    attributes:
+      label: What happens with Filamatch today
+      description: What you tried, and what worked or did not. Leave it empty if you have not tried yet.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: In the Filamatch palette, Settings > Advanced > Run diagnostics. Paste the report.
+      render: text
+  - type: textarea
+    id: project
+    attributes:
+      label: Project file from your slicer
+      description: |
+        In your slicer, select your printer, load a small test part (not a private design), give it two or more
+        filaments and put them on different nozzles or tools if the printer has them. Save the project as 3MF,
+        zip it and drag the zip here. Add a screenshot of the slicer's filament or nozzle mapping screen.
+  - type: textarea
+    id: report
+    attributes:
+      label: Printer status report (optional, helps a lot)
+      description: |
+        The printer's own status data with spools loaded:
+        - Bambu Lab: the JSON answer to a `pushall` request (for example with MQTT Explorer), or in Bambuddy open `/docs` and run `GET /api/v1/printers/{id}/status`.
+        - Prusa: PrusaLink `GET /api/v1/info` and `GET /api/v1/status`.
+        - Klipper / Moonraker: `GET /printer/objects/list`, then `GET /printer/objects/query?...` for the tool changer, MMU or spool objects.
+        - Other printers: whatever the local API returns for loaded spools and tools.
+        Remove the private values listed at the top first.
+      render: json
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Private values
+      options:
+        - label: I removed serial numbers, access codes, IP addresses, API keys, Wi-Fi names and user names from everything above.
+          required: true

@@ -19,9 +19,17 @@ access codes.
 
 ## Test with your printer or slicer
 
-The [roadmap](docs/roadmap.md) needs real hardware: Klipper/Moonraker,
-Creality CFS, OctoPrint, Prusa and other slicers. If you can test one,
-open an issue and say what you have.
+Filamatch needs data from real printers to support them: multi-nozzle and
+tool-changer printers (Bambu Lab H2C, H3C, X2D, Prusa XL, CORE One INDX,
+Snapmaker U1), Klipper/Moonraker, Creality CFS, OctoPrint and other
+slicers. The [tested printers](README.md#printers) list shows what works
+now.
+
+If you own a printer that is not tested, open a
+[printer support issue](https://github.com/percosys/filamatch/issues/new?template=printer-support.yml).
+The form says what to send and how to remove private values first.
+[docs/design/multi-nozzle.md](docs/design/multi-nozzle.md) says why each
+item is needed.
 
 ## Change the code
 

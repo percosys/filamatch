@@ -26,6 +26,9 @@ The shared printer, spool and slot model behind it is already in place.
 - **Cura and the OrcaSlicer family** (Creality Print, Elegoo Slicer,
   Snapmaker Orca, Anycubic Slicer Next): test and document.
 - **Bambu Studio** as a first-class target next to OrcaSlicer.
+- **Printers with several nozzles or tools** (Bambu Lab H2C, H3C, X2D,
+  Prusa XL and INDX, Snapmaker U1, IDEX): the plan is in
+  [design/multi-nozzle.md](design/multi-nozzle.md).
 
 ## Palette
 
