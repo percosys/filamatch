@@ -34,7 +34,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from . import slicer_profiles
+from . import body_settings, slicer_profiles
 
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
 
@@ -59,11 +59,14 @@ class PrusaProjectError(Exception):
 class _Part:
     """One body: its name, world vertices (mm) and triangles."""
 
-    def __init__(self, name: str, vertices: List[Point], triangles: List[Tuple[int, int, int]], extruder: int):
+    def __init__(self, name: str, vertices: List[Point], triangles: List[Tuple[int, int, int]], extruder: int,
+                 settings: Optional[Dict[str, Any]] = None):
         self.name = name
         self.vertices = vertices
         self.triangles = triangles
         self.extruder = extruder
+        #: The body's own print settings (body_settings keys).
+        self.settings = settings or {}
 
 
 def _local(tag: str) -> str:
@@ -77,32 +80,36 @@ def is_prusa_family(path: Any) -> bool:
     return "prusaslicer" in name or "superslicer" in name
 
 
-def _object_extruders(archive: zipfile.ZipFile) -> Dict[Tuple[str, str], int]:
-    """1-based extruders from the Bambu/Orca settings.
+def _object_metadata(archive: zipfile.ZipFile) -> Tuple[Dict[Tuple[str, str], int], Dict[Tuple[str, str], Dict[str, Any]]]:
+    """1-based extruders and body print settings from the Bambu/Orca settings.
 
     Keys are ``(build-item object id, "")`` for an object and ``(build-item
     object id, component object id)`` for one of its parts (Bambu Studio and
-    OrcaSlicer projects give each ``<part>`` its own extruder).
+    OrcaSlicer projects give each ``<part>`` its own extruder).  Settings are
+    body_settings keys read from the Bambu Studio / OrcaSlicer ones.
     """
     if "Metadata/model_settings.config" not in archive.namelist():
-        return {}
+        return {}, {}
     root = ET.fromstring(archive.read("Metadata/model_settings.config"))
     extruders: Dict[Tuple[str, str], int] = {}
+    settings: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
     def read(element: Any, key: Tuple[str, str]) -> None:
-        for meta in element.findall("metadata"):
-            if meta.get("key") == "extruder":
-                try:
-                    extruders[key] = max(1, int(str(meta.get("value"))))
-                except ValueError:
-                    pass
+        values = {str(meta.get("key")): str(meta.get("value")) for meta in element.findall("metadata") if meta.get("key")}
+        try:
+            extruders[key] = max(1, int(values["extruder"]))
+        except (KeyError, ValueError):
+            pass
+        found = body_settings.from_bambu(values)
+        if found:
+            settings[key] = found
 
     for element in root.findall("object"):
         object_id = str(element.get("id"))
         read(element, (object_id, ""))
         for part in element.findall("part"):
             read(part, (object_id, str(part.get("id"))))
-    return extruders
+    return extruders, settings
 
 
 def _read_parts(archive: zipfile.ZipFile) -> List[Tuple[str, List[_Part]]]:
@@ -116,7 +123,7 @@ def _read_parts(archive: zipfile.ZipFile) -> List[Tuple[str, List[_Part]]]:
 
     main = model(MODEL_PART)
     scale = UNIT_MM.get(str(main.get("unit") or "millimeter").lower(), 1.0)
-    extruders = _object_extruders(archive)
+    extruders, settings = _object_metadata(archive)
 
     def find_object(path: str, object_id: str) -> Any:
         for element in model(path).iter():
@@ -125,7 +132,8 @@ def _read_parts(archive: zipfile.ZipFile) -> List[Tuple[str, List[_Part]]]:
         raise PrusaProjectError("Object {} is missing from {}".format(object_id, path))
 
     def collect(
-        path: str, object_id: str, chain: List[Matrix], extruder: int, depth: int = 0, item_id: str = ""
+        path: str, object_id: str, chain: List[Matrix], extruder: int, depth: int = 0, item_id: str = "",
+        own: Optional[Dict[str, Any]] = None,
     ) -> List[_Part]:
         if depth > 8:
             raise PrusaProjectError("Components are nested too deep (object {})".format(object_id))
@@ -147,7 +155,7 @@ def _read_parts(archive: zipfile.ZipFile) -> List[Tuple[str, List[_Part]]]:
                     elif tag == "triangle":
                         triangles.append((int(node.get("v1")), int(node.get("v2")), int(node.get("v3"))))
                 if triangles:
-                    parts.append(_Part(name, vertices, triangles, extruder))
+                    parts.append(_Part(name, vertices, triangles, extruder, own))
             elif kind == "components":
                 for component in child:
                     if _local(component.tag) != "component":
@@ -156,7 +164,9 @@ def _read_parts(archive: zipfile.ZipFile) -> List[Tuple[str, List[_Part]]]:
                     matrix = slicer_profiles._parse_transform(component.get("transform"))
                     child_id = str(component.get("objectid"))
                     child_extruder = extruders.get((item_id, child_id), extruder) if depth == 0 else extruder
-                    parts.extend(collect(target, child_id, [matrix] + chain, child_extruder, depth + 1))
+                    child_settings = dict(own or {}, **settings.get((item_id, child_id), {})) if depth == 0 else own
+                    parts.extend(collect(target, child_id, [matrix] + chain, child_extruder, depth + 1,
+                                         own=child_settings))
         return parts
 
     items: List[Tuple[str, List[_Part]]] = []
@@ -166,7 +176,8 @@ def _read_parts(archive: zipfile.ZipFile) -> List[Tuple[str, List[_Part]]]:
         object_id = str(element.get("objectid"))
         target = str(element.get("{%s}path" % PRODUCTION_NS) or "").lstrip("/") or MODEL_PART
         matrix = slicer_profiles._parse_transform(element.get("transform"))
-        parts = collect(target, object_id, [matrix], extruders.get((object_id, ""), 1), item_id=object_id)
+        parts = collect(target, object_id, [matrix], extruders.get((object_id, ""), 1), item_id=object_id,
+                        own=settings.get((object_id, ""), {}))
         if parts:
             items.append((object_id, parts))
     if not items:
@@ -217,6 +228,8 @@ def _write_model(objects: Sequence[Tuple[str, List[_Part]]], shift: Tuple[float,
             config.append('   <metadata type="volume" key="name" value="{}"/>\n'.format(_escape(part.name)))
             config.append('   <metadata type="volume" key="volume_type" value="ModelPart"/>\n')
             config.append('   <metadata type="volume" key="extruder" value="{}"/>\n'.format(part.extruder))
+            config.extend('   <metadata type="volume" key="{}" value="{}"/>\n'.format(key, value)
+                          for key, value in sorted(body_settings.to_prusa(part.settings).items()))
             config.append('  </volume>\n')
             vertex_offset += len(part.vertices)
             triangle_offset += len(part.triangles)
@@ -393,7 +406,8 @@ def _check_touching_bodies(root: Path) -> None:
         path,
         '<object id="1" name="Base" type="model">{0}</object><object id="2" name="Inlay" type="model">{0}</object>'.format(_cube(10)),
         '<item objectid="1"/><item objectid="2" transform="1 0 0 0 1 0 0 0 1 0 0 10"/>',
-        _settings(("1", 2), ("2", 1)),
+        _settings(("1", 2)) + '<object id="2"><metadata key="extruder" value="1"/>'
+        '<metadata key="sparse_infill_density" value="100%"/></object>',
     )
     result = to_prusa_layout(path, out)
     _expect(result == {"objects": 1, "parts": 2, "assembled": True, "box": (0.0, 0.0, 10.0, 10.0)}, "touching bodies become one object: {}".format(result))
@@ -402,6 +416,9 @@ def _check_touching_bodies(root: Path) -> None:
         model = ET.fromstring(archive.read(MODEL_PART))
     volumes = [(volume.get("firstid"), volume.get("lastid")) for volume in config.iter("volume")]
     _expect(volumes == [("0", "11"), ("12", "23")], "each part is a triangle range: {}".format(volumes))
+    infill = [[meta.get("value") for meta in volume.findall("metadata") if meta.get("key") == "fill_density"]
+              for volume in config.iter("volume")]
+    _expect(infill == [[], ["100%"]], "a body's infill stays on its part: {}".format(infill))
     heights = sorted({float(vertex.get("z")) for vertex in model.iter("{%s}vertex" % CORE_NS)})
     _expect(heights == [0.0, 10.0, 20.0], "the inlay stays on top of the base: {}".format(heights))
     _expect(zipfile.ZipFile(str(path)).namelist().count("Metadata/model_settings.config") == 1,

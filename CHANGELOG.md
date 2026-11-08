@@ -1,5 +1,111 @@
 # Changelog
 
+## 0.9.0 – Printed weight and strength, design check
+
+**New**
+- **Printed weight and strength.** A new card on Home, above the send
+  button, estimates what each filament body weighs as printed: walls, top
+  and bottom layers and infill from the print settings (a body's own
+  settings count). **Check with the slicer** slices each body once with
+  OrcaSlicer or Bambu Studio for its exact grams.
+  - The switch **Fusion uses the printed values** (off until you turn it
+    on, kept per design) gives each body its own "… · as printed" copy of
+    its filament, with the printed density, stiffness and strength. Fusion's
+    mass, Physical Properties and Simulation then use them. A copy follows
+    when its body's settings change. Turning the switch off puts the
+    filaments back and removes the copies from the design.
+  - Stiffness and strength come from the filament's own data sheet when
+    Filamatch has it (Bambu Lab and Polymaker engineering filaments, see
+    below), else from generic values for its type (the median of 29 data
+    sheets from 6 makers). Choose **Safe** (across the layers, the weakest
+    direction; moist values for a nylon whose sheet has them) or
+    **Typical**. Fusion Simulation takes one value for every direction.
+  - **Where the values come from** names each data sheet. These are rough
+    estimates (±25 % from a data sheet, ±25–40 % generic), never design
+    values: check important parts with a test print.
+- **Filament data sheets.** `Filamatch/data/datasheets/` has the makers'
+  printed-part values for 16 Bambu Lab and 23 Polymaker engineering
+  filaments: stiffness, strength, elongation, bending, impact and heat
+  values along and across the layers, with the test standard, how the test
+  bars were printed, and a link to each maker's data sheet. The folder's
+  README has the table. Errors on a sheet are named in its notes, not
+  used.
+- **Design check.** The ready check above the send button also warns:
+  - when the design uses more filaments than the printer has slots (all
+    AMS and external slots of a connected printer) or, without a printer,
+    than the PrusaSlicer printer has tools;
+  - when filaments cannot share one bed: a hot filament (ABS, ASA, PC, PA,
+    fibre-filled ones) with a cool one (PLA, PETG, TPU, PVA). The groups are
+    Bambu Studio's own; the message gives each type's bed temperature;
+  - when a carbon or glass fibre filament (CF, GF) would print with a
+    stainless steel or brass nozzle. The direct LAN connection and Bambuddy
+    now read the nozzle material from the printer;
+  - when a filament's bodies are thinner than the nozzle (about; measured
+    across, so a thin colour layer on top does not count).
+  Each warning has **Show**, which selects the bodies in Fusion.
+- **Click a filament's name** to select its bodies in Fusion.
+- **Use it** next to "≠ Loaded: …" gives the bodies the loaded spool's
+  filament in one click. The filament is added to Fusion like an import
+  from the printer, and the slot stays chosen.
+- **Print settings per body.** Each filament row has an arrow (›); open it
+  to see the filament's bodies (with
+  their component, "Body1 in TEF", so two bodies with one name are told
+  apart). **Edit** gives one body, or all bodies of the filament, their own
+  infill %, infill type, walls, top and bottom layers. Empty fields show the
+  print process's value in grey ("15% (process)"). The settings stay on the
+  bodies in the design; Bambu Studio, OrcaSlicer and PrusaSlicer get them as
+  the body's own settings. The filament row shows "⚙" when some of its
+  bodies have their own settings.
+- **Infill type** lists the types the chosen slicer has. Filamatch asks
+  each slicer once per version: PrusaSlicer lists them in its help; Bambu
+  Studio and OrcaSlicer keep only the type names they know when they load a
+  3MF. A type with another name in another slicer is renamed ("zig-zag" in
+  Bambu Studio is "rectilinear" in OrcaSlicer and PrusaSlicer); a type the
+  slicer does not have at all is named in the ready check.
+- Supports are left to the slicer: they depend on how the part sits on the
+  bed, and the slicers paint them where they are needed.
+- **Filament cost** in the print estimate, for example "filament cost about
+  $0.30". It is each filament's grams at the price per kg in its slicer
+  preset (PrusaSlicer works it out itself). Set the currency symbol under
+  Settings > Export; set the prices in the slicer to what you pay.
+- A copy of a Filamatch filament (for example a body's "as printed" copy,
+  with the printed density) stays that filament: same row, slot, colour and
+  slicer preset, and the filament's own density in the slicer. The copy
+  names its source in its description (`filamatch_source=<name>`).
+
+**Changed**
+- Colour matching compares colours the way people see them (CIEDE2000)
+  instead of by RGB distance. Two shades of green now count as close, and a
+  grey no longer counts as close to a colour. The matches on a real H2D
+  with eight spools stayed the same.
+
+**Fixed**
+- An empty design (no bodies yet) no longer writes an error to the log.
+- The palette no longer gets stuck on the sample data ("Preview with
+  sample data") when Fusion is slow to connect it, for example right after
+  the add-in starts. It waits up to 3 seconds, and connects later when
+  Fusion's link shows up after that.
+
+Checked with the Bambu Studio 2.9.1, OrcaSlicer 2.5 and PrusaSlicer 2.9.7
+command lines: a body with 100% infill and 6 walls gets more filament in all
+three, also when touching bodies are joined into one object, and an infill
+type on a body is kept (Bambu Studio 21 types, OrcaSlicer 26, PrusaSlicer
+18). In Fusion, a test design (with a component placed twice) was measured,
+selected, given body settings, exported with them and sliced.
+
+**What is tested** for the printed weight and strength: the weight model
+against Bambu Studio's sliced grams for 6 shapes with 3 settings (mean error
+3.3 %, largest 7.2 %); in Fusion, the switch on and off (one copy per body,
+all copies removed), Safe and Typical written into the copies (stiffness,
+shear modulus, yield and tensile strength, Poisson's ratio, density), a
+Bambu Lab PAHT-CF body with its data sheet values, a "Polymaker PPS GF"
+body found under its catalog name, and a PLA body with the generic values.
+Every data sheet value was read from the sheet and checked a second time;
+all 45 data sheet links open. Not tested: a Static Stress study in Fusion
+Simulation with these materials (Fusion's API cannot run one).
+
+The slicer test matrix is unchanged against 0.8.0 (24 cases the same).
+
 ## 0.8.0 – Send to PrusaSlicer
 
 **New**

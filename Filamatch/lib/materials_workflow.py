@@ -98,6 +98,10 @@ __all__ = [
     "find_source_appearance",
     "import_catalog_entries",
     "collect_assembly_materials",
+    "iter_placed_bodies",
+    "source_material_name",
+    "replace_body_material",
+    "material_identity",
     "build_mapping",
     "build_filament_slots",
     "apply_export_appearances",
@@ -135,6 +139,9 @@ class DetectedMaterial:
     #: The catalog entry's slicer data (Open Filament Database), for a preset
     #: built when the slicer has none for this filament.
     slicer_data: Mapping[str, Any] = field(default_factory=dict, compare=False, hash=False)
+    #: True when the filament was found in the catalog; otherwise the type is
+    #: only Filamatch's fallback ("PLA") and the density the material's own.
+    in_catalog: bool = False
 
 
 @dataclass(frozen=True)
@@ -173,6 +180,10 @@ class _MaterialGroup:
     material_name: str
     body_names: List[str] = field(default_factory=list)
     color_hex: Optional[str] = None
+    #: The catalog entry of the group's filament, from any of its materials.
+    entry: Any = None
+    #: True when ``entry`` came from the material's own name (not a source note).
+    entry_by_name: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -663,7 +674,87 @@ def _iter_design_bodies(design: Any) -> Iterator[Tuple[Any, str]]:
     yield from _iter_component_bodies(root_component, ROOT_PATH_LABEL, 0, seen)
 
 
-def _material_identity(material: Any) -> str:
+def _body_material_id(body: Any) -> str:
+    """The ``material_id`` :func:`collect_assembly_materials` gives a body's group."""
+    material = _safe_get(body, "material", "a body")
+    if material is not None:
+        return material_identity(material)
+    appearance = _effective_appearance(body, None)
+    return "appearance:{}|{}".format(
+        _display_name(appearance, "name", "an appearance", "<no appearance>"),
+        _appearance_color_hex(appearance) or DEFAULT_APPEARANCE_COLOR,
+    )
+
+
+def iter_placed_bodies(design: Any) -> Iterator[Tuple[str, Any]]:
+    """Every solid body where it sits in the assembly, with its group's ``material_id``.
+
+    A sub-component's bodies come once per placed copy, as occurrence proxies
+    (``occurrence.bRepBodies``): Fusion can select those, and they measure in
+    design coordinates.  Surface bodies are skipped like in
+    :func:`collect_assembly_materials`.
+    """
+    root = _safe_get(design, "rootComponent", "the active design") if design is not None else None
+    if root is None:
+        return
+    owners: List[Tuple[Any, str]] = [(root, ROOT_PATH_LABEL)]
+    placed = _safe_get(root, "allOccurrences", "the root component")
+    if placed is not None:
+        owners.extend((occurrence, "occurrence") for occurrence in _collection_items(placed, "all occurrences"))
+    else:  # Without allOccurrences (test doubles): walk the components.
+        pending = list(_collection_items(_safe_get(root, "occurrences", "the root component"), "occurrences"))
+        while pending:
+            occurrence = pending.pop(0)
+            owners.append((occurrence, "occurrence"))
+            child = _safe_get(occurrence, "component", "an occurrence")
+            if child is not None:
+                pending.extend(_collection_items(_safe_get(child, "occurrences", "a component"), "occurrences"))
+    for owner, label in owners:
+        bodies = _safe_get(owner, "bRepBodies", label)
+        if bodies is None:
+            component = _safe_get(owner, "component", label)
+            bodies = _safe_get(component, "bRepBodies", label) if component is not None else None
+        for body in _collection_items(bodies, "bodies of " + label) if bodies is not None else []:
+            if _safe_get(body, "isSolid", "a body") is False:
+                continue
+            yield _body_material_id(body), body
+
+
+def replace_body_material(design: Any, material_id: str, material: Any) -> int:
+    """Give every body of one design filament another material.
+
+    ``material_id`` as :func:`collect_assembly_materials` gives it.  A body
+    of a component placed more than once changes once.  Returns the number of
+    bodies changed.
+    """
+    changed: Dict[Any, Any] = {}
+    for found_id, body in list(iter_placed_bodies(design)):
+        if found_id != material_id:
+            continue
+        native = _safe_get(body, "nativeObject", "a body") or body
+        key = _safe_get(native, "entityToken", "a body") or id(native)
+        if key in changed:
+            continue
+        native.material = material
+        changed[key] = native
+    logger.info("Changed the material of %d body(ies) from %s.", len(changed), material_id)
+    return len(changed)
+
+
+#: A material copy made from a Filamatch filament names its source in its
+#: description ("Printegrity | filamatch_source=<source name> | ...").
+_SOURCE_NAME = re.compile(r"(?:^|\|)\s*filamatch_source=([^|]+?)\s*(?=\||$)")
+
+
+def source_material_name(material: Any) -> str:
+    """The Filamatch material a copy was made from (its description's
+    ``filamatch_source=``), or "" when it names none."""
+    description = _safe_get(material, "description", "a material") if material is not None else None
+    found = _SOURCE_NAME.search(description) if isinstance(description, str) else None
+    return found.group(1).strip() if found else ""
+
+
+def material_identity(material: Any) -> str:
     """Return a stable grouping key for a material (its id, else its name)."""
     raw_identifier = _safe_get(material, "id", "a material")
     if isinstance(raw_identifier, str) and raw_identifier.strip():
@@ -771,6 +862,15 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
     _require_design(design, "collect_assembly_materials")
     entries = list(entries or [])
     catalog_by_id = _catalog_entries_by_id(entries)
+    catalog_by_display: Dict[str, Any] = {}
+    for item in entries:
+        label = str(_entry_field(item, "display_name", "") or "").strip()
+        if label:
+            catalog_by_display.setdefault(label, item)
+
+    def catalog_entry(name: str) -> Any:
+        text = str(name or "").strip()
+        return (catalog_by_id.get(text) or catalog_by_display.get(text)) if text else None
     groups: Dict[str, _MaterialGroup] = {}
     total_bodies = 0
 
@@ -785,7 +885,7 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
         effective_color = _appearance_color_hex(effective_appearance)
 
         if material is not None:
-            identity = _material_identity(material)
+            identity = material_identity(material)
             group_key = "material:" + identity
             group = groups.get(group_key)
             if group is None:
@@ -817,6 +917,18 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
                 groups[synthetic_id] = group
         if body_name not in group.body_names:
             group.body_names.append(body_name)
+        if material is not None and not group.entry_by_name:
+            # A copy of a filament (Printegrity's as-printed material) shares its
+            # material id, so it is in the same group; its own name is not in the
+            # catalog, its description names the source.  A material found by
+            # its own name names the group.
+            own = catalog_entry(_display_name(material, "name", "a material", ""))
+            if own is not None:
+                group.entry, group.entry_by_name = own, True
+                group.material = material
+                group.material_name = _display_name(material, "name", "a material", group.material_name)
+            elif group.entry is None:
+                group.entry = catalog_entry(source_material_name(material))
 
     if total_bodies == 0:
         raise NoMaterialsFoundError(
@@ -831,17 +943,9 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
             )
         )
 
-    catalog_by_display: Dict[str, Any] = {}
-    for item in entries:
-        label = str(_entry_field(item, "display_name", "") or "").strip()
-        if label:
-            catalog_by_display.setdefault(label, item)
-
     detected: List[DetectedMaterial] = []
     for slot, group in enumerate(groups.values(), start=1):
-        entry = catalog_by_id.get(group.material_name) or catalog_by_display.get(
-            str(group.material_name or "").strip()
-        )
+        entry = group.entry
         manufacturer = ""
         product_line = ""
         color_name = ""
@@ -881,6 +985,7 @@ def collect_assembly_materials(design: Any, entries: Sequence[Any]) -> List[Dete
                 color_name=color_name,
                 orca_filament_profile=orca_filament_profile,
                 slicer_data=slicer_data,
+                in_catalog=entry is not None,
             )
         )
 
@@ -1829,6 +1934,7 @@ def _check_collect_assembly_materials() -> None:
         "density must convert kg/m3 to g/cm3, got {}".format(second.density_g_cm3),
     )
     _expect(second.display_name == "Custom Blue", "fallback display name must be the material name")
+    _expect(first.in_catalog and not second.in_catalog, "in_catalog tells a catalog filament from a fallback")
 
     third = detected[2]
     _expect(third.slot == 3, "material-less appearance group must get slot 3")
@@ -1850,6 +1956,44 @@ def _check_collect_assembly_materials() -> None:
     )
     _expect(detected[3].slot == 4, "petg material must be slot 4")
     _expect(len(detected[3].body_names) == 1, "deduplicated bodies must appear once")
+    placed = [(material_id, body.name) for material_id, body in iter_placed_bodies(design)]
+    loaded = FakeMaterial("Polymaker - PolyLite ABS - Green", material_id="material-loaded")
+    _expect(replace_body_material(design, "material-petg", loaded) == 1
+            and [body.material for _, body in iter_placed_bodies(design) if body.name == "Shared Body"] == [loaded, loaded],
+            "a body placed twice changes once")
+    _expect(
+        [name for _, name in placed].count("Shared Body") == 2
+        and ("material-pla", "Bracket") in placed
+        and {material_id for material_id, _ in placed} == {item.material_id for item in detected},
+        "placed bodies: every copy, with the ids of the detected groups: {}".format(placed),
+    )
+
+
+def _check_source_material() -> None:
+    """A filament copy (Printegrity) finds its filament through filamatch_source=."""
+    original = FakeMaterial("bambu_pla_basic_black", material_id="material-pla",
+                            appearance=FakeAppearance("PLA Black", FakeColor(22, 22, 22)), density_kg_m3=1240.0)
+    copy = FakeMaterial("Printegrity · Bambu Lab PLA Basic Black · 15% gyroid", material_id="material-pla",
+                        appearance=original.appearance, density_kg_m3=430.0)
+    copy.description = ("Printegrity | filamatch_source=bambu_pla_basic_black | 0.4/0.2 · 2 walls · 15% gyroid"
+                        " · Z-up | printegrity_id=3f9a12c47e05")
+    only_copy = FakeMaterial("Printegrity · PLA · 20%", material_id="material-pla-2", density_kg_m3=400.0)
+    only_copy.description = "Printegrity | filamatch_source=Bambu Lab - PLA Basic - Black | x"
+    _expect(source_material_name(copy) == "bambu_pla_basic_black"
+            and source_material_name(only_copy) == "Bambu Lab - PLA Basic - Black"
+            and source_material_name(original) == "", "the source name is read from the description")
+    design = FakeDesign(root_component=FakeComponent("Root", bodies=[
+        FakeBody("Printed", material=copy), FakeBody("Plain", material=original)]))
+    detected = collect_assembly_materials(design, _catalog_entries())
+    _expect(len(detected) == 1 and detected[0].body_names == ("Printed", "Plain")
+            and detected[0].material_name == "bambu_pla_basic_black"
+            and detected[0].display_name == "Bambu Lab - PLA Basic - Black"
+            and detected[0].density_g_cm3 == 1.24 and detected[0].filament_type == "PLA",
+            "a copy shares its filament's row, name and density: {}".format(detected))
+    alone = collect_assembly_materials(FakeDesign(root_component=FakeComponent("Root", bodies=[
+        FakeBody("Printed", material=only_copy)])), _catalog_entries())
+    _expect(alone[0].display_name == "Bambu Lab - PLA Basic - Black" and alone[0].density_g_cm3 == 1.24,
+            "a copy alone finds its filament by display name, never takes the printed density: {}".format(alone))
 
 
 def _check_collect_edge_cases() -> None:
@@ -2258,6 +2402,7 @@ def _selftest() -> int:
             "collect_assembly_materials handles empty/oversized/legacy designs",
             _check_collect_edge_cases,
         ),
+        ("a filament copy finds its filament through filamatch_source", _check_source_material),
         ("build_mapping and build_filament_slots build the handoff data", _check_mapping_and_slots),
         (
             "apply_export_appearances and restore_appearances round-trip safely",

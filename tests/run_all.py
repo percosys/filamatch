@@ -37,19 +37,26 @@ LIB_DIR = REPO_ROOT / "Filamatch" / "lib"
 SELF_TEST_MODULES = (
     "catalog", "importer", "exporter", "diagnostics", "materials_workflow", "favorites",
     "slicer_profiles", "openfilament", "custom_library", "printer_model", "secret_store",
-    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project", "printer_catalog", "printer_report", "filament_presets", "prusa_profiles",
+    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project", "printer_catalog", "printer_report", "filament_presets", "prusa_profiles", "design_check", "body_settings",
+    # The As printed tab (moved from Printegrity).
+    "mass_model", "strength_model", "body_geometry", "material_copy", "slicer_check", "as_printed_bridge",
 )
 #: Modules whose checks live in another module's self-test.
 TESTED_BY = {"project_fixes": "slicer_profiles", "slicer_profiles_selftest": "slicer_profiles", "testing": None}
-JS_LABEL = "palette/app.js syntax"
+JS_LABEL = "palette scripts syntax"
 #: Files outside Filamatch/lib and the checks they need.
 OTHER_FILES = {
+    "Filamatch/palette/as_printed.js": ["test_as_printed_contract.py", JS_LABEL],
+    "Filamatch/palette/as_printed.css": ["test_as_printed_contract.py"],
     "Filamatch/palette/": ["test_palette_contract.py", "test_palette_export_flow.py", JS_LABEL],
     "Filamatch/data/printers.json": ["lib.printer_catalog", "test_printer_docs.py"],
+    "Filamatch/data/filament_rules.json": ["lib.design_check"],
     "Filamatch/data/filaments.json": ["lib.catalog"],
     "scripts/slicer_matrix.py": ["test_slicer_matrix.py"],
     "tests/slicer_matrix.json": ["test_slicer_matrix.py"],
     "scripts/printer_docs.py": ["test_printer_docs.py"],
+    "Filamatch/data/datasheets/": ["test_datasheet_docs.py"],
+    "scripts/datasheet_docs.py": ["test_datasheet_docs.py"],
     "README.md": ["test_printer_docs.py"],
 }
 #: Changes that need no check.
@@ -65,7 +72,12 @@ def commands() -> list:
     for test in sorted((REPO_ROOT / "tests").glob("test_*.py")):
         runs.append((test.name, [python, str(test)]))
     if shutil.which("node"):
-        runs.append((JS_LABEL, ["node", "--check", str(REPO_ROOT / "Filamatch" / "palette" / "app.js")]))
+        # node --check takes one file; "&&" would need a shell, so check each and join.
+        palette = REPO_ROOT / "Filamatch" / "palette"
+        runs.append((JS_LABEL, [sys.executable, "-c", (
+            "import subprocess, sys\n"
+            "sys.exit(max(subprocess.run(['node', '--check', path]).returncode for path in sys.argv[1:]))"),
+            str(palette / "app.js"), str(palette / "as_printed.js")]))
     return runs
 
 

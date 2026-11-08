@@ -133,6 +133,18 @@ def _install_fakes(design: Any) -> Dict[str, Any]:
     )
     workflow.restore_body_names = lambda backups: state["names_restored"].append(list(backups))
     workflow.build_mapping = lambda detected: {"Body1": 1, "Body2": 2}
+
+    class Attributes:
+        """Body1 has its own infill (body_settings attribute)."""
+
+        @staticmethod
+        def itemByName(group: str, name: str) -> Any:
+            return types.SimpleNamespace(value='{"infill": 40}') if (group, name) == ("Filamatch", "print_settings") else None
+
+    placed = [("pla_black", types.SimpleNamespace(name="Body1", nativeObject=None, attributes=Attributes())),
+              ("petg_white", types.SimpleNamespace(name="Body2", nativeObject=None, attributes=types.SimpleNamespace(
+                  itemByName=lambda group, name: None)))]
+    workflow.iter_placed_bodies = lambda d: iter(placed)
     workflow.build_filament_slots = lambda detected: {1: "slot1", 2: "slot2"}
     workflow.find_source_appearance = lambda d, app: "source-appearance"
     workflow.apply_export_appearances = lambda d, detected, source_appearance=None: (
@@ -582,6 +594,10 @@ def main() -> int:
     check(
         str(base_call.get("output_path", "")).endswith(".base.3mf"),
         "base export before preparation omits project_settings and uses a temp name",
+    )
+    check(
+        base_call.get("object_settings") == {"Body1": {"sparse_infill_density": "40%"}},
+        "a body's own print settings go to the export by body name: {}".format(base_call.get("object_settings")),
     )
     saved = prepared_result.get("settings") or {}
     check(

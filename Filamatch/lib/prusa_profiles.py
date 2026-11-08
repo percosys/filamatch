@@ -28,6 +28,8 @@ import traceback
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from . import body_settings
+
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
 
 #: Section kinds of a PrusaSlicer bundle that Filamatch uses.
@@ -495,7 +497,9 @@ def list_processes(slicer_exe: Any, vendor_id: str, printer_name: str) -> List[D
     default = unquote(printer.get("default_print_profile", ""))
     names = [name for name in bundle.all_names("print") if compatible(bundle, "print", name, printer, printer_name)]
     names.sort(key=lambda name: name != default)
-    return [{"name": name, "process_path": "", "default": name == default} for name in names]
+    # "values": the print's own infill, walls and layers (shown in empty body setting fields).
+    return [{"name": name, "process_path": "", "default": name == default,
+             "values": body_settings.process_values(bundle.flat("print", name), "prusa")} for name in names]
 
 
 # ---------------------------------------------------------------------------
@@ -666,6 +670,30 @@ def option_kinds(slicer_exe: Any) -> Tuple[Dict[str, str], frozenset]:
         return types, frozenset(keys)
     finally:
         shutil.rmtree(str(work), ignore_errors=True)
+
+
+def infill_patterns(slicer_exe: Any) -> List[str]:
+    """PrusaSlicer's infill types (``--fill-pattern`` in ``--help-fff``), read once per version."""
+    import json
+
+    cache = _cache_root() / "infill_patterns_{}.json".format(_exe_key(slicer_exe))
+    try:
+        cached = json.loads(cache.read_text(encoding="utf-8"))
+        if isinstance(cached, list) and cached:
+            return [str(name) for name in cached]
+    except (OSError, ValueError):
+        pass
+    work = Path(tempfile.mkdtemp(prefix="options_", dir=str(_empty_datadir().parent)))
+    try:
+        text = _output(_run([str(slicer_exe), "--help-fff"], work))
+    finally:
+        shutil.rmtree(str(work), ignore_errors=True)
+    found = re.search(r"^ --fill-pattern\b[^(]*\(([^;)]*);\s*default", text, re.M)
+    names = [name.strip() for name in found.group(1).split(",") if name.strip()] if found else []
+    if not names:
+        raise PrusaProfilesError("PrusaSlicer did not list its infill types")
+    cache.write_text(json.dumps(names), encoding="utf-8")
+    return names
 
 
 def _quoted(value: str) -> str:
@@ -946,7 +974,7 @@ ESTIMATE_TRIES = 3
 def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
     """Slice a PrusaSlicer project with its own settings for the time and grams.
 
-    Returns ``{"minutes", "grams", "plates", "filament_grams"}`` like
+    Returns ``{"minutes", "grams", "plates", "filament_grams", "cost"}`` like
     slicer_profiles.estimate_print, one gram entry per tool (0 when unused);
     ``minutes`` is None when PrusaSlicer's time stays broken.
     """
@@ -967,10 +995,13 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
         minutes = None
     per_tool = re.search(r"^; filament used \[g\] = (.+)$", text, re.M)
     total = re.search(r"^; total filament used \[g\] = ([\d.]+)", text, re.M)
+    cost = re.search(r"^; total filament cost = ([\d.]+)", text, re.M)
     if not total:
         raise PrusaProfilesError("PrusaSlicer gave no print estimate")
     grams = [round(float(value), 1) for value in re.findall(r"[\d.]+", per_tool.group(1))] if per_tool else []
-    return {"minutes": minutes, "grams": round(float(total.group(1)), 1), "plates": 1, "filament_grams": grams}
+    return {"minutes": minutes, "grams": round(float(total.group(1)), 1), "plates": 1, "filament_grams": grams,
+            # PrusaSlicer works it out from the filament presets' prices per kg.
+            "cost": round(float(cost.group(1)), 2) if cost else None}
 
 
 # ---------------------------------------------------------------------------
@@ -1205,7 +1236,7 @@ def _check_estimate_retries() -> None:
 
     def runner(command: List[str], timeout: float, cwd: str) -> Result:
         out = Path(command[command.index("-o") + 1])
-        out.write_text("G1 X1\n; filament used [g] = 1.50, 2.25\n; total filament used [g] = 3.75\n"
+        out.write_text("G1 X1\n; filament used [g] = 1.50, 2.25\n; total filament used [g] = 3.75\n; total filament cost = 0.09\n"
                        "; estimated printing time (normal mode) = {}\n{}\n; temperature = 215\n{}\n".format(
                            times.pop(0) if times else "1h 2m 3s", CONFIG_BEGIN, CONFIG_END), encoding="utf-8")
         return Result(-11)  # PrusaSlicer 2.9.7 crashes now and then after writing the G-code.
@@ -1216,14 +1247,37 @@ def _check_estimate_retries() -> None:
             estimate = estimate_print(Path(temp) / "project.3mf", "PrusaSlicer")
         finally:
             _CACHE_ROOT_OVERRIDE, _command_runner = None, None
-    _expect(estimate == {"minutes": 62, "grams": 3.8, "plates": 1, "filament_grams": [1.5, 2.2]}
-            or estimate == {"minutes": 62, "grams": 3.75, "plates": 1, "filament_grams": [1.5, 2.2]},
+    _expect(estimate == {"minutes": 62, "grams": 3.8, "plates": 1, "filament_grams": [1.5, 2.2], "cost": 0.09},
             "a broken time is sliced again; a crash after a complete G-code counts: {}".format(estimate))
+
+
+def _check_infill_patterns() -> None:
+    global _CACHE_ROOT_OVERRIDE, _command_runner
+    calls: List[List[str]] = []
+
+    def runner(command: List[str], timeout: float, cwd: str) -> Any:
+        calls.append(command)
+        help_text = (" --fill-density      Density of internal infill. (default: 15%)\n"
+                     " --fill-pattern      Fill pattern for general low-density infill. (rectilinear, alignedrectilinear,\n"
+                     "                     grid, gyroid,\n                     lightning, zigzag; default: stars)\n"
+                     " --top-fill-pattern  Fill pattern for top infill. (rectilinear, monotonic; default: monotonic)\n")
+        return type("Result", (), {"returncode": 0, "stdout": help_text, "stderr": ""})()
+
+    with tempfile.TemporaryDirectory(prefix="filamatch-prusa-test-") as temp:
+        _CACHE_ROOT_OVERRIDE, _command_runner = Path(temp), runner
+        try:
+            first = infill_patterns("PrusaSlicer")
+            again = infill_patterns("PrusaSlicer")
+        finally:
+            _CACHE_ROOT_OVERRIDE, _command_runner = None, None
+    _expect(first == ["rectilinear", "alignedrectilinear", "grid", "gyroid", "lightning", "zigzag"] and again == first
+            and len(calls) == 1, "the types come from --fill-pattern, once per version: {} {}".format(first, calls))
 
 
 def _selftest() -> int:
     failures = 0
     for label, check in (
+        ("the infill types come from PrusaSlicer's help", _check_infill_patterns),
         ("bundles, inheritance and compatibility conditions", _check_bundle_and_conditions),
         ("vendors, printers and prints that fit", _check_listing),
         ("filament choice and the full configuration", _check_filaments_and_config),

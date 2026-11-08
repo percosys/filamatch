@@ -809,6 +809,12 @@ code {
   min-width: 0;
 }
 
+/* Printed weight card (palette/as_printed.js fills it) --------------------- */
+
+.printed-weight:empty {
+  display: none;
+}
+
 .screen__body {
   display: flex;
   flex-direction: column;
@@ -822,6 +828,7 @@ code {
   top: 0;
   z-index: 2;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   min-height: 44px;
@@ -1044,6 +1051,45 @@ code {
 .frow__main {
   flex: 1 1 auto;
   min-width: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.frow__main:hover .frow__name {
+  text-decoration: underline;
+}
+
+.frow__toggle {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  margin-right: -4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.frow__toggle:hover {
+  color: var(--text);
+}
+
+.frow__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.frow__toggle svg {
+  transition: transform 120ms ease-out;
+}
+
+.frow__toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
 }
 
 .frow__name {
@@ -1067,6 +1113,13 @@ code {
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.frow__use {
+  min-height: 0;
+  margin-left: 6px;
+  padding: 0;
+  font-size: 11px;
 }
 
 .frow__note-icon {
@@ -1239,6 +1292,133 @@ code {
   flex-direction: column;
   gap: 8px;
   padding: 0 12px 12px;
+}
+
+/* Bodies of a filament and their own print settings ---------------------- */
+
+.bodies {
+  /* Body names line up with the filament name: past the arrow and the swatch. */
+  padding: 2px 10px 8px 60px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.bodies + .frow {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.body-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+}
+
+.body-line--all {
+  border-bottom: 1px dashed var(--border-subtle);
+  border-radius: 0;
+}
+
+.body-line--editing {
+  background: rgba(6, 150, 215, 0.12);
+}
+
+.body-line__name {
+  flex: 0 0 auto;
+  max-width: 60%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.body-line__name:hover {
+  text-decoration: underline;
+}
+
+.body-line__where {
+  color: var(--text-muted);
+}
+
+.body-line__detail {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.body-line__note {
+  margin: 0 0 4px 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.body-line__note--warning {
+  color: var(--warning);
+}
+
+.body-line__note--success {
+  color: var(--success);
+}
+
+.body-line__summary {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent-hover);
+  font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.body-line__summary--process {
+  color: var(--text-faint);
+}
+
+.body-editor {
+  margin: 4px 0 8px;
+  padding: 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.body-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.body-editor__grid .field--wide {
+  grid-column: span 2;
+}
+
+.body-editor__grid .body-editor__note {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+}
+
+.body-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.frow__note--settings .frow__note-icon {
+  color: var(--accent);
 }
 
 /* Ready check and send ----------------------------------------------------- */
@@ -1703,4 +1883,8 @@ h1[tabindex="-1"]:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.text-input--short {
+  max-width: 5em;
 }

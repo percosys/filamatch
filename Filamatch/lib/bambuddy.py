@@ -51,6 +51,7 @@ from .printer_model import (  # noqa: F401 - re-exported for older callers
     material_family,
     normalize_color_hex,
     nozzle_flow,
+    nozzle_material,
 )
 
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
@@ -555,7 +556,8 @@ def status_nozzles(status: Mapping[str, Any]) -> Tuple[NozzleInfo, ...]:
     for index, item in enumerate(raw[: 2 if _status_is_dual(status) else 1]):
         diameter = _safe_float(item.get("nozzle_diameter"))
         if diameter and diameter > 0:
-            nozzles.append(NozzleInfo(index, diameter, nozzle_flow(item.get("nozzle_type"))))
+            nozzles.append(NozzleInfo(index, diameter, nozzle_flow(item.get("nozzle_type")),
+                                      nozzle_material(item.get("nozzle_type"))))
     return tuple(nozzles)
 
 
@@ -782,11 +784,12 @@ def _check_status_nozzles() -> None:
 
     fixtures = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
     status = json.loads((fixtures / "bambuddy" / "h2d_status.json").read_text(encoding="utf-8"))
-    _expect(status_nozzles(status) == (NozzleInfo(0, 0.4, ""), NozzleInfo(1, 0.4, "")),
+    _expect(status_nozzles(status) == (NozzleInfo(0, 0.4, "", "hardened_steel"), NozzleInfo(1, 0.4, "", "hardened_steel")),
             "H2D: two 0.4 nozzles, flow unknown: {}".format(status_nozzles(status)))
     single = {"nozzles": [{"nozzle_type": "HS01", "nozzle_diameter": "0.6"}, {"nozzle_diameter": "0.4"}],
               "ams_extruder_map": {"0": 0}, "vt_tray": [{"id": 254}]}
-    _expect(status_nozzles(single) == (NozzleInfo(0, 0.6, "Standard"),), "one nozzle, a type code gives the flow")
+    _expect(status_nozzles(single) == (NozzleInfo(0, 0.6, "Standard", "hardened_steel"),),
+            "one nozzle, a type code gives the flow and material")
 
 
 def _check_live_slots() -> None:

@@ -78,9 +78,27 @@ by hand, every time. Filamatch keeps that information in the design:
   switching designs update it without a refresh button.
 - A ready check before you send, with a fix button for each problem, for
   example when the printer's nozzle is another size than the print
-  settings.
+  settings. It also checks the design: more filaments than the printer has
+  slots or tools, filaments that cannot share one bed (ABS with PLA or
+  PETG), carbon or glass fibre on a soft nozzle, and bodies thinner than
+  the nozzle. **Show** selects the bodies in Fusion; so does a click on a
+  filament's name.
 - A note under a filament when its slot holds another filament than the
-  design names ("≠ Loaded: PolyLite ABS").
+  design names ("≠ Loaded: PolyLite ABS"), with **Use it** to give the
+  bodies the loaded filament in one click.
+- **Print settings per body:** click a filament to see its bodies, then give
+  one body, or all of them, their own infill %, infill type (only the types
+  your slicer has), walls, top and bottom layers. Empty fields show the
+  print process's values. The settings stay on the bodies and reach Bambu
+  Studio, OrcaSlicer and PrusaSlicer as the body's own settings.
+- **Printed weight and strength:** each body's weight as printed (walls,
+  top and bottom layers and infill, or sliced for the exact grams). Turn
+  on **Fusion uses the printed values** and each body gets an "as printed"
+  copy of its filament with the printed density, stiffness and strength,
+  for Fusion's mass and Simulation. Stiffness and strength come from the
+  filament's own data sheet (Bambu Lab and Polymaker engineering
+  filaments) or generic values for its type. Rough estimates, not design
+  values.
 
 **Filaments**
 - Add filaments from three places: the spools **on your printer**, the
@@ -125,7 +143,9 @@ by hand, every time. Filamatch keeps that information in the design:
   PrusaSlicer's own printers and prints, a filament preset that fits the
   printer on every tool, each body on its tool, and the print estimate.
   Your PrusaSlicer settings are not changed.
-- Opens the result in the slicer you pick.
+- Opens the result in the slicer you pick, then shows the print time,
+  grams and filament cost (from the slicer presets' prices) and checks the
+  spools have enough left.
 
 **Under the hood**
 - Slow work (printer queries, profile downloads, the slicer run) happens in

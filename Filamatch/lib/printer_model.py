@@ -16,6 +16,7 @@ includes a self-test.
 from __future__ import annotations
 
 import logging
+import math
 import re
 import sys
 import traceback
@@ -75,12 +76,27 @@ EXTERNAL_UNIT_ID = 255
 #: code ("HH01": hardened steel, High Flow; "HS01": Standard).
 NOZZLE_FLOWS = {"S": "Standard", "H": "High Flow"}
 
+#: Nozzle materials by the first letter of a Bambu Lab nozzle type code, and
+#: the names older printers report in ``nozzle_type``.
+NOZZLE_MATERIALS = {"H": "hardened_steel", "S": "stainless_steel", "T": "tungsten_carbide"}
+NOZZLE_MATERIAL_NAMES = ("hardened_steel", "stainless_steel", "tungsten_carbide", "brass")
+
 
 def nozzle_flow(type_code: Any) -> str:
     """The flow type of a Bambu Lab nozzle type code ("HH01" -> "High Flow"), or ""."""
     text = str(type_code or "").strip().upper()
     if re.fullmatch(r"[A-Z]{2}\d{2}", text):
         return NOZZLE_FLOWS.get(text[1], "")
+    return ""
+
+
+def nozzle_material(value: Any) -> str:
+    """The nozzle material of a type code ("HH01" -> "hardened_steel") or name, or ""."""
+    text = str(value or "").strip()
+    if text.lower() in NOZZLE_MATERIAL_NAMES:
+        return text.lower()
+    if re.fullmatch(r"[A-Z]{2}\d{2}", text.upper()):
+        return NOZZLE_MATERIALS.get(text.upper()[0], "")
     return ""
 
 
@@ -93,6 +109,8 @@ class NozzleInfo:
     diameter: float
     #: The slicers' flow type ("Standard", "High Flow"); "" when the printer does not say.
     flow: str = ""
+    #: "hardened_steel", "stainless_steel", ...; "" when the printer does not say.
+    material: str = ""
 
 
 @dataclass(frozen=True)
@@ -267,6 +285,63 @@ def normalize_color_hex(value: Any, fallback: str = "#808080") -> str:
     return fallback
 
 
+def lab_from_hex(value: Any) -> Tuple[float, float, float]:
+    """CIE L*a*b* (D65) of a ``#RRGGBB`` colour (sRGB); unreadable text is mid grey."""
+    text = normalize_color_hex(value)
+
+    def linear(channel: int) -> float:
+        level = channel / 255.0
+        return level / 12.92 if level <= 0.04045 else ((level + 0.055) / 1.055) ** 2.4
+
+    red, green, blue = (linear(int(text[index:index + 2], 16)) for index in (1, 3, 5))
+    xyz = (
+        (0.4124 * red + 0.3576 * green + 0.1805 * blue) / 0.95047,
+        0.2126 * red + 0.7152 * green + 0.0722 * blue,
+        (0.0193 * red + 0.1192 * green + 0.9505 * blue) / 1.08883,
+    )
+    f_x, f_y, f_z = (part ** (1.0 / 3.0) if part > 0.008856 else 7.787 * part + 16.0 / 116.0 for part in xyz)
+    return 116.0 * f_y - 16.0, 500.0 * (f_x - f_y), 200.0 * (f_y - f_z)
+
+
+def color_difference(first: Any, second: Any) -> float:
+    """How different two colours look: CIEDE2000 delta E (0 same, about 2 just
+    noticeable, 10 clearly another shade, 100 black against white)."""
+    l1, a1, b1 = lab_from_hex(first)
+    l2, a2, b2 = lab_from_hex(second)
+    c1, c2 = math.hypot(a1, b1), math.hypot(a2, b2)
+    c_mean = (c1 + c2) / 2.0
+    g = 0.5 * (1.0 - math.sqrt(c_mean ** 7 / (c_mean ** 7 + 25.0 ** 7)))
+    a1p, a2p = (1.0 + g) * a1, (1.0 + g) * a2
+    c1p, c2p = math.hypot(a1p, b1), math.hypot(a2p, b2)
+    h1p = math.degrees(math.atan2(b1, a1p)) % 360.0 if c1p else 0.0
+    h2p = math.degrees(math.atan2(b2, a2p)) % 360.0 if c2p else 0.0
+    delta_l, delta_c = l2 - l1, c2p - c1p
+    delta_h = 0.0
+    if c1p and c2p:
+        delta_h = h2p - h1p
+        if delta_h > 180.0:
+            delta_h -= 360.0
+        elif delta_h < -180.0:
+            delta_h += 360.0
+    delta_hh = 2.0 * math.sqrt(c1p * c2p) * math.sin(math.radians(delta_h / 2.0))
+    l_mean, cp_mean = (l1 + l2) / 2.0, (c1p + c2p) / 2.0
+    if not (c1p and c2p):
+        h_mean = h1p + h2p
+    elif abs(h1p - h2p) <= 180.0:
+        h_mean = (h1p + h2p) / 2.0
+    else:
+        h_mean = (h1p + h2p + (360.0 if h1p + h2p < 360.0 else -360.0)) / 2.0
+    t = (1.0 - 0.17 * math.cos(math.radians(h_mean - 30.0)) + 0.24 * math.cos(math.radians(2.0 * h_mean))
+         + 0.32 * math.cos(math.radians(3.0 * h_mean + 6.0)) - 0.20 * math.cos(math.radians(4.0 * h_mean - 63.0)))
+    s_l = 1.0 + 0.015 * (l_mean - 50.0) ** 2 / math.sqrt(20.0 + (l_mean - 50.0) ** 2)
+    s_c = 1.0 + 0.045 * cp_mean
+    s_h = 1.0 + 0.015 * cp_mean * t
+    r_t = -2.0 * math.sqrt(cp_mean ** 7 / (cp_mean ** 7 + 25.0 ** 7)) * math.sin(
+        math.radians(60.0 * math.exp(-(((h_mean - 275.0) / 25.0) ** 2))))
+    return math.sqrt((delta_l / s_l) ** 2 + (delta_c / s_c) ** 2 + (delta_hh / s_h) ** 2
+                     + r_t * (delta_c / s_c) * (delta_hh / s_h))
+
+
 def material_family(material: str) -> str:
     """Return the base material family (``ABS`` for ``ABS-GF``)."""
     text = _text(material).upper()
@@ -345,6 +420,9 @@ def _check_helpers() -> None:
     _expect(nozzle_flow("HH01") == "High Flow" and nozzle_flow("hs01") == "Standard", "nozzle type codes")
     _expect(nozzle_flow("hardened_steel") == "" and nozzle_flow("") == "" and nozzle_flow("HX01") == "",
             "a material name or an unknown code gives no flow")
+    _expect([nozzle_material(value) for value in ("HH01", "ss00", "Hardened_Steel", "brass", "XS01", "")]
+            == ["hardened_steel", "stainless_steel", "hardened_steel", "brass", "", ""],
+            "nozzle material from a type code's first letter or the reported name")
 
 
 def _check_slots() -> None:

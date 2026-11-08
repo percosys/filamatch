@@ -1,0 +1,19 @@
+/* The printed weight card (palette/as_printed.js). Only its own rules; colours
+   and the shared classes (card, switch-field, btn, status) are style.css's. */
+
+.ap-total {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The switch sits inside the card: no second box around it. */
+.printed-weight .ap-switch {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.ap-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

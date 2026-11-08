@@ -1,0 +1,19 @@
+{
+  "comment": "Rules for the design check (lib/design_check.py). The temperature groups and nozzle hardness come from Bambu Studio's own files (resources/info/filament_info.json 1.0.0.4 and nozzle_info.json 1.0.0.3): a high-temperature and a low-temperature filament cannot share one plate. The bed ranges are the median recommended bed temperatures in the Open Filament Database (November 2026); they only explain a clash.",
+  "high_temp": ["ABS", "ASA", "ASA-CF", "PC", "PA", "PA-CF", "PA-GF", "PA6-CF", "PET-CF", "PPS", "PPS-CF", "PPA-CF", "PPA-GF", "ABS-GF", "ASA-AERO"],
+  "low_temp": ["PLA", "TPU", "TPU-AMS", "PLA-CF", "PLA-AERO", "PVA", "BVOH", "PCTG", "PETG", "PETG-CF"],
+  "high_low_compatible": ["HIPS", "PE", "PP", "EVA", "PE-CF", "PP-CF", "PP-GF", "PHA"],
+  "aliases": {
+    "PAHT": "PA", "PAHT-CF": "PA-CF", "PAHT-GF": "PA-GF", "PA6": "PA", "PA6-GF": "PA-GF", "PA12": "PA",
+    "PA12-CF": "PA-CF", "PA11": "PA", "PLA+": "PLA", "PLA-PLUS": "PLA", "ABS+": "ABS",
+    "PETG+": "PETG", "PCTG+": "PCTG", "CPE": "PETG", "TPE": "TPU"
+  },
+  "nozzle_hardness": {"hardened_steel": 55, "stainless_steel": 20, "tungsten_carbide": 85, "brass": 2},
+  "abrasive_hardness": 40,
+  "bed_temperature": {
+    "PLA": [50, 60], "PETG": [70, 85], "PCTG": [75, 95], "ABS": [90, 110], "ASA": [90, 110], "TPU": [30, 60],
+    "PC": [95, 115], "PA": [80, 100], "PET": [60, 80], "PP": [80, 100], "HIPS": [90, 110], "PVA": [50, 60],
+    "BVOH": [55, 65], "PHA": [50, 60], "EVA": [50, 75], "PVB": [50, 70], "PPS": [100, 120], "PPA": [70, 90],
+    "PEI": [120, 160], "PEEK": [120, 160], "PEKK": [120, 160]
+  }
+}

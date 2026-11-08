@@ -28,7 +28,7 @@
  *   save_settings        { output_path, write_project_settings, orca_enabled,
  *                          orca_path, orca_profile_dir, prepare_enabled,
  *                          target_vendor, target_printer, target_process,
- *                          slicer_path, auto_library_update, estimate_enabled,
+ *                          slicer_path, auto_library_update, estimate_enabled, currency_symbol,
  *                          save_slicer_presets, custom_library_path, bambuddy_printer_id,
  *                          bambuddy_slot_map, bambuddy_verify_tls } -> settingsSaved
  *   clear_bambuddy_key   {}                                  -> settingsSaved
@@ -48,6 +48,12 @@
  *                        string). URL, key and TLS flag only on an explicit
  *                        Bambuddy Connect, never while the source is bambu_lan.
  *   bambuddy_import      { slot_keys[], bambuddy_printer_id } -> bambuddyImportResult
+ *   set_body_settings    { tokens[], settings{infill, infill_pattern, walls,
+ *                          top_layers, bottom_layers} }      -> bodySettingsSaved
+ *                        Empty settings give the bodies back to the print process.
+ *   use_loaded_filament  { material_id, slot_key, bambuddy_printer_id } -> loadedFilamentUsed
+ *                        Replaces a design filament on its bodies with the spool
+ *                        loaded in that slot.
  *   set_printer_source   { source: "bambuddy"|"bambu_lan" }  -> settingsSaved
  *                        (+ printer_configured; the palette then re-reads the
  *                        printer with bambuddy_context when it is configured)
@@ -61,6 +67,9 @@
  *                              replies materialBrowserData only on failure.
  *   design_check          {}   Fusion replies materialsData only when bodies or
  *                              materials changed.
+ *   select_bodies         { material_ids[] } or { tokens[] }  Fusion selects
+ *                              those filaments' bodies, or those bodies, and
+ *                              replies bodiesSelected { ok, count }.
  *   fit_height            { content, viewport }  Fusion fits the palette height.
  *
  * Replies handled by this palette (action -> payload):
@@ -122,6 +131,10 @@
  *   bambuddyImportResult { ok, imported[], favorites{}, catalog[],
  *                      categories[], custom_library{}, materials[], log[], error }
  *   materialBrowserData { ok, error }
+ *   bodySettingsSaved { ok, count, settings{}, materials[], error }
+ *   loadedFilamentUsed { ok, replaced, display_name, old_material_id, material_id,
+ *                      slot_key, slot_map{}, favorites{}, materials[], catalog[],
+ *                      categories[], error }
  *   bambuLanTestResult { ok: true, serial_tail, model, name_suggestion, certificate,
  *                      units[{label, slots[{label, filament, color_hex, loaded}]}],
  *                      slot_count, loaded_count }
@@ -177,6 +190,8 @@
     create_library: 'libraryCreated',
     bambuddy_context: 'bambuddyContextData',
     bambuddy_import: 'bambuddyImportResult',
+    use_loaded_filament: 'loadedFilamentUsed',
+    set_body_settings: 'bodySettingsSaved',
     set_printer_source: 'settingsSaved',
     bambu_lan_test: 'bambuLanTestResult',
     bambu_lan_save: 'bambuLanPrinters',
@@ -203,6 +218,8 @@
     create_library: 'create the Filamatch material library',
     bambuddy_context: 'read the printer and its AMS slots',
     bambuddy_import: 'import the printer filaments',
+    use_loaded_filament: 'use the loaded filament',
+    set_body_settings: 'save the body print settings',
     set_printer_source: 'switch the printer source',
     bambu_lan_test: 'test the Bambu printer',
     bambu_lan_save: 'save the Bambu printer',
@@ -265,8 +282,12 @@
   var SETTINGS_SAVE_DEBOUNCE_MS = 600;
 
   /** How many times to look for the Fusion bridge before falling back to demo. */
-  var BRIDGE_RETRY_ATTEMPTS = 3;
+  /* Fusion can wire the bridge late while it is busy (right after the add-in
+     starts): wait up to 3 s, and after that keep looking while in preview. */
+  var BRIDGE_RETRY_ATTEMPTS = 15;
   var BRIDGE_RETRY_DELAY_MS = 200;
+  var LATE_BRIDGE_CHECK_MS = 1000;
+  var LATE_BRIDGE_CHECKS = 60;
 
   /** Fallback label for catalog entries without a category. */
   var UNCATEGORIZED = 'Uncategorized';
@@ -323,9 +344,12 @@
   /** Demo process rows for a printer. */
   function demoProcessRows() {
     return [
-      { name: '0.20mm Standard', process_path: '/Users/demo/Documents/FilamatchProfiles/process_020_standard.json', default: true },
-      { name: '0.12mm Fine', process_path: '/Users/demo/Documents/FilamatchProfiles/process_012_fine.json', default: false },
-      { name: '0.28mm Draft', process_path: '/Users/demo/Documents/FilamatchProfiles/process_028_draft.json', default: false }
+      { name: '0.20mm Standard', process_path: '/Users/demo/Documents/FilamatchProfiles/process_020_standard.json', default: true,
+        values: { infill: 15, infill_pattern: 'crosshatch', walls: 2, top_layers: 5, bottom_layers: 3 } },
+      { name: '0.12mm Fine', process_path: '/Users/demo/Documents/FilamatchProfiles/process_012_fine.json', default: false,
+        values: { infill: 15, infill_pattern: 'crosshatch', walls: 2, top_layers: 7, bottom_layers: 5 } },
+      { name: '0.28mm Draft', process_path: '/Users/demo/Documents/FilamatchProfiles/process_028_draft.json', default: false,
+        values: { infill: 10, infill_pattern: 'crosshatch', walls: 2, top_layers: 4, bottom_layers: 3 } }
     ];
   }
 
@@ -427,8 +451,15 @@
         density_g_cm3: 1.24,
         category: 'PLA',
         body_count: 2,
-        bodies: ['Bracket', 'Bracket:1'],
-        slot: 1
+        bodies: ['Body1', 'Body1'],
+        slot: 1,
+        traits: demoTraits('PLA'),
+        body_list: [
+          { token: 'demo-bracket', name: 'Body1', component: 'Bracket', copies: 1,
+            settings: { infill: 25, infill_pattern: '3dhoneycomb', walls: 3, top_layers: 4 },
+            summary: '25% 3D honeycomb infill · 3 walls · 4 top layers' },
+          { token: 'demo-lid', name: 'Body1', component: 'Lid', copies: 1, settings: {}, summary: '' }
+        ]
       },
       {
         material_id: 'prusament_pla_orange',
@@ -440,7 +471,10 @@
         category: 'PLA',
         body_count: 1,
         bodies: ['Bushing'],
-        slot: 2
+        body_list: [{ token: 'demo-bushing', name: 'Bushing', component: 'Bracket', copies: 2, settings: {}, summary: '' }],
+        slot: 2,
+        traits: demoTraits('PLA'),
+        detail_width_mm: 0.32
       },
       {
         material_id: 'bambu_petg_hf_white',
@@ -452,7 +486,9 @@
         category: 'PETG',
         body_count: 1,
         bodies: ['Cover'],
-        slot: 3
+        body_list: [{ token: 'demo-cover', name: 'Cover', component: '', copies: 1, settings: {}, summary: '' }],
+        slot: 3,
+        traits: demoTraits('PETG')
       },
       {
         material_id: 'polymaker_polylite_abs_black',
@@ -464,7 +500,10 @@
         category: 'ABS',
         body_count: 1,
         bodies: ['Housing'],
-        slot: 4
+        body_list: [{ token: 'demo-housing', name: 'Housing', component: '', copies: 1,
+          settings: { infill: 40, infill_pattern: 'gyroid' }, summary: '40% gyroid infill' }],
+        slot: 4,
+        traits: demoTraits('ABS')
       }
     ],
     settings: {
@@ -480,6 +519,7 @@
       slicer_path: '/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer',
       auto_library_update: true,
       estimate_enabled: true,
+      currency_symbol: '$',
       save_slicer_presets: false,
       custom_library_path: '/Users/demo/Documents/Filamatch/Filamatch Library.adsklib',
       bambuddy_url: 'http://192.168.1.20:8000',
@@ -530,20 +570,32 @@
     ]
   };
 
+  /**
+   * Design-check traits as Python's design_check.filament_traits gives them (demo only).
+   * @param {string} type
+   * @returns {object}
+   */
+  function demoTraits(type) {
+    var known = { PLA: ['low', [50, 60]], PETG: ['low', [70, 85]], ABS: ['high', [90, 110]] };
+    var found = known[type] || ['', null];
+    return { type: type, temp_group: found[0], abrasive: /\b(CF|GF)/.test(type), bed: found[1] };
+  }
+
   /** Demo printer for the preview: Bambuddy printer with six loaded slots. */
   var DEMO_BAMBUDDY = {
     printers: [
       { id: 1, name: 'Workshop H2D', model: 'H2D', label: 'Workshop H2D - H2D',
-        nozzles: [{ side: 'right', diameter: 0.4, flow: 'High Flow' }, { side: 'left', diameter: 0.4, flow: 'High Flow' }] },
+        nozzles: [{ side: 'right', diameter: 0.4, flow: 'High Flow', material: 'hardened_steel', hardness: 55 },
+          { side: 'left', diameter: 0.4, flow: 'High Flow', material: 'hardened_steel', hardness: 55 }] },
       { id: 2, name: 'Studio P1S', model: 'P1S', label: 'Studio P1S - P1S' }
     ],
     slots: [
-      { key: '1:0:0', label: 'AMS 1 - T1', display_name: 'Bambu Lab - PLA Basic - Black', filament_type: 'PLA', color_hex: '#161616', spool_id: 3, remaining_percent: 62, spool_preset: 'Bambu PLA Basic' },
-      { key: '1:0:1', label: 'AMS 1 - T2', display_name: 'Bambu Lab - PLA Matte - Charcoal', filament_type: 'PLA', color_hex: '#333333', spool_id: 4, remaining_percent: 10, spool_preset: 'Bambu PLA Matte' },
-      { key: '1:0:2', label: 'AMS 1 - T3', display_name: 'Bambu Lab - PLA Matte - Charcoal', filament_type: 'PLA', color_hex: '#333333', spool_id: 5, remaining_percent: 100, spool_preset: 'Bambu PLA Matte' },
-      { key: '1:0:3', label: 'AMS 1 - T4', display_name: 'Bambu Lab - PETG HF - White', filament_type: 'PETG', color_hex: '#FFFFFF', spool_id: 7, remaining_percent: 80, spool_preset: 'Bambu PETG HF' },
-      { key: '1:1:2', label: 'AMS 2 - T3', display_name: 'Bambu Lab - PLA Basic - Blue Grey', filament_type: 'PLA', color_hex: '#5B6579', spool_id: 9, remaining_percent: 44, spool_preset: 'Bambu PLA Basic' },
-      { key: '1:1:3', label: 'AMS 2 - T4', display_name: 'Bambu Lab - ABS - Grey', filament_type: 'ABS', color_hex: '#4D4D4D', spool_id: 6, remaining_percent: 24, spool_preset: 'Bambu ABS' }
+      { key: '1:0:0', label: 'AMS 1 - T1', display_name: 'Bambu Lab - PLA Basic - Black', filament_type: 'PLA', color_hex: '#161616', spool_id: 3, remaining_percent: 62, spool_preset: 'Bambu PLA Basic', traits: demoTraits('PLA') },
+      { key: '1:0:1', label: 'AMS 1 - T2', display_name: 'Bambu Lab - PLA Matte - Charcoal', filament_type: 'PLA', color_hex: '#333333', spool_id: 4, remaining_percent: 10, spool_preset: 'Bambu PLA Matte', traits: demoTraits('PLA') },
+      { key: '1:0:2', label: 'AMS 1 - T3', display_name: 'Bambu Lab - PLA Matte - Charcoal', filament_type: 'PLA', color_hex: '#333333', spool_id: 5, remaining_percent: 100, spool_preset: 'Bambu PLA Matte', traits: demoTraits('PLA') },
+      { key: '1:0:3', label: 'AMS 1 - T4', display_name: 'Bambu Lab - PETG HF - White', filament_type: 'PETG', color_hex: '#FFFFFF', spool_id: 7, remaining_percent: 80, spool_preset: 'Bambu PETG HF', traits: demoTraits('PETG') },
+      { key: '1:1:2', label: 'AMS 2 - T3', display_name: 'Bambu Lab - PLA Basic - Blue Grey', filament_type: 'PLA', color_hex: '#5B6579', spool_id: 9, remaining_percent: 44, spool_preset: 'Bambu PLA Basic', traits: demoTraits('PLA') },
+      { key: '1:1:3', label: 'AMS 2 - T4', display_name: 'Bambu Lab - ABS - Grey', filament_type: 'ABS', color_hex: '#4D4D4D', spool_id: 6, remaining_percent: 24, spool_preset: 'Bambu ABS', traits: demoTraits('ABS') }
     ]
   };
 
@@ -596,6 +648,8 @@
     catalog: [],
     categories: [],
     materials: [],
+    /** Tools of each slicer printer preset, by name, when the slicer says (PrusaSlicer). */
+    targetPrinterTools: {},
     /** App-level Favorites summary {count, names} reported by Fusion. */
     favorites: { count: 0, names: [] },
     settings: normalizeSettings(null),
@@ -658,6 +712,18 @@
     demoLog: [],
     /** Favorites names used by the standalone demo-mode import simulation. */
     demoFavoriteNames: [],
+    /** The open body settings editor: {materialId, key ("all" or a body token),
+        tokens[], values{}, differ, error}, or null. */
+    bodyEditor: null,
+    /** Filaments whose body list is open, by material id. */
+    openBodyLists: {},
+    /** The chosen slicer's infill types [{value, label}] and other slicers' names for them. */
+    infillPatterns: [],
+    infillAliases: {},
+    /** The listed print processes ({name, values{}}), for the print process values. */
+    processRows: [],
+    /** The chosen printer's values ({nozzle}) from the profile lists. */
+    printerValues: {},
     /** Open Filament Database search/selection state. */
     openfilament: {
       results: [],
@@ -834,6 +900,8 @@
   function normalizeSettings(raw) {
     var settings = (raw && typeof raw === 'object') ? raw : {};
     return {
+      /* The As printed tab's own settings; Filamatch keeps them as they are. */
+      as_printed: settings.as_printed && typeof settings.as_printed === 'object' ? settings.as_printed : {},
       output_path: asString(settings.output_path),
       write_project_settings: settings.write_project_settings !== false,
       orca_enabled: settings.orca_enabled === true,
@@ -846,6 +914,7 @@
       slicer_path: asString(settings.slicer_path),
       auto_library_update: settings.auto_library_update !== false,
       estimate_enabled: settings.estimate_enabled !== false,
+      currency_symbol: typeof settings.currency_symbol === 'string' ? settings.currency_symbol : '$',
       save_slicer_presets: settings.save_slicer_presets === true,
       custom_library_path: asString(settings.custom_library_path),
       bambuddy_url: asString(settings.bambuddy_url),
@@ -1600,6 +1669,11 @@
       return true;
     }
 
+    if (state.demoMode) {
+      /* Only Fusion calls this handler: the preview started too early. */
+      leaveDemoMode();
+      return true;
+    }
     dispatchIncoming(asString(action), payload);
     return true;
   }
@@ -1673,6 +1747,15 @@
         case 'bambuddyImportResult':
           handleBambuddyImportResult(payload);
           break;
+        case 'bodySettingsSaved':
+          handleBodySettingsSaved(payload);
+          break;
+        case 'loadedFilamentUsed':
+          handleLoadedFilamentUsed(payload);
+          break;
+        case 'bodiesSelected':
+          handleBodiesSelected(payload);
+          break;
         case 'materialBrowserData':
           handleMaterialBrowserData(payload);
           break;
@@ -1688,7 +1771,11 @@
              infinite feedback loop. */
           break;
         default:
-          appendLog('Ignored unsupported message from Fusion: ' + action, 'warning');
+          if (extensionHandlers[action]) {
+            extensionHandlers[action].forEach(function (handler) { handler(payload, entry); });
+          } else {
+            appendLog('Ignored unsupported message from Fusion: ' + action, 'warning');
+          }
           break;
       }
     } catch (err) {
@@ -1814,6 +1901,7 @@
         printer: state.settings.target_printer
       });
     }
+    notifyChange('connected');
   }
 
   /**
@@ -2082,9 +2170,18 @@
   }
 
   /**
+   * The currency symbol shown before a cost (Settings; "$" by default).
+   * @param {object} settings
+   * @returns {string}
+   */
+  function currencyText(settings) {
+    return settings && typeof settings.currency_symbol === 'string' ? settings.currency_symbol : '$';
+  }
+
+  /**
    * `printEstimate`: print time and filament of the sent project, worked out
    * in the background by slicing a copy.
-   * @param {object} payload {ok, minutes, grams, plates, filament_grams[]}
+   * @param {object} payload {ok, minutes, grams, plates, cost, filament_grams[]}
    */
   function handlePrintEstimate(payload) {
     if (!payload || payload.ok !== true) {
@@ -2101,7 +2198,11 @@
     var plates = Math.round(Number(payload.plates) || 1);
     // Bambu Studio puts bodies on plates of their own when one filament's bed is too hot for another.
     var onPlates = plates > 1 ? ', on ' + plates + ' plates' : '';
-    var text = 'About ' + timePart + Number(payload.grams).toFixed(1) + ' g of filament' + parts + onPlates;
+    // The cost comes from the slicer presets' prices per kg; none when a preset has no price.
+    var cost = typeof payload.cost === 'number' && payload.cost > 0
+      ? ', filament cost about ' + currencyText(state.settings) + payload.cost.toFixed(2)
+      : '';
+    var text = 'About ' + timePart + Number(payload.grams).toFixed(1) + ' g of filament' + parts + onPlates + cost;
     setPrintEstimate(text);
     renderSpoolCheck(payload.spools, typeof payload.auto_refill === 'boolean' ? payload.auto_refill : null);
     appendLog('Print estimate: ' + text, 'info');
@@ -4027,6 +4128,7 @@
   function renderMaterials(materials) {
     state.materials = Array.isArray(materials) ? materials.slice() : [];
     renderHome();
+    notifyChange('materials');
   }
 
   /**
@@ -4145,6 +4247,12 @@
     var vendors = Array.isArray(data.vendors) ? data.vendors : [];
     var printers = Array.isArray(data.printers) ? data.printers : [];
     var processes = Array.isArray(data.processes) ? data.processes : [];
+    state.processRows = processes.slice();
+    state.printerValues = data.printer_values && typeof data.printer_values === 'object' ? data.printer_values : {};
+    if (Array.isArray(data.infill_patterns)) {
+      state.infillPatterns = data.infill_patterns.filter(function (item) { return item && asString(item.value); });
+      state.infillAliases = data.infill_aliases && typeof data.infill_aliases === 'object' ? data.infill_aliases : {};
+    }
 
     var vendorRows = [];
     var i;
@@ -4169,7 +4277,11 @@
     }
 
     var printerRows = [];
+    state.targetPrinterTools = {};
     for (i = 0; i < printers.length; i += 1) {
+      if (typeof printers[i].extruders === 'number') {
+        state.targetPrinterTools[asString(printers[i].name)] = printers[i].extruders;
+      }
       var titles = [];
       if (asString(printers[i].machine_path)) {
         titles.push(asString(printers[i].machine_path));
@@ -4283,6 +4395,7 @@
     }
 
     renderProfileSelects(payload, context);
+    notifyChange('profiles');
     appendLog(demoSuffix('Loaded printer profiles from ' + asString((payload.selected || {}).slicer_path || 'the configured slicer') + '.'), 'info');
   }
 
@@ -4937,6 +5050,10 @@
     if (estimateEnabled) {
       estimateEnabled.checked = settings.estimate_enabled !== false;
     }
+    var currencySymbol = byId('currency-symbol');
+    if (currencySymbol && document.activeElement !== currencySymbol) {
+      currencySymbol.value = currencyText(settings);
+    }
     var saveSlicerPresets = byId('save-slicer-presets');
     if (saveSlicerPresets) {
       saveSlicerPresets.checked = settings.save_slicer_presets === true;
@@ -4965,6 +5082,7 @@
     var prepareEnabled = byId('prepare-enabled');
     var autoLibraryUpdate = byId('auto-library-update');
     var estimateEnabled = byId('estimate-enabled');
+    var currencySymbol = byId('currency-symbol');
     var saveSlicerPresets = byId('save-slicer-presets');
     var verifyTls = byId('bambuddy-verify-tls');
     var slicerPath = orcaPath ? orcaPath.value.trim() : '';
@@ -4981,6 +5099,7 @@
       slicer_path: slicerPath,
       auto_library_update: autoLibraryUpdate ? autoLibraryUpdate.checked : true,
       estimate_enabled: estimateEnabled ? estimateEnabled.checked : true,
+      currency_symbol: currencySymbol ? currencySymbol.value.trim() : '$',
       save_slicer_presets: saveSlicerPresets ? saveSlicerPresets.checked : false,
       custom_library_path: (state.customLibrary && state.customLibrary.path) ||
         state.settings.custom_library_path || '',
@@ -5133,6 +5252,49 @@
   }
 
   /**
+   * Leave the preview when Fusion's bridge shows up after it started (Fusion
+   * was busy while the palette loaded): drop the sample data and connect.
+   */
+  function leaveDemoMode() {
+    if (!state.demoMode || !hasFusionBridge()) {
+      return;
+    }
+    state.demoMode = false;
+    /* Forget the sample design and printer; Fusion's init reply sends the real ones. */
+    state.materials = [];
+    state.bodyEditor = null;
+    state.openBodyLists = {};
+    state.printer.lan.printers = [];
+    Object.assign(state.bambuddy, {
+      configured: false, keySet: false, url: '', selectedPrinterId: 0, printers: [], slots: [], mapping: [],
+      slotMap: {}, loaded: false, error: '', mappedMaterialsKey: '', importKeys: new Set()
+    });
+    showDemoBanner(false);
+    renderHome({ forceList: true });
+    appendLog('Connected to Fusion (the preview had started before Fusion was ready).', 'info');
+    requestInitialData();
+  }
+
+  /** In the preview, keep looking for a late Fusion bridge for a minute. */
+  function watchForLateBridge() {
+    var checks = 0;
+    var check = function () {
+      if (!state.demoMode) {
+        return;
+      }
+      if (hasFusionBridge()) {
+        leaveDemoMode();
+        return;
+      }
+      checks += 1;
+      if (checks < LATE_BRIDGE_CHECKS) {
+        window.setTimeout(check, LATE_BRIDGE_CHECK_MS);
+      }
+    };
+    window.setTimeout(check, LATE_BRIDGE_CHECK_MS);
+  }
+
+  /**
    * Build the demo-mode Favorites payload ({count, names[]}).
    * @returns {{count: number, names: string[]}}
    */
@@ -5262,6 +5424,10 @@
       vendors: vendors,
       printers: printers,
       processes: processes,
+      infill_patterns: [['rectilinear', 'Rectilinear'], ['grid', 'Grid'], ['cubic', 'Cubic'], ['gyroid', 'Gyroid'],
+        ['honeycomb', 'Honeycomb'], ['3dhoneycomb', '3D honeycomb'], ['crosshatch', 'Cross hatch'],
+        ['lightning', 'Lightning'], ['tpmsd', 'TPMS-D']].map(function (pair) { return { value: pair[0], label: pair[1] }; }),
+      infill_aliases: { 'zig-zag': 'rectilinear', stars: 'tri-hexagon' },
       imported: DEMO_PROFILES.imported,
       selected: {
         slicer_path: asString(req.slicer_path) || DEMO_PROFILES.selected.slicer_path,
@@ -5281,6 +5447,11 @@
     var responseAction = RESPONSE_BY_REQUEST[requestAction] || requestAction;
     var delay = 220 + Math.round(Math.random() * 160);
     window.setTimeout(function () {
+      if (!state.demoMode) {
+        /* Connected to Fusion meanwhile: sample data must not overwrite real data. */
+        endPending(responseAction);
+        return;
+      }
       var response;
       try {
         var builder = DEMO_RESPONSE_BUILDERS[requestAction];
@@ -5625,6 +5796,53 @@
         catalog: state.catalog,
         categories: state.categories,
         custom_library: demoCustomLibraryPayload('Updated automatically after import (demo).'),
+        materials: state.materials,
+        log: state.demoLog.slice()
+      };
+    },
+
+    set_body_settings: function (payload) {
+      var tokens = (Array.isArray(payload.tokens) ? payload.tokens : []).map(asString);
+      var settings = payload.settings || {};
+      state.materials = state.materials.map(function (material) {
+        var list = (material.body_list || []).map(function (body) {
+          return tokens.indexOf(asString(body.token)) === -1 ? body
+            : Object.assign({}, body, { settings: settings, summary: settingsSummary(settings) });
+        });
+        return Object.assign({}, material, { body_list: list });
+      });
+      state.demoLog.push('Saved print settings for ' + tokens.length + ' bodies (demo).');
+      return { ok: true, count: tokens.length, settings: settings, materials: state.materials, log: state.demoLog.slice() };
+    },
+
+    use_loaded_filament: function (payload) {
+      var slot = DEMO_BAMBUDDY.slots.filter(function (item) { return item.key === asString(payload.slot_key); })[0];
+      var replaced = 0;
+      var newId = slot ? 'demo_spool_' + slot.spool_id : '';
+      state.materials = state.materials.map(function (material) {
+        if (!slot || asString(material.material_id) !== asString(payload.material_id)) {
+          return material;
+        }
+        replaced = Number(material.body_count) || 0;
+        return Object.assign({}, material, {
+          material_id: newId, material_name: newId, display_name: slot.display_name,
+          color_hex: slot.color_hex, filament_type: slot.filament_type, traits: slot.traits
+        });
+      });
+      delete state.bambuddy.slotMap[asString(payload.material_id)];
+      if (slot) {
+        state.bambuddy.slotMap[newId] = slot.key;
+      }
+      state.demoLog.push('Replaced a design filament with the loaded one (demo).');
+      return {
+        ok: Boolean(slot),
+        error: slot ? '' : 'That printer slot has no spool now.',
+        replaced: replaced,
+        display_name: slot ? slot.display_name : '',
+        material_id: newId,
+        slot_key: asString(payload.slot_key),
+        slot_map: state.bambuddy.slotMap,
+        favorites: demoFavoritesPayload(),
         materials: state.materials,
         log: state.demoLog.slice()
       };
@@ -6158,7 +6376,8 @@
       return;
     }
     var active = document.activeElement;
-    var slotFocused = !!(active && list.contains(active) && active.classList.contains('slot-chip__select'));
+    var slotFocused = !!(active && list.contains(active) && (active.classList.contains('slot-chip__select') ||
+      (active.closest && active.closest('.body-editor'))));
     if (slotFocused && !force) {
       filamentListDeferred = true;
       return;
@@ -6181,6 +6400,9 @@
     });
     for (var i = 0; i < rows.length; i += 1) {
       list.appendChild(createFilamentRow(rows[i].material, rows[i].row, rows[i].kind));
+      if (state.openBodyLists[asString(rows[i].material.material_id)]) {
+        list.appendChild(createBodyList(rows[i].material));
+      }
     }
     restoreFocus();
   }
@@ -6199,14 +6421,33 @@
     var full = asString(material.display_name) || asString(material.material_name) || 'Filament';
     var parts = splitDisplayName(full);
 
+    var listOpen = !!state.openBodyLists[asString(material.material_id)];
+    // The arrow says the row opens: its bodies and their print settings are under it.
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'frow__toggle';
+    toggle.setAttribute('aria-expanded', listOpen ? 'true' : 'false');
+    toggle.setAttribute('aria-label', (listOpen ? 'Hide' : 'Show') + ' the bodies of ' + full);
+    toggle.title = listOpen ? 'Hide the bodies' : 'Show the bodies and their print settings';
+    toggle.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">' +
+      '<path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+      'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    toggle.addEventListener('click', function () { toggleBodyList(material); });
+    element.appendChild(toggle);
     element.appendChild(createSwatch(material.color_hex, full, 'swatch--row'));
 
     var main = document.createElement('div');
     main.className = 'frow__main';
+    // Clicking the name opens the row too (the arrow is the keyboard control).
+    main.title = full + '\nClick to see its bodies and their print settings (also selects them in Fusion).';
+    main.addEventListener('click', function (event) {
+      if (!(event.target && event.target.closest && event.target.closest('button'))) {
+        toggleBodyList(material);
+      }
+    });
     var name = document.createElement('div');
     name.className = 'frow__name';
     name.textContent = parts.name;
-    name.title = full;
     main.appendChild(name);
     var sub = document.createElement('div');
     sub.className = 'frow__sub';
@@ -6230,7 +6471,33 @@
       note.appendChild(document.createTextNode('Loaded: ' + other.loaded));
       note.title = 'The design names ' + other.design + '. This slot holds ' + other.loaded +
         (other.usesSpool ? ', so the slicer project uses its settings.' : '.');
+      var use = document.createElement('button');
+      use.type = 'button';
+      use.className = 'link link--small frow__use';
+      use.textContent = 'Use it';
+      use.title = 'Give the ' + pluralize(countBodies([material]), 'body', 'bodies') + ' of ' + full +
+        ' the loaded ' + other.loaded + ' filament.';
+      use.disabled = isActionPending('use_loaded_filament');
+      use.addEventListener('click', function () { useLoadedFilament(material, slot, use); });
+      note.appendChild(use);
       main.appendChild(note);
+    }
+    var custom = (Array.isArray(material.body_list) ? material.body_list : []).filter(function (body) {
+      return asString(body.summary);
+    });
+    if (custom.length && !listOpen) {
+      var own = document.createElement('div');
+      own.className = 'frow__note frow__note--settings';
+      var gear = document.createElement('span');
+      gear.className = 'frow__note-icon';
+      gear.setAttribute('aria-hidden', 'true');
+      gear.textContent = '⚙';
+      own.appendChild(gear);
+      own.appendChild(document.createTextNode(custom.length === 1
+        ? bodyLabel(custom[0]) + ': ' + asString(custom[0].summary)
+        : pluralize(custom.length, 'body', 'bodies') + ' with own print settings'));
+      own.title = custom.map(function (item) { return bodyLabel(item) + ': ' + asString(item.summary); }).join('\n');
+      main.appendChild(own);
     }
     element.appendChild(main);
 
@@ -6243,6 +6510,585 @@
     element.appendChild(createSlotChip(material, row, kind));
     element.appendChild(createMatchBadge(row, kind));
     return element;
+  }
+
+  /* Print settings for single bodies ------------------------------------- */
+
+  /** Number fields of the body editor: setting key, label, highest value. */
+  var BODY_NUMBER_FIELDS = [
+    { key: 'infill', label: 'Infill %', max: 100 },
+    { key: 'walls', label: 'Walls', max: 20 },
+    { key: 'top_layers', label: 'Top layers', max: 50 },
+    { key: 'bottom_layers', label: 'Bottom layers', max: 50 }
+  ];
+
+  /** @returns {string} the slicer the palette sends to (Settings), or "". */
+  function slicerPathValue() {
+    var input = byId('orca-path');
+    return (input ? input.value.trim() : '') || asString(state.settings.slicer_path) || asString(state.settings.orca_path);
+  }
+
+  /** @returns {object} the chosen print process's own infill, walls and layers ({} when not known). */
+  function processValues() {
+    var name = selectValue('target-process');
+    var row = (state.processRows || []).filter(function (item) { return asString(item && item.name) === name; })[0];
+    return row && row.values && typeof row.values === 'object' ? row.values : {};
+  }
+
+  /**
+   * @param {string} value a slicer's infill name ("3dhoneycomb")
+   * @returns {string} its label ("3D honeycomb")
+   */
+  function infillLabel(value) {
+    var found = (state.infillPatterns || []).filter(function (item) { return asString(item.value) === value; })[0];
+    return found ? asString(found.label) : asString(value);
+  }
+
+  /**
+   * @param {string} value an infill name, maybe another slicer's
+   * @returns {boolean} whether the chosen slicer has that infill (under any of its names)
+   */
+  function slicerHasInfill(value) {
+    if (!state.infillPatterns.length) {
+      return true;
+    }
+    var other = asString((state.infillAliases || {})[value]);
+    return state.infillPatterns.some(function (item) { return item.value === value || (other && item.value === other); });
+  }
+
+  /**
+   * "20% gyroid infill · 3 walls", as Python's body_settings.describe writes it.
+   * @param {object} settings
+   * @returns {string}
+   */
+  function settingsSummary(settings) {
+    var found = settings || {};
+    var parts = [];
+    if (typeof found.infill === 'number' || found.infill_pattern) {
+      var type = found.infill_pattern ? infillLabel(found.infill_pattern) : '';
+      if (type && !/^([0-9]|.[A-Z])/.test(type)) {
+        type = type.charAt(0).toLowerCase() + type.slice(1);
+      }
+      parts.push([typeof found.infill === 'number' ? found.infill + '%' : '', type, 'infill'].filter(Boolean).join(' '));
+    }
+    if (typeof found.walls === 'number') {
+      parts.push(found.walls + ' walls');
+    }
+    if (typeof found.top_layers === 'number') {
+      parts.push(found.top_layers + ' top layers');
+    }
+    if (typeof found.bottom_layers === 'number') {
+      parts.push(found.bottom_layers + ' bottom layers');
+    }
+    return parts.join(' · ');
+  }
+
+  /**
+   * @param {object[]} bodies rows of material.body_list
+   * @returns {object} the settings all of them have the same
+   */
+  function sharedSettings(bodies) {
+    var first = bodies.length ? (bodies[0].settings || {}) : {};
+    var shared = {};
+    Object.keys(first).forEach(function (key) {
+      if (bodies.every(function (body) { return (body.settings || {})[key] === first[key]; })) {
+        shared[key] = first[key];
+      }
+    });
+    return shared;
+  }
+
+  /** @returns {boolean} whether all bodies have the same own settings. */
+  function sameSettings(bodies) {
+    var first = JSON.stringify(bodies.length ? (bodies[0].settings || {}) : {});
+    return bodies.every(function (body) { return JSON.stringify(body.settings || {}) === first; });
+  }
+
+  /** "Body1 in TEF" (the component tells two bodies with one name apart). */
+  function bodyLabel(body) {
+    var component = asString(body && body.component);
+    return asString(body && body.name) + (component ? ' in ' + component : '');
+  }
+
+  /**
+   * Show or hide a filament's bodies; showing them also selects them in Fusion.
+   * @param {object} material
+   */
+  function toggleBodyList(material) {
+    var id = asString(material.material_id);
+    var open = !state.openBodyLists[id];
+    state.openBodyLists[id] = open;
+    if (!open && state.bodyEditor && state.bodyEditor.materialId === id) {
+      state.bodyEditor = null;
+    }
+    if (open) {
+      selectBodies([id]);
+    }
+    renderFilamentList(true);
+  }
+
+  /** Extra editor fields other modules add (window.Filamatch.registerBodyField). */
+  var bodyFields = [];
+  /** Values other modules show on every body line ({detail(body), allDetail(bodies)}). */
+  var bodyDetails = [];
+  /** Lines other modules show under every body (fn(body) -> [{text, kind}]). */
+  var bodyNotes = [];
+
+  /**
+   * Redraw every body list after the editor changed: the Print tab's, and the
+   * one that opened the editor (another tab's ``rerender``).
+   * @param {function=} rerender
+   */
+  function refreshBodyLists(rerender) {
+    renderFilamentList(true);
+    if (typeof rerender === 'function') {
+      try {
+        rerender();
+      } catch (err) {
+        appendLog('A body list could not be redrawn: ' + errorMessage(err), 'error');
+      }
+    }
+    notifyChange('body-editor');
+  }
+
+  /**
+   * The list under a filament row: "All N bodies" (when there are several),
+   * then one line per body, each with Edit.
+   * @param {object} material
+   * @param {{rerender?: function, detail?: function, allDetail?: function, notes?: function}} [options]
+   *   rerender redraws the caller's list (another tab; the Print tab's list is
+   *   always redrawn); detail(body) and allDetail(bodies) give a short value
+   *   shown after the name ("2.4 g estimate"); notes(body) gives lines under
+   *   the body ([{text, kind: "warning"|"success"|""}])
+   * @returns {HTMLElement}
+   */
+  function createBodyList(material, options) {
+    var opts = options || {};
+    var bodies = Array.isArray(material.body_list) ? material.body_list : [];
+    var panel = document.createElement('div');
+    panel.className = 'bodies';
+    panel.setAttribute('role', 'group');
+    panel.setAttribute('aria-label', 'Bodies of ' + splitDisplayName(asString(material.display_name)).name);
+    if (!bodies.length) {
+      var none = document.createElement('p');
+      none.className = 'faint';
+      none.textContent = 'Fusion did not list these bodies. Click ↻ to check the design again.';
+      panel.appendChild(none);
+      return panel;
+    }
+    if (bodies.length > 1) {
+      appendBodyLine(panel, material, bodies, null, opts);
+    }
+    bodies.forEach(function (body) { appendBodyLine(panel, material, bodies, body, opts); });
+    return panel;
+  }
+
+  /**
+   * One line of the body list, and the editor under it when it is open.
+   * @param {HTMLElement} panel
+   * @param {object} material
+   * @param {object[]} bodies all bodies of the filament
+   * @param {object|null} body null for the "All N bodies" line
+   * @param {{rerender?: function}} opts
+   */
+  function appendBodyLine(panel, material, bodies, body, opts) {
+    var key = body ? asString(body.token) : 'all';
+    var editor = state.bodyEditor;
+    var editing = !!(editor && editor.materialId === asString(material.material_id) && editor.key === key);
+    var line = document.createElement('div');
+    line.className = 'body-line' + (body ? '' : ' body-line--all') + (editing ? ' body-line--editing' : '');
+
+    var name = document.createElement('button');
+    name.type = 'button';
+    name.className = 'body-line__name';
+    name.title = 'Select in Fusion';
+    name.textContent = body ? asString(body.name) : 'All ' + bodies.length + ' bodies';
+    if (body && asString(body.component)) {
+      var where = document.createElement('span');
+      where.className = 'body-line__where';
+      where.textContent = ' in ' + asString(body.component);
+      name.appendChild(where);
+    }
+    if (body && Number(body.copies) > 1) {
+      var copies = document.createElement('span');
+      copies.className = 'body-line__where';
+      copies.textContent = ' ×' + Number(body.copies);
+      name.appendChild(copies);
+    }
+    name.addEventListener('click', function () {
+      if (body) {
+        selectBodyTokens([asString(body.token)]);
+      } else {
+        selectBodies([asString(material.material_id)]);
+      }
+    });
+    line.appendChild(name);
+
+    var detailText = body ? (opts.detail ? asString(opts.detail(body)) : '')
+      : (opts.allDetail ? asString(opts.allDetail(bodies)) : '');
+    if (!detailText) {
+      // Values other modules registered for every list (the printed weight).
+      detailText = bodyDetails.map(function (item) {
+        return body ? asString(item.detail(body)) : (item.allDetail ? asString(item.allDetail(bodies)) : '');
+      }).filter(Boolean).join(' · ');
+    }
+    if (detailText) {
+      var detail = document.createElement('span');
+      detail.className = 'body-line__detail';
+      detail.textContent = detailText;
+      line.appendChild(detail);
+    }
+
+    var summary = document.createElement('span');
+    summary.className = 'body-line__summary';
+    var text = body ? asString(body.summary) : (sameSettings(bodies) ? settingsSummary(bodies[0].settings) : 'Different settings');
+    if (body) {
+      // Other tabs' fields add their own words ("X axis up").
+      bodyFields.forEach(function (field) {
+        var extra = typeof field.summary === 'function' ? asString(field.summary(body)) : '';
+        if (extra) {
+          text = text ? text + ' · ' + extra : extra;
+        }
+      });
+    }
+    summary.textContent = text || 'Print process';
+    if (!text) {
+      summary.classList.add('body-line__summary--process');
+    }
+    line.appendChild(summary);
+
+    var edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'btn btn--ghost btn--small';
+    edit.textContent = editing ? 'Close' : 'Edit';
+    edit.setAttribute('aria-expanded', editing ? 'true' : 'false');
+    edit.setAttribute('aria-label', (editing ? 'Close' : 'Edit') + ' print settings of ' +
+      (body ? bodyLabel(body) : 'all ' + bodies.length + ' bodies'));
+    edit.addEventListener('click', function () {
+      if (editing) {
+        state.bodyEditor = null;
+        refreshBodyLists(opts.rerender);
+      } else {
+        openBodyEditor(material, bodies, body, opts.rerender);
+      }
+    });
+    line.appendChild(edit);
+    panel.appendChild(line);
+    if (body) {
+      var lines = opts.notes ? (opts.notes(body) || []) : [];
+      bodyNotes.forEach(function (notes) { lines = lines.concat(notes(body) || []); });
+      lines.forEach(function (note) {
+        var line2 = document.createElement('p');
+        line2.className = 'body-line__note' + (note && note.kind ? ' body-line__note--' + asString(note.kind) : '');
+        line2.textContent = asString(note && note.text);
+        panel.appendChild(line2);
+      });
+    }
+    if (editing) {
+      panel.appendChild(createBodyEditor(material, bodies, body));
+    }
+  }
+
+  /**
+   * Open the editor for one body or for all bodies of a filament, and select
+   * them in Fusion so it is clear which part is meant.
+   */
+  function openBodyEditor(material, bodies, body, rerender) {
+    var targets = body ? [body] : bodies;
+    var shared = sharedSettings(targets);
+    var values = {};
+    Object.keys(shared).forEach(function (key) { values[key] = String(shared[key]); });
+    var extra = {};
+    bodyFields.forEach(function (field) {
+      // A value all the bodies share, else empty ("default").
+      var seen = targets.map(function (item) { return asString(field.read(item)); });
+      extra[field.key] = seen.every(function (value) { return value === seen[0]; }) ? seen[0] : '';
+    });
+    state.bodyEditor = {
+      materialId: asString(material.material_id),
+      key: body ? asString(body.token) : 'all',
+      tokens: targets.map(function (item) { return asString(item.token); }),
+      values: values,
+      extra: extra,
+      differ: !body && !sameSettings(targets),
+      error: '',
+      rerender: rerender || null
+    };
+    selectBodyTokens(state.bodyEditor.tokens);
+    refreshBodyLists(rerender);
+    // The first field of the editor that can be seen (each tab draws its own list).
+    var inputs = document.querySelectorAll('.body-editor input');
+    for (var i = 0; i < inputs.length; i += 1) {
+      if (inputs[i].offsetParent !== null) {
+        inputs[i].focus();
+        break;
+      }
+    }
+  }
+
+  /**
+   * The editor: infill %, infill type, walls, top and bottom layers. Empty
+   * fields show the print process's value in grey.
+   * @returns {HTMLElement}
+   */
+  function createBodyEditor(material, bodies, body) {
+    var editor = state.bodyEditor;
+    var process = processValues();
+    var box = document.createElement('div');
+    box.className = 'body-editor';
+
+    var hint = document.createElement('p');
+    hint.className = 'faint';
+    hint.textContent = body
+      ? 'Selected in Fusion: ' + bodyLabel(body) + (Number(body.copies) > 1 ? ' (all ' + Number(body.copies) + ' copies).' : '.')
+      : 'Selected in Fusion: all ' + bodies.length + ' bodies of ' + splitDisplayName(asString(material.display_name)).name + '.';
+    box.appendChild(hint);
+    if (editor.differ) {
+      var differ = document.createElement('p');
+      differ.className = 'faint';
+      differ.textContent = 'These bodies have different settings. What they share is filled in; Save gives all of them the values below.';
+      box.appendChild(differ);
+    }
+
+    var grid = document.createElement('div');
+    grid.className = 'body-editor__grid';
+    function field(labelText, control, wide) {
+      var wrap = document.createElement('div');
+      wrap.className = 'field' + (wide ? ' field--wide' : '');
+      var label = document.createElement('label');
+      label.className = 'field-label';
+      label.htmlFor = control.id;
+      label.textContent = labelText;
+      wrap.appendChild(label);
+      wrap.appendChild(control);
+      grid.appendChild(wrap);
+    }
+    function numberInput(spec) {
+      var input = document.createElement('input');
+      input.id = 'body-' + spec.key.replace('_', '-');
+      input.className = 'text-input';
+      input.type = 'number';
+      input.min = '0';
+      input.max = String(spec.max);
+      input.step = '1';
+      input.inputMode = 'numeric';
+      input.value = asString(editor.values[spec.key]);
+      input.placeholder = typeof process[spec.key] === 'number'
+        ? process[spec.key] + (spec.key === 'infill' ? '%' : '') + ' (process)'
+        : 'Process';
+      input.setAttribute('data-focus-key', 'body-editor:' + spec.key);
+      input.addEventListener('input', function () { editor.values[spec.key] = input.value; });
+      return input;
+    }
+    field('Infill %', numberInput(BODY_NUMBER_FIELDS[0]));
+
+    var pattern = document.createElement('select');
+    pattern.id = 'body-infill-pattern';
+    pattern.className = 'select-input';
+    pattern.setAttribute('data-focus-key', 'body-editor:infill_pattern');
+    var processPattern = asString(process.infill_pattern);
+    var fallback = document.createElement('option');
+    fallback.value = '';
+    fallback.textContent = 'Process' + (processPattern ? ' (' + infillLabel(processPattern) + ')' : '');
+    pattern.appendChild(fallback);
+    (state.infillPatterns || []).forEach(function (item) {
+      var option = document.createElement('option');
+      option.value = asString(item.value);
+      option.textContent = asString(item.label) || asString(item.value);
+      pattern.appendChild(option);
+    });
+    var current = asString(editor.values.infill_pattern);
+    if (current && !(state.infillPatterns || []).some(function (item) { return item.value === current; })) {
+      var missing = document.createElement('option');
+      missing.value = current;
+      missing.textContent = infillLabel(current) + (slicerHasInfill(current) ? '' : ' (not in ' + slicerNames().full + ')');
+      pattern.appendChild(missing);
+    }
+    pattern.value = current;
+    pattern.addEventListener('change', function () { editor.values.infill_pattern = pattern.value; });
+    field('Infill type', pattern, true);
+    BODY_NUMBER_FIELDS.slice(1).forEach(function (spec) { field(spec.label, numberInput(spec)); });
+    bodyFields.forEach(function (spec) {
+      var select = document.createElement('select');
+      select.id = 'body-extra-' + spec.key;
+      select.className = 'select-input';
+      select.setAttribute('data-focus-key', 'body-editor:extra:' + spec.key);
+      var empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = asString(spec.emptyLabel) || 'Default';
+      select.appendChild(empty);
+      (spec.options || []).forEach(function (item) {
+        var option = document.createElement('option');
+        option.value = asString(item.value);
+        option.textContent = asString(item.label) || asString(item.value);
+        select.appendChild(option);
+      });
+      select.value = asString(editor.extra && editor.extra[spec.key]);
+      select.addEventListener('change', function () { editor.extra[spec.key] = select.value; });
+      field(asString(spec.label), select, true);
+      if (spec.note) {
+        var fieldNote = document.createElement('p');
+        fieldNote.className = 'faint body-editor__note';
+        fieldNote.textContent = asString(spec.note);
+        grid.appendChild(fieldNote);
+      }
+    });
+    box.appendChild(grid);
+
+    var note = document.createElement('p');
+    note.className = 'faint';
+    note.textContent = 'Empty fields use the print process; its values are shown in grey.';
+    box.appendChild(note);
+    if (editor.error) {
+      var error = document.createElement('p');
+      error.className = 'status status--error';
+      error.textContent = editor.error;
+      box.appendChild(error);
+    }
+
+    var actions = document.createElement('div');
+    actions.className = 'body-editor__actions';
+    var save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'btn btn--primary btn--small';
+    save.textContent = body ? 'Save' : 'Save for all ' + bodies.length;
+    save.addEventListener('click', function () { saveBodyEditor(editor.tokens, false); });
+    actions.appendChild(save);
+    if (body && bodies.length > 1) {
+      var all = document.createElement('button');
+      all.type = 'button';
+      all.className = 'btn btn--ghost btn--small';
+      all.textContent = 'Save for all ' + bodies.length + ' bodies';
+      all.addEventListener('click', function () {
+        saveBodyEditor(bodies.map(function (item) { return asString(item.token); }), false);
+      });
+      actions.appendChild(all);
+    }
+    var reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'link link--small';
+    reset.textContent = 'Use the print process';
+    reset.title = 'Remove ' + (body ? 'this body\'s' : 'these bodies\'') + ' own settings';
+    reset.addEventListener('click', function () { saveBodyEditor(editor.tokens, true); });
+    actions.appendChild(reset);
+    box.appendChild(actions);
+    return box;
+  }
+
+  /**
+   * Save the editor's values on these bodies (or give them back to the print process).
+   * @param {string[]} tokens
+   * @param {boolean} clear
+   */
+  function saveBodyEditor(tokens, clear) {
+    var editor = state.bodyEditor;
+    var settings = {};
+    if (!clear && editor) {
+      BODY_NUMBER_FIELDS.forEach(function (spec) {
+        var text = asString(editor.values[spec.key]).trim();
+        if (text) {
+          settings[spec.key] = Number(text);
+        }
+      });
+      if (asString(editor.values.infill_pattern)) {
+        settings.infill_pattern = asString(editor.values.infill_pattern);
+      }
+    }
+    request('set_body_settings', { tokens: tokens, settings: settings }, {
+      statusEl: byId('materials-status'),
+      pendingText: 'Saving the print settings…'
+    });
+    // Other tabs' fields (build direction) save their own values after Filamatch's.
+    bodyFields.forEach(function (field) {
+      try {
+        field.save(tokens, clear || !editor ? '' : asString(editor.extra && editor.extra[field.key]));
+      } catch (err) {
+        appendLog('Could not save ' + asString(field.label) + ': ' + errorMessage(err), 'error');
+      }
+    });
+  }
+
+  /**
+   * `bodySettingsSaved`: close the editor; the body list shows the new settings.
+   * @param {object} payload
+   */
+  function handleBodySettingsSaved(payload) {
+    var status = byId('materials-status');
+    if (payload.ok === false) {
+      if (state.bodyEditor) {
+        state.bodyEditor.error = 'Not saved. ' + replyError(payload);
+        refreshBodyLists(state.bodyEditor.rerender);
+      }
+      setStatus(status, '', 'muted');
+      return;
+    }
+    var empty = !payload.settings || !Object.keys(payload.settings).length;
+    var text = demoSuffix(pluralize(Number(payload.count) || 0, 'body', 'bodies') +
+      (empty ? ' use the print process again.' : ' saved. The slicer gets the settings on the next send.'));
+    setStatus(status, text, 'success');
+    appendLog(text, 'info');
+    var rerender = state.bodyEditor ? state.bodyEditor.rerender : null;
+    state.bodyEditor = null;
+    applyLibraryRefresh(payload);
+    // The Save button had focus inside the list, which holds back redraws.
+    refreshBodyLists(rerender);
+  }
+
+  /**
+   * Ask Fusion to select these bodies, every placed copy (fire-and-forget).
+   * @param {string[]} tokens
+   */
+  function selectBodyTokens(tokens) {
+    if (!bridgeLive()) {
+      return;
+    }
+    try {
+      adsk.fusionSendData('select_bodies', JSON.stringify({ tokens: tokens }));
+    } catch (err) {
+      appendLog('Could not select the bodies in Fusion: ' + errorMessage(err), 'error');
+    }
+  }
+
+  /**
+   * Replace a design filament on its bodies with the spool loaded in its slot.
+   * @param {object} material design material
+   * @param {object} slot printer slot
+   * @param {HTMLButtonElement} button
+   */
+  function useLoadedFilament(material, slot, button) {
+    request('use_loaded_filament', {
+      material_id: asString(material.material_id),
+      slot_key: asString(slot.key),
+      bambuddy_printer_id: state.bambuddy.selectedPrinterId || 0
+    }, {
+      statusEl: byId('materials-status'),
+      pendingText: 'Giving the bodies the loaded ' + asString(slot.display_name) + '…',
+      button: button,
+      timeoutMs: CUSTOM_LIBRARY_TIMEOUT_MS
+    });
+  }
+
+  /**
+   * `loadedFilamentUsed`: the bodies have the loaded filament now; it keeps its slot.
+   * @param {object} payload
+   */
+  function handleLoadedFilamentUsed(payload) {
+    var status = byId('materials-status');
+    if (payload.ok === false) {
+      setStatus(status, 'Could not use the loaded filament: ' + replyError(payload), 'error');
+      appendLog('Use loaded filament failed: ' + replyError(payload), 'error');
+      return;
+    }
+    if (payload.slot_map && typeof payload.slot_map === 'object') {
+      state.bambuddy.slotMap = payload.slot_map;
+    }
+    applyLibraryRefresh(payload);
+    ingestLogSnapshot(payload.log);
+    var text = demoSuffix(pluralize(Number(payload.replaced) || 0, 'body', 'bodies') + ' now use ' +
+      asString(payload.display_name) + '.');
+    setStatus(status, text, 'success');
+    appendLog(text, 'info');
+    requestBambuddyContext({ silent: true });
   }
 
   /**
@@ -6737,6 +7583,7 @@
         run: useInstalledNozzle(mismatch.option)
       });
     }
+    fixes = fixes.concat(designFixes(printerName));
     if (state.connectionReady && !(selectValue('target-printer') && selectValue('target-process')) &&
         !isActionPending('get_profiles')) {
       fixes.push({
@@ -6792,6 +7639,213 @@
       box.appendChild(item);
     }
     container.appendChild(box);
+  }
+
+  /**
+   * The filament each design material prints with: the matched slot's when it
+   * has one, else the design's own.  `traits` come from Python
+   * (design_check.filament_traits): temp_group, abrasive, bed, type.
+   * @returns {{id: string, name: string, traits: object, width: (number|null)}[]}
+   */
+  function printedFilaments() {
+    var mapping = mappingByMaterial();
+    var slots = slotsByKey();
+    return state.materials.map(function (material) {
+      var row = mapping[asString(material.material_id)];
+      var kind = matchKind(row);
+      var slot = kind !== 'unknown' && kind !== 'missing' && row ? slots[asString(row.slot_key)] : null;
+      var traits = slot && slot.traits && slot.traits.type ? slot.traits : (material.traits || {});
+      return {
+        id: asString(material.material_id),
+        name: splitDisplayName(asString(material.display_name) || asString(material.material_id)).name,
+        traits: traits,
+        width: typeof material.detail_width_mm === 'number' ? material.detail_width_mm : null
+      };
+    });
+  }
+
+  /**
+   * "ABS needs a 90–110 °C bed" style text for one filament type.
+   * @param {object} traits
+   * @returns {string}
+   */
+  function bedText(traits) {
+    var bed = Array.isArray(traits.bed) ? traits.bed : null;
+    return asString(traits.type) + (bed ? ' ' + bed[0] + '–' + bed[1] + ' °C' : '');
+  }
+
+  /** @returns {object[]} the traits of each filament type once, in order. */
+  function uniqueTraits(filaments) {
+    var seen = {};
+    return filaments.map(function (item) { return item.traits; }).filter(function (traits) {
+      var key = asString(traits.type);
+      if (seen[key]) {
+        return false;
+      }
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  /** @returns {string[]} each filament type once ("ABS", "PLA"). */
+  function uniqueTypes(filaments) {
+    return uniqueTraits(filaments).map(function (traits) { return asString(traits.type); });
+  }
+
+  /** @returns {string} "A", "A and B", "A, B and C" */
+  function joinNames(names) {
+    return names.length <= 1 ? names.join('') : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+  }
+
+  /**
+   * The nozzle size the project slices for: the print settings' size, else
+   * the printer's smallest nozzle, else 0.4 mm.
+   * @returns {number}
+   */
+  function slicedNozzleSize() {
+    var chosen = (selectValue('target-printer') + ' ' + selectedOptionLabel(byId('target-printer')))
+      .match(/(\d+(?:\.\d+)?)\s*(?:mm\s*)?nozzle/i);
+    if (chosen) {
+      return Number(chosen[1]);
+    }
+    var sizes = selectedNozzles().map(function (nozzle) { return Number(nozzle.diameter); }).filter(Boolean);
+    return sizes.length ? Math.min.apply(null, sizes) : 0.4;
+  }
+
+  /**
+   * The design check: more filaments than the printer holds, filaments that
+   * cannot share one bed, fibre filament on a soft nozzle, and details thinner
+   * than the nozzle.  Each fix selects the bodies concerned in Fusion.
+   * @param {string} printerName
+   * @returns {{text: string, action: string, run: function}[]}
+   */
+  function designFixes(printerName) {
+    var fixes = [];
+    var filaments = printedFilaments();
+    if (!filaments.length) {
+      return fixes;
+    }
+    function show(list) {
+      var ids = list.map(function (item) { return item.id; });
+      return function () { selectBodies(ids); };
+    }
+
+    // Every design filament needs a slot: all printer slots, or the preset's tools without a printer.
+    var slotCount = state.bambuddy.loaded && selectedPrinter() ? (state.bambuddy.slots || []).length : 0;
+    var tools = state.targetPrinterTools[selectValue('target-printer')];
+    if (slotCount && filaments.length > slotCount) {
+      fixes.push({
+        text: 'The design uses ' + filaments.length + ' filaments. ' + printerName + ' has ' +
+          pluralize(slotCount, 'slot') + '.',
+        action: 'Show all',
+        run: show(filaments)
+      });
+    } else if (!slotCount && typeof tools === 'number' && filaments.length > tools) {
+      fixes.push({
+        text: 'The design uses ' + filaments.length + ' filaments. The ' + selectValue('target-printer') +
+          ' settings have ' + pluralize(tools, 'tool') + '.',
+        action: 'Change',
+        run: function () { toggleCardBody('print-settings-toggle', true); }
+      });
+    }
+
+    // Bambu Studio's rule: a high-temperature and a low-temperature filament cannot share one plate.
+    var hot = filaments.filter(function (item) { return item.traits.temp_group === 'high'; });
+    var cool = filaments.filter(function (item) { return item.traits.temp_group === 'low'; });
+    if (hot.length && cool.length) {
+      var bambu = slicerNames().full === 'Bambu Studio';
+      fixes.push({
+        text: joinNames(uniqueTypes(hot)) + ' cannot share a bed with ' + joinNames(uniqueTypes(cool)) + ' (' +
+          uniqueTraits(hot.concat(cool)).map(bedText).join('; ') + '). ' +
+          (bambu ? 'Bambu Studio puts them on separate plates.' : 'Print them as separate jobs.'),
+        action: 'Show',
+        run: show(hot.length <= cool.length ? hot : cool)
+      });
+    }
+
+    // Carbon and glass fibre wear out nozzles softer than hardened steel (Bambu Studio needs HRC 40).
+    var soft = selectedNozzles().filter(function (nozzle) {
+      return typeof nozzle.hardness === 'number' && nozzle.hardness < 40;
+    });
+    var abrasive = filaments.filter(function (item) { return item.traits.abrasive === true; });
+    if (soft.length && abrasive.length) {
+      var nozzle = soft[0];
+      var where = selectedNozzles().length > 1 && asString(nozzle.side) ? ' (' + asString(nozzle.side) + ')' : '';
+      fixes.push({
+        text: joinNames(abrasive.map(function (item) { return item.name; })) +
+          (abrasive.length > 1 ? ' have' : ' has') + ' carbon or glass fibre. It wears out the ' +
+          asString(nozzle.material).replace(/_/g, ' ') + ' nozzle' + where + '. Use a hardened steel nozzle.',
+        action: 'Show',
+        run: show(abrasive)
+      });
+    }
+
+    // An infill type the chosen slicer does not have (set for another slicer).
+    var unknown = {};
+    state.materials.forEach(function (material) {
+      (Array.isArray(material.body_list) ? material.body_list : []).forEach(function (body) {
+        var type = asString(body.settings && body.settings.infill_pattern);
+        if (type && !slicerHasInfill(type)) {
+          (unknown[type] = unknown[type] || []).push({ material: material, body: body });
+        }
+      });
+    });
+    Object.keys(unknown).forEach(function (type) {
+      var first = unknown[type][0];
+      fixes.push({
+        text: joinNames(unknown[type].map(function (item) { return bodyLabel(item.body); })) + ' ' +
+          (unknown[type].length > 1 ? 'use ' : 'uses ') + infillLabel(type) + ' infill, which ' + slicerNames().full +
+          ' does not have. It gets the print process\'s infill.',
+        action: 'Edit',
+        run: function () {
+          state.openBodyLists[asString(first.material.material_id)] = true;
+          openBodyEditor(first.material, first.material.body_list, first.body);
+        }
+      });
+    });
+
+    // Bodies thinner than the nozzle print badly or not at all.
+    var size = slicedNozzleSize();
+    filaments.forEach(function (item) {
+      if (item.width !== null && item.width < size) {
+        fixes.push({
+          text: item.name + ': some bodies are about ' + item.width.toFixed(2) + ' mm wide, thinner than the ' +
+            size + ' mm nozzle. They may print badly or not at all.',
+          action: 'Show',
+          run: show([item])
+        });
+      }
+    });
+    return fixes;
+  }
+
+  /**
+   * Ask Fusion to select the bodies of these design filaments (fire-and-forget;
+   * Fusion answers with bodiesSelected).
+   * @param {string[]} materialIds
+   */
+  function selectBodies(materialIds) {
+    if (!bridgeLive()) {
+      appendLog('Preview: in Fusion this selects the bodies of ' + pluralize(materialIds.length, 'filament') + '.', 'info');
+      return;
+    }
+    try {
+      adsk.fusionSendData('select_bodies', JSON.stringify({ material_ids: materialIds }));
+    } catch (err) {
+      appendLog('Could not select the bodies in Fusion: ' + errorMessage(err), 'error');
+    }
+  }
+
+  /**
+   * `bodiesSelected`: how many bodies Fusion selected.
+   * @param {object} payload {ok, count}
+   */
+  function handleBodiesSelected(payload) {
+    if (payload.ok === false) {
+      appendLog('Could not select the bodies in Fusion: ' + replyError(payload), 'error');
+      return;
+    }
+    appendLog('Selected ' + pluralize(Number(payload.count) || 0, 'body', 'bodies') + ' in Fusion.', 'info');
   }
 
   /**
@@ -7117,6 +8171,11 @@
       saveSlicerPresets.addEventListener('change', scheduleSettingsSave);
     }
 
+    var currencySymbol = byId('currency-symbol');
+    if (currencySymbol) {
+      currencySymbol.addEventListener('input', scheduleSettingsSave);
+    }
+
     var refreshMaterials = byId('refresh-materials-btn');
     if (refreshMaterials) {
       refreshMaterials.addEventListener('click', onRefreshMaterialsClick);
@@ -7163,6 +8222,10 @@
       targetProcess.addEventListener('change', function () {
         renderPrintSummary();
         renderReadiness();
+        if (state.bodyEditor) {
+          renderFilamentList(true);  // The empty fields show the new process's values.
+        }
+        notifyChange('target');
         scheduleSettingsSave();
       });
     }
@@ -7486,6 +8549,7 @@
       if (attempts >= BRIDGE_RETRY_ATTEMPTS) {
         setupDemoMode();
         requestInitialData();
+        watchForLateBridge();
         return;
       }
       setConnectionState('info', 'Looking for the Fusion bridge...');
@@ -7493,6 +8557,102 @@
     };
     waitForBridge();
   }
+
+  /* =========================================================================
+   * window.Filamatch: what other palette modules (palette/as_printed.js) use
+   * ======================================================================= */
+
+  /** Reply handlers other modules registered, by reply action. */
+  var extensionHandlers = {};
+  /** Listeners for "connected", "materials", "profiles", "target", "body-editor". */
+  var changeListeners = [];
+
+  /**
+   * Tell other modules what changed.
+   * @param {string} kind
+   */
+  function notifyChange(kind) {
+    changeListeners.forEach(function (listener) {
+      try {
+        listener(kind);
+      } catch (err) {
+        appendLog('A palette module failed on "' + kind + '": ' + errorMessage(err), 'error');
+      }
+    });
+  }
+
+  window.Filamatch = {
+    apiVersion: 1,
+    /* Requests and replies. */
+    request: function (action, payload, options) { return request(action, payload, options); },
+    registerAction: function (requestAction, replyAction, label) {
+      RESPONSE_BY_REQUEST[requestAction] = replyAction;
+      ACTION_LABELS[requestAction] = label || requestAction;
+    },
+    onMessage: function (replyAction, handler) {
+      (extensionHandlers[replyAction] = extensionHandlers[replyAction] || []).push(handler);
+    },
+    registerDemo: function (requestAction, builder) { DEMO_RESPONSE_BUILDERS[requestAction] = builder; },
+    onChange: function (listener) { changeListeners.push(listener); },
+    isPending: function (action) { return isActionPending(action); },
+    isDemo: function () { return state.demoMode; },
+    /* What Filamatch knows. */
+    getMaterials: function () { return state.materials.slice(); },
+    getSettings: function () { return state.settings; },
+    getTarget: function () {
+      return {
+        slicer_path: slicerPathValue(),
+        vendor: selectValue('target-vendor'),
+        printer: selectValue('target-printer'),
+        process: selectValue('target-process')
+      };
+    },
+    processValues: function () { return processValues(); },
+    printerValues: function () { return state.printerValues || {}; },
+    printerNozzles: function () { return selectedNozzles(); },
+    getInfillPatterns: function () { return (state.infillPatterns || []).slice(); },
+    slicerName: function () { return slicerNames().full; },
+    /* Shared pieces. */
+    createBodyList: function (material, options) { return createBodyList(material, options); },
+    registerBodyField: function (field) {
+      if (field && field.key && typeof field.read === 'function' && typeof field.save === 'function') {
+        bodyFields.push(field);
+      }
+    },
+    selectBodies: function (materialIds) { selectBodies(materialIds); },
+    selectBodyTokens: function (tokens) { selectBodyTokens(tokens); },
+    registerBodyDetail: function (detail, allDetail) {
+      if (typeof detail === 'function') {
+        bodyDetails.push({ detail: detail, allDetail: typeof allDetail === 'function' ? allDetail : null });
+      }
+    },
+    registerBodyNotes: function (notes) {
+      if (typeof notes === 'function') {
+        bodyNotes.push(notes);
+      }
+    },
+    refreshBodyLists: function () { refreshBodyLists(); },
+    /* No tabs any more (one Print view); kept so older callers do nothing harmful. */
+    showTab: function () {},
+    openPrintSettings: function () { toggleCardBody('print-settings-toggle', true); },
+    saveSettings: function (values) {
+      Object.keys(values || {}).forEach(function (key) { state.settings[key] = values[key]; });
+      request('save_settings', values || {}, { statusEl: null });
+    },
+    /* Helpers. */
+    byId: byId,
+    asString: asString,
+    pluralize: pluralize,
+    setStatus: setStatus,
+    appendLog: appendLog,
+    replyError: replyError,
+    errorMessage: errorMessage,
+    demoSuffix: demoSuffix,
+    splitDisplayName: splitDisplayName,
+    bodyLabel: bodyLabel,
+    settingsSummary: settingsSummary,
+    infillLabel: infillLabel
+  };
 
   /* Deferred scripts run before DOMContentLoaded; wait for the full DOM so all
      element references are guaranteed to exist. */

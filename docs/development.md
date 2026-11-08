@@ -161,6 +161,40 @@ needed).
 - Keep `threemf_injector.py` free of package imports: it is also a
   standalone command-line tool.
 
+## Palette design language
+
+Home (the Print view, with the printed weight card) and every screen follow
+these rules, so the palette reads as one tool.
+
+- **Words.** Plain English, active voice, one idea per sentence. Sentence
+  case for every label and button ("Use the print process"). Buttons are a
+  verb and say what happens ("Save for all 2 bodies", "Check with the
+  slicer"). Numbers carry their unit ("0.4 mm", "25%", "6.9 g").
+- **Colours** come from the tokens in `style.css` (`--text`,
+  `--text-muted`, `--text-faint`, `--accent`, `--success`, `--warning`,
+  `--error`, `--panel`, `--border`); no new colours. Blue (`--accent`)
+  marks what the user set or can click; muted grey marks values that come
+  from elsewhere ("15% (process)", "Print process").
+- **One primary button per screen**, its main action (Home: **Send to
+  …**). Row actions are small ghost buttons (`btn btn--ghost btn--small`:
+  Edit, Show, Change); going somewhere is a link (`link`).
+- **Lists**: a bordered `list` of rows. A row that opens has the arrow
+  (`frow__toggle`) at its start; what opens sits under it, indented to the
+  row's name (`bodies`, `body-line`). Bodies are named with their component
+  (`bodyLabel`: "Body1 in TEF").
+- **One source for each setting.** The printer, process and slicer are set
+  in Print settings; other places show them as one line with **Change**.
+  A body's own settings are edited in the shared body editor
+  (`createBodyList`); a setting another module adds goes into that editor
+  (`registerBodyField`), not into a form of its own.
+- **Status**: one line under the area it is about (`status` and
+  `status--success`, `--warning`, `--error`). Problems before sending go
+  into the ready check, each with one button that fixes or shows it.
+- **No controls that do nothing yet.** A feature that is not finished is
+  not shown (or shows one faint line saying it comes later).
+- **Estimates say so**: values that are estimates are marked, with where
+  they come from.
+
 ## Palette messages
 
 The palette calls `adsk.fusionSendData(action, json)`; Python answers with
@@ -168,6 +202,50 @@ The palette calls `adsk.fusionSendData(action, json)`; Python answers with
 is at the top of `Filamatch/palette/app.js`; Python handles them in
 `palette_bridge.dispatch`. `tests/test_palette_contract.py` fails when the
 two sides disagree.
+
+## Printed weight (As printed)
+
+Filamatch can give every body its printed weight in Fusion (it came from the
+Printegrity add-in). It lives in its own files and talks to the rest only
+through these hooks:
+
+- `palette/as_printed.js` builds the **Printed weight** card into
+  `#as-printed-root` (in the Print view, before the send button);
+  `palette/as_printed.css` holds only its own rules (use the classes and
+  colours of `style.css`).
+- `lib/as_printed_bridge.py`: `dispatch(action, payload, palette) -> bool`
+  gets every palette action Filamatch does not know; it may use
+  `palette_bridge`'s helpers (`_send`, `_send_error`, `_run_job`,
+  `_active_design`, `load_settings`, `save_settings`). Its settings live in
+  the settings key `as_printed` (a dict).
+- `window.Filamatch` (from `app.js`):
+  - requests: `request(action, payload, options)`,
+    `registerAction(request, reply, label)`, `onMessage(reply, handler)`,
+    `registerDemo(request, builder)` (preview replies), `isPending(action)`,
+    `isDemo()`;
+  - changes: `onChange(listener)` is called with "connected", "materials"
+    (also after body settings are saved and after "Use it"), "profiles",
+    "target" and "body-editor";
+  - what Filamatch knows: `getMaterials()` (rows with `body_list`),
+    `getSettings()`, `getTarget()` (slicer, vendor, printer, process),
+    `processValues()` (the chosen process's infill, infill type, walls,
+    layers, `layer_height`, `outer_wall_width`, `inner_wall_width`,
+    `top_min_mm`, `bottom_min_mm`; a width may be "105%"),
+    `printerValues()` (`nozzle`), `printerNozzles()`, `getInfillPatterns()`,
+    `slicerName()`;
+  - body lines: `registerBodyDetail(detail(body), allDetail(bodies))` adds a
+    short value after every body's name ("2.4 g estimate"),
+    `registerBodyNotes(notes(body))` lines under it (`[{text, kind}]`, kind
+    "warning", "success" or ""), `refreshBodyLists()` redraws them;
+  - shared pieces: `createBodyList(material, {rerender, detail, allDetail,
+    notes})`, `registerBodyField({key, label, options, emptyLabel, note,
+    read(body), save(tokens, value), summary(body)})` (an extra select in
+    the body editor), `selectBodies(materialIds)`,
+    `selectBodyTokens(tokens)`, `openPrintSettings()`,
+    `saveSettings(values)`;
+  - helpers: `byId`, `asString`, `pluralize`, `setStatus`, `appendLog`,
+    `replyError`, `errorMessage`, `demoSuffix`, `splitDisplayName`,
+    `bodyLabel`, `settingsSummary`, `infillLabel`.
 
 ## Release
 

@@ -6,7 +6,10 @@
   <meta name="color-scheme" content="dark">
   <title>Filamatch</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./as_printed.css">
   <script src="./app.js" defer></script>
+  <!-- Printed weight (from the As printed work); it uses window.Filamatch (see docs/development.md). -->
+  <script src="./as_printed.js" defer></script>
 </head>
 <body>
   <svg width="0" height="0" class="icon-defs" aria-hidden="true" focusable="false">
@@ -83,6 +86,9 @@
             <p id="profiles-status" class="status status--muted" role="status" aria-live="polite"></p>
           </div>
         </section>
+
+        <!-- palette/as_printed.js fills this: the bodies' printed weight in Fusion. -->
+        <section id="as-printed-root" class="card printed-weight" aria-label="Printed weight"></section>
 
         <section class="send" aria-label="Send to the slicer">
           <div id="export-readiness" class="readiness" role="status" aria-live="polite"></div>
@@ -335,6 +341,11 @@
             <input id="estimate-enabled" type="checkbox" checked>
           </label>
           <p class="faint">Slices a copy in the background after the slicer opens. Turn it off on a slow computer.</p>
+          <div class="field">
+            <label class="field-label" for="currency-symbol">Currency for the filament cost</label>
+            <input id="currency-symbol" class="text-input text-input--short" type="text" maxlength="4" value="$" autocomplete="off" spellcheck="false">
+          </div>
+          <p class="faint">The cost uses the price per kg in each slicer filament preset. To get your real cost, set the prices in the slicer to what you pay.</p>
           <label class="switch-field" for="save-slicer-presets">
             <span>Save new filament presets in the slicer</span>
             <input id="save-slicer-presets" type="checkbox">

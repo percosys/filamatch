@@ -174,6 +174,78 @@ def main() -> int:
         "Home shows the printer's nozzles and the ready check warns when the size does not match",
     )
     check(
+        "fixes = fixes.concat(designFixes(printerName));" in js
+        and "item.traits.temp_group === 'high'" in js
+        and "nozzle.hardness < 40" in js
+        and "item.width !== null && item.width < size" in js
+        and "filaments.length > slotCount" in js
+        and "filaments.length > tools" in js,
+        "the ready check warns about slots, bed temperatures, fibre on a soft nozzle and thin details",
+    )
+    check(
+        "adsk.fusionSendData('select_bodies', JSON.stringify({ material_ids: materialIds }))" in js
+        and "case 'bodiesSelected':" in js
+        and "selectBodies([asString(material.material_id)]);" in js,
+        "clicking a filament selects its bodies in Fusion",
+    )
+    check(
+        "use.textContent = 'Use it';" in js
+        and "request('use_loaded_filament'" in js
+        and "use_loaded_filament: 'loadedFilamentUsed'" in js
+        and "state.bambuddy.slotMap = payload.slot_map;" in js,
+        "a design filament can take the loaded spool's filament in one click, keeping its slot",
+    )
+    check(
+        'id="body-settings"' not in html and "get_body_settings" not in js and "body-supports" not in js
+        and "list.appendChild(createBodyList(rows[i].material));" in js
+        and "name.textContent = body ? asString(body.name) : 'All ' + bodies.length + ' bodies';" in js
+        and "where.textContent = ' in ' + asString(body.component);" in js
+        and "all.textContent = 'Save for all ' + bodies.length + ' bodies';" in js
+        and "' (process)'" in js
+        and "field('Infill type', pattern, true);" in js
+        and "tokens: state.bodyEditor.tokens" not in js
+        and "request('set_body_settings', { tokens: tokens, settings: settings }" in js,
+        "each filament lists its bodies (with their component) and edits one body or all of them, "
+        "with the print process values in empty fields and an infill type menu",
+    )
+    check(
+        "toggle.className = 'frow__toggle';" in js
+        and "toggle.setAttribute('aria-expanded', listOpen ? 'true' : 'false');" in js
+        and '.frow__toggle[aria-expanded="true"] svg' in css,
+        "each filament row has an arrow that opens and closes its body list",
+    )
+    check(
+        "data-home-tab" not in html and 'id="as-printed-root"' in html and 'src="./as_printed.js"' in html
+        and html.index('id="as-printed-root"') < html.index('<section class="send"')
+        and "window.Filamatch = {" in js
+        and "registerBodyDetail: function (detail, allDetail)" in js
+        and "registerBodyNotes: function (notes)" in js
+        and "notifyChange('materials');" in js and "notifyChange('connected');" in js
+        and "extensionHandlers[action].forEach" in js,
+        "one Print view: the printed weight card sits before the send button, and its module "
+        "gets the window.Filamatch hooks (weights and notes on every body line)",
+    )
+    check(
+        "state.infillPatterns = data.infill_patterns" in js
+        and "' does not have. It gets the print process\\'s infill.'" in js
+        and "function slicerHasInfill(value)" in js,
+        "the infill menu lists the chosen slicer's types and the ready check warns about other slicers' types",
+    )
+    check(
+        "var BRIDGE_RETRY_ATTEMPTS = 15;" in js
+        and "watchForLateBridge();" in js
+        and "function leaveDemoMode()" in js
+        and "if (state.demoMode) {\n      /* Only Fusion calls this handler" in js
+        and "endPending(responseAction);\n        return;" in js,
+        "a palette that fell back to the preview connects when Fusion's bridge shows up late",
+    )
+    check(
+        'id="currency-symbol"' in html
+        and "currency_symbol: currencySymbol ? currencySymbol.value.trim() : '$'" in js
+        and "', filament cost about ' + currencyText(state.settings) + payload.cost.toFixed(2)" in js,
+        "the print estimate shows the filament cost with the currency from Settings",
+    )
+    check(
         "', on ' + plates + ' plates'" in js,
         "the print estimate says when the project has more than one plate",
     )

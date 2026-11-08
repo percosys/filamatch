@@ -69,10 +69,20 @@ reachable. The gear opens Settings.
   **Not loaded** no slot holds it;
 - **≠ Loaded: …** under the name when the slot holds another filament than
   the design names, for example "≠ Loaded: PolyLite ABS" for a Bambu ABS
-  design. Point at it for the details.
+  design. Point at it for the details. **Use it** gives the bodies the
+  loaded filament: Filamatch adds it to Fusion (as adding filaments from
+  the printer does), puts it on the bodies in place of the design's filament, and keeps
+  the slot;
+- **⚙** under the name when some of its bodies have their own print
+  settings (see Print settings per body below).
 
+Click a filament's name to see its bodies (and select them in Fusion).
 Click a slot to choose another one; your choice is remembered for that
 filament. Rows that need attention are listed first.
+
+Filamatch matches each filament to a slot by type first, then by colour,
+then by brand. Colours are compared the way people see them, so two shades
+of the same green are close, and black and dark grey are not the same.
 
 The list updates by itself when you assign a material, undo, redo or switch
 designs. The **↻** button reloads it by hand.
@@ -80,6 +90,31 @@ designs. The **↻** button reloads it by hand.
 **Links.** **+ Add filaments** opens the add page. **Open Material Browser**
 opens Fusion's Physical Material browser, where you assign the filaments to
 bodies.
+
+**Print settings per body.** Give single bodies their own infill %, infill
+type, walls, top and bottom layers, for example 100% gyroid infill for a
+part that must be strong:
+
+1. Click the arrow (›) at the start of the filament's row, or its name. Its
+   bodies show under it, each with its component ("Body1 in TEF"), and "×2"
+   when the component is placed twice.
+   With several bodies, the first line is **All N bodies**.
+2. Click **Edit** on a body, or on **All N bodies**. Fusion selects the
+   bodies, so you see which part it is.
+3. Fill in what you want to change. Empty fields use the print process;
+   its values are shown in grey, for example "15% (process)".
+   **Infill type** lists the types your slicer has.
+4. Click **Save** (or **Save for all N bodies** to give the same settings to
+   every body of that filament). **Use the print process** removes the
+   bodies' own settings.
+
+The settings stay on the bodies in the design. Bambu Studio and OrcaSlicer
+show them on the object (or on the part, when touching bodies are joined
+into one object); PrusaSlicer shows them on the part. When you switch to a
+slicer that names an infill type differently, Filamatch renames it ("zig-zag"
+in Bambu Studio is "rectilinear" in OrcaSlicer and PrusaSlicer); a type the
+slicer does not have is named in the ready check, and the slicer uses the
+print process's infill. Supports stay in the slicer.
 
 **Print settings.** One line with the printer, process and plate. **Change**
 opens the printer, process and plate lists. They come from your installed
@@ -93,10 +128,58 @@ or High Flow), like Bambu Studio's printer sync, so the slicer and the
 estimate use the right speeds. The direct LAN connection reports size and
 flow; Bambuddy reports the size only.
 
+**Printed weight and strength.** A printed part is not solid: it has walls,
+top and bottom layers and infill. This card shows what each filament body
+weighs as printed, from the print settings (a body's own settings count).
+
+- **Check with the slicer** slices each body once with OrcaSlicer or Bambu
+  Studio (about 2 seconds a body) and shows its exact grams.
+- **Fusion uses the printed values** (off at first; Filamatch remembers it
+  per design). When on, each body gets its own copy of its filament, named
+  "… · as printed", with the printed density, stiffness and strength.
+  Fusion's mass, Physical Properties and Simulation then use the printed
+  part, not solid plastic. The copy stays the same filament for Filamatch:
+  same slot, colour and slicer preset. Turn the switch off to put the
+  filaments back; Filamatch removes the copies from the design.
+- **Safe** or **Typical** picks the stiffness and strength. Fusion
+  Simulation uses one value for every direction, and printed parts break
+  first across the layers. **Safe** uses that weakest direction (and the
+  moist values of a nylon, when its data sheet has them). **Typical** is
+  between along and across the layers.
+- **Where the values come from** names the source of each filament: its own
+  data sheet (Bambu Lab and Polymaker engineering filaments, for example
+  "Bambu Lab PAHT-CF (data sheet V3.0)"), else generic values for its type,
+  the median of 29 data sheets from 6 makers.
+
+These values are rough estimates: about ±25 % from a data sheet and
+±25–40 % from generic values. They are good for comparing designs and
+finding weak spots, not as design values. Check important parts with a
+test print. The data sheets Filamatch uses are listed in
+[Filamatch/data/datasheets](../Filamatch/data/datasheets/README.md); how
+the estimate works is in [the strength model](as-printed/strength-model.md)
+and [the mass model](as-printed/mass-model.md).
+
 **Ready check and Send to Orca.** Above the button you see "Ready to send" or
 a short list of problems, each with a button that fixes it. Warnings never
 block sending; only real blockers do (no open design, no filament assigned,
-no slicer found). The button names the slicer you pick in Settings, for
+no slicer found). The design check also warns when:
+
+- the design uses more filaments than the printer has slots, or, without a
+  connected printer, than the PrusaSlicer printer has tools;
+- filaments cannot share one bed: a hot filament (ABS, ASA, PC, PA and the
+  fibre-filled ones) with a cool one (PLA, PETG, TPU, PVA). These are
+  Bambu Studio's own groups. Bambu Studio puts them on separate plates;
+  with other slicers, print them as separate jobs;
+- a carbon or glass fibre filament (CF, GF) would print with a stainless
+  steel or brass nozzle, which it wears out. The nozzle material comes from
+  the printer;
+- a filament's bodies are thinner than the nozzle. Filamatch measures each
+  body across (twice its volume over its side area), so a thin colour
+  layer on top of a part does not count. The number is about right for
+  strips and text, and half the width for a round pin.
+
+**Show** selects the bodies concerned in Fusion. The check uses the
+filament in the matched slot when there is one. The button names the slicer you pick in Settings, for
 example **Send to Orca** or **Send to Bambu**. It:
 
 1. exports the design as a 3MF with each body assigned to its slot;
@@ -152,7 +235,11 @@ The line below the button shows where the file is saved; **Change** picks
 another place.
 
 After a prepared send, the palette shows the print time and filament under
-the button, for example "About 43 min and 6.9 g of filament (2.6 g + 4.3 g)".
+the button, for example "About 43 min and 6.9 g of filament (2.6 g + 4.3 g),
+filament cost about $0.11". The cost is each filament's grams at the price
+per kg in its slicer preset (PrusaSlicer works it out itself; it is left
+out when a preset has no price). To get your real cost, set the prices in
+the slicer's filament presets to what you pay.
 Filamatch works it out by slicing a copy in the background after the slicer
 has opened. The numbers come from the slicer, so they match what the slicer
 shows when you slice. When the project has more than one plate, the line
@@ -215,6 +302,8 @@ Select filaments and click **Add to Fusion**. You return to Home.
 - **Print time, filament and spool check after sending:** on by default.
   It slices a copy in the background (about 1 to 5 seconds on a fast Mac,
   longer on a slow computer); turn it off there.
+- **Currency for the filament cost:** the symbol shown before the cost
+  ("$" by default). The slicer presets' prices have no currency.
 - **Save new filament presets in the slicer:** off by default. With it on,
   a preset Filamatch makes from the Open Filament Database is also saved as
   your own preset in Bambu Studio or OrcaSlicer (in the slicer's local
@@ -282,5 +371,9 @@ are not OK. Log files: see [file locations](how-it-works.md#file-locations).
 - The Filamatch Library is a snapshot of your Fusion Favorites; Fusion's API
   cannot create library categories.
 - Bodies that are not solid (surfaces) are not printed and are left out.
+- Printed stiffness and strength are one value for every direction (Fusion
+  Simulation has no layer direction), mixed by volume from shell and infill.
+  A thin plate in bending is stiffer than the estimate says. The slicer
+  check works with OrcaSlicer and Bambu Studio, not PrusaSlicer.
 - Material previews in Fusion's Material Browser can show a stock swatch (see
   Troubleshooting).

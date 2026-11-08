@@ -1,0 +1,4014 @@
+{
+  "schema": 1,
+  "maker": "Polymaker",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "PolyLite ABS",
+      "aliases": [
+        "ABS PolyLite"
+      ],
+      "type": "ABS",
+      "product_url": "https://polymaker.com/product/polylite-abs/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_PolyLite-ABS_V5.6_2025-12-30_EN.pdf",
+      "datasheet_version": "V5.6 (2025-12-30)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 90,
+        "chamber_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.04,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2246.6,
+          "plus_minus": 58.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2080.9,
+          "plus_minus": 92.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 33.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 29.7,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 17.9,
+          "plus_minus": 1.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 3.1,
+          "plus_minus": 0.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2127.2,
+          "plus_minus": 29.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 56.2,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 18.0,
+          "plus_minus": 0.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 104,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 98,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 100,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.35,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "X-Y tensile strength spread is printed as ± 92.7 MPa on the sheet (the same number as the Z modulus spread): a sheet typo, so the spread is left out here; do not use it. Bending values: the sheet names ISO 527, GB/T 1040; Z bending N/A. Tested with PolyLite ABS SKU PE01001."
+    },
+    {
+      "product": "Polymaker ABS Max",
+      "type": "ABS",
+      "product_url": "https://polymaker.com/product/polymaker-abs-max/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_ABS-Max_V1.1_2026_06_01_EN.pdf",
+      "datasheet_version": "V1.1 (2026-06-01)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 240,
+        "bed_c": 80,
+        "chamber_c": "ambient",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.06,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.32,
+          "plus_minus": 0.03,
+          "unit": "GPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2.1,
+          "plus_minus": 0.01,
+          "unit": "GPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 35.66,
+          "plus_minus": 0.58,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 25.41,
+          "plus_minus": 0.36,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 6.72,
+          "plus_minus": 0.34,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.81,
+          "plus_minus": 0.15,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.5,
+          "plus_minus": 0.07,
+          "unit": "GPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2.21,
+          "plus_minus": 0.05,
+          "unit": "GPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 63.29,
+          "plus_minus": 1.19,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 45.12,
+          "plus_minus": 0.89,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 10.51,
+          "plus_minus": 0.67,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 8.01,
+          "plus_minus": 0.77,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 29.37,
+          "plus_minus": 2.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 127.4,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 113.1,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 118.1,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        }
+      ],
+      "notes": "Unnotched Charpy X-Y 8.01 vs Z 29.37 kJ/m2: X-Y and Z may be swapped on the sheet, copied as printed. Specimens printed at 240 °C, below the 270-300 °C recommended nozzle range. No equilibrium water absorption number (curve only)."
+    },
+    {
+      "product": "Polymaker ABS Pro",
+      "type": "ABS",
+      "product_url": "https://polymaker.com/product/polymaker-abs-pro/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_ABS-Pro_V1.1_2026_06_01_EN.pdf",
+      "datasheet_version": "V1.1 (2026-06-01)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 240,
+        "bed_c": 80,
+        "chamber_c": "ambient",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.04,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.33,
+          "plus_minus": 0.03,
+          "unit": "GPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1.95,
+          "plus_minus": 0.02,
+          "unit": "GPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 34.94,
+          "plus_minus": 0.62,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 21.87,
+          "plus_minus": 0.32,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 7.34,
+          "plus_minus": 1.13,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.54,
+          "plus_minus": 0.13,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.33,
+          "plus_minus": 0.05,
+          "unit": "GPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2.17,
+          "plus_minus": 0.01,
+          "unit": "GPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 60.05,
+          "plus_minus": 0.46,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 41.24,
+          "plus_minus": 2.14,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 14.48,
+          "plus_minus": 0.96,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 8.87,
+          "plus_minus": 1.14,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 39.58,
+          "plus_minus": 12.45,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 116.1,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 101.4,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 106.4,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.51,
+          "unit": "%",
+          "standard": "70% RH, 23°C, max"
+        }
+      ],
+      "notes": "Unnotched Charpy: the sheet gives X-Y 8.87 and Z 39.58 kJ/m2 (lower than notched X-Y and Z far above X-Y); X-Y and Z may be swapped on the sheet, copied as printed. Specimens printed at 240 °C, below the 270-290 °C recommended nozzle range."
+    },
+    {
+      "product": "Polymaker ASA (PolyLite ASA)",
+      "type": "ASA",
+      "product_url": "https://polymaker.com/product/polylite-asa/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_ASA-V6.0_2025-12-02_EN.pdf",
+      "datasheet_version": "V6.0 (2025-12-02)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 90,
+        "chamber_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.13,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2379,
+          "plus_minus": 157,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1965,
+          "plus_minus": 136,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 43.8,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 32,
+          "plus_minus": 1.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 6.7,
+          "plus_minus": 0.6,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.65,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3206,
+          "plus_minus": 108,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 73.4,
+          "plus_minus": 2.1,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 10.3,
+          "plus_minus": 0.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "Z",
+          "value": 6.7,
+          "plus_minus": 1.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 105,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 100,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 103,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.4,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Sold as Polymaker ASA (formerly PolyLite ASA); tested with PolyLite ASA SKU PF01046. Z bending N/A."
+    },
+    {
+      "product": "Fiberon ASA-CF08",
+      "type": "ASA-CF",
+      "product_url": "https://fiberon.polymaker.com/product/asa-cf08/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-ASA-CF08_V1.0_EN.pdf",
+      "datasheet_version": "V1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "bed_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet (drying 90 °C/6 h recommended; annealing N/A)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.09,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3611.7,
+          "plus_minus": 181.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1903.8,
+          "plus_minus": 71.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 43.5,
+          "plus_minus": 0.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 25.0,
+          "plus_minus": 0.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 1.8,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 2.7,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3265.0,
+          "plus_minus": 56.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1743.4,
+          "plus_minus": 59.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 69.1,
+          "plus_minus": 1.62,
+          "unit": "MPa",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 46.5,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 5.5,
+          "plus_minus": 0.14,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 11.0,
+          "plus_minus": 0.5,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 11.9,
+          "plus_minus": 0.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 110.8,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 97.3,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 103.0,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.37,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Bending strength: the sheet prints ISO 306, GB/T 1633 (a Vicat method) as its test method, copied as printed; likely ISO 178. 8% carbon fiber."
+    },
+    {
+      "product": "PolyLite PC (Transparent)",
+      "type": "PC",
+      "product_url": "https://polymaker.com/product/polylite-pc/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_PolyLite-PC-Transparent_V5.5_2026_01_05_EN.pdf",
+      "datasheet_version": "V5.5 (2026-01-05)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 100,
+        "chamber_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet (the sheet recommends annealing printed parts at 90 °C for 2 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.19,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T 1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2497,
+          "plus_minus": 154,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2371,
+          "plus_minus": 55,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 69.1,
+          "plus_minus": 3.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 52.8,
+          "plus_minus": 1.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.8,
+          "plus_minus": 0.9,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 2.7,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2640,
+          "plus_minus": 47,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 106.1,
+          "plus_minus": 1.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 4.1,
+          "plus_minus": 0.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 120,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 107,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 111,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.253,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Light transmission 89% (GB/T 2410). Bending values: the sheet names ISO 527, GB/T 1040; Z bending values are N/A."
+    },
+    {
+      "product": "PolyMax PC",
+      "type": "PC",
+      "product_url": "https://polymaker.com/product/polymax-pc/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/TDS_Polymaker_PolyMax-PC_V5.5_2026-01-05_EN.pdf",
+      "datasheet_version": "V5.5 (2026-01-05)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 100,
+        "chamber_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet (the sheet recommends annealing printed parts at 90 °C for 2 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.19,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T 1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2435,
+          "plus_minus": 63,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2149,
+          "plus_minus": 119,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 53.44,
+          "plus_minus": 0.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 41.43,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.53,
+          "plus_minus": 0.45,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 2.79,
+          "plus_minus": 0.21,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2050,
+          "plus_minus": 79,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 81.29,
+          "plus_minus": 1.53,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 21.28,
+          "plus_minus": 1.69,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 117,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 99,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 114,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.253,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Bending (flexural) values: the sheet names ISO 527, GB/T 1040 as their method (the specimen drawing says ISO 178); Z bending values are N/A. Low-temperature impact: N/A."
+    },
+    {
+      "product": "PolyMax PC-FR",
+      "type": "PC",
+      "product_url": "https://polymaker.com/product/polymax-pc-fr/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/TDS_Polymaker_PolyMax-PC-FR_V5.5_2026-01-06_EN.pdf",
+      "datasheet_version": "V5.5 (2026-01-06)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 100,
+        "chamber_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet (the sheet recommends annealing printed parts at 90 °C for 2 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.2,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T 1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2634,
+          "plus_minus": 182,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2743,
+          "plus_minus": 72,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 67,
+          "plus_minus": 4.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 46,
+          "plus_minus": 4.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 3.49,
+          "plus_minus": 0.7,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 2.2,
+          "plus_minus": 0.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2518,
+          "plus_minus": 53,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 96.6,
+          "plus_minus": 1.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 11.7,
+          "plus_minus": 1.6,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 116,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 107,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 110,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.22,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Flame retardancy UL94 V0. Bending values: the sheet names ISO 527, GB/T 1040; Z bending and Z notched impact are N/A. Low-temperature notched impact (X-Y, ISO 179-1/1eA, -30 °C): 7.5 ± 1.6 kJ/m2. The sheet's HDT curve is titled PolyLite PC Transparent (copy error on the sheet)."
+    },
+    {
+      "product": "Polymaker PC-ABS",
+      "type": "PC-ABS",
+      "product_url": "https://polymaker.com/product/polymaker-pc-abs/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/TDS_Polymaker_PC-ABS_V5.5_2025-12-10_EN.pdf",
+      "datasheet_version": "V5.5 (2025-12-10)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 100,
+        "chamber_c": 90,
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet (the sheet recommends annealing printed parts at 90 °C for 2 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.1,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T 1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1835,
+          "plus_minus": 65,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1677,
+          "plus_minus": 94,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 39.9,
+          "plus_minus": 1.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 22.9,
+          "plus_minus": 1.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.2,
+          "plus_minus": 0.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.5,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2081,
+          "plus_minus": 106,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 66.3,
+          "plus_minus": 0.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 25.8,
+          "plus_minus": 1.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 135,
+          "unit": "°C",
+          "standard": "ISO 306,GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 106,
+          "unit": "°C",
+          "standard": "ISO 75, 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 112,
+          "unit": "°C",
+          "standard": "ISO 75, 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.352,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "PC/ABS blend. Z bending and Z notched impact are N/A. Low-temperature notched impact (ISO 179-1/1eA, -30 °C): X-Y 13 ± 2, Z 1.5 ± 0.2 kJ/m2. Tested with PC-ABS Black (SKU PC04001)."
+    },
+    {
+      "product": "Polymaker PC-PBT",
+      "type": "PC-PBT",
+      "product_url": "https://polymaker.com/product/polymaker-pc-pbt/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/TDS_Polymaker_PC-PBT_V5.5_2025-12-10_EN.pdf",
+      "datasheet_version": "V5.5 (2025-12-10)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 230,
+        "bed_c": 50,
+        "chamber_c": "ambient",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "on",
+        "conditioning": "not stated on the sheet (the sheet recommends annealing printed parts at 90 °C for 2 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.2,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T 1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1940.2,
+          "plus_minus": 76.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1743.4,
+          "plus_minus": 66.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 50.4,
+          "plus_minus": 0.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 37.9,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.6,
+          "plus_minus": 0.7,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 3.8,
+          "plus_minus": 0.5,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 1950.3,
+          "plus_minus": 142.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 77.3,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 33.0,
+          "plus_minus": 0.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 139,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 91,
+          "unit": "°C",
+          "standard": "ISO 75, 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 107,
+          "unit": "°C",
+          "standard": "ISO 75, 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.257,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "PC/PBT blend. Z bending and Z notched impact are N/A. Low-temperature notched impact (ISO 179-1/1eA, -30 °C) as printed: X-Y 13 ± 2, Z 1.5 ± 0.2 kJ/m2 (identical to the PC-ABS sheet; may be a copy on the sheet). Tested with PC-PBT Black (SKU PC05001). Reported as discontinued on some regional wikis."
+    },
+    {
+      "product": "Fiberon PA612-ESD",
+      "type": "PA",
+      "product_url": "https://fiberon.polymaker.com/product/pa612-esd/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA612-ESD_V1.0_EN.pdf",
+      "datasheet_version": "V1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 50,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "OFF (X-Y), 80% (Z)",
+        "conditioning": "dry: all specimens annealed at 100 °C for 16 h; conditioned (the sheet's 'wet status'): annealed at 100 °C for 16 h, then immersed in water at 60 °C for 48 h, average moisture content 4.64%",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.1,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1784.4,
+          "plus_minus": 102.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 21.5,
+          "plus_minus": 2.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.4,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1362.3,
+          "plus_minus": 111.7,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 39.5,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 24.1,
+          "plus_minus": 2.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 4.5,
+          "plus_minus": 0.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 4293.7,
+          "plus_minus": 116.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 84.3,
+          "plus_minus": 2.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 3.0,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3745.5,
+          "plus_minus": 292.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 116.2,
+          "plus_minus": 5.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 5.9,
+          "plus_minus": 0.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1343.9,
+          "plus_minus": 99.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 19.2,
+          "plus_minus": 1.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.9,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1420.1,
+          "plus_minus": 114.0,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 40.5,
+          "plus_minus": 1.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 33.6,
+          "plus_minus": 2.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 3.6,
+          "plus_minus": 0.1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3730.8,
+          "plus_minus": 156.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 73.6,
+          "plus_minus": 2.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.2,
+          "plus_minus": 0.4,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3056.1,
+          "plus_minus": 175.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 102.6,
+          "plus_minus": 4.8,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 4.9,
+          "plus_minus": 0.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 190.0,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 125.4,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 157.0,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        }
+      ],
+      "notes": "Static-dissipative PA612; Filamatch has no ESD type, so filed as PA. Specimen cooling fan: OFF for X-Y bars, 80% for Z bars. The sheet gives no equilibrium water absorption number. Dry and conditioned values are given; thermal values are not marked dry or wet on the sheet. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "PolyMide CoPA",
+      "aliases": [
+        "Polymide Copa PA6"
+      ],
+      "type": "PA",
+      "product_url": "https://polymaker.com/product/polymide-copa/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_PolyMide-CoPA_V5.5_2026-01-06_EN.pdf",
+      "datasheet_version": "V5.5 (2026-01-06)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 50,
+        "chamber_c": "ambient",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "dry and wet status are given; the sheet does not say how specimens were dried, wetted or annealed (it recommends annealing parts at 80 °C for 6 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.12,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T 1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2703,
+          "plus_minus": 259,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2209,
+          "plus_minus": 59,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 78.0,
+          "plus_minus": 0.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 45.8,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 12.7,
+          "plus_minus": 2.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.3,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2510,
+          "plus_minus": 25,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 109.8,
+          "plus_minus": 1.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 6.9,
+          "plus_minus": 1.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 724,
+          "plus_minus": 61,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 660,
+          "plus_minus": 29,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 34.3,
+          "plus_minus": 2.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 13.7,
+          "plus_minus": 1.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 13.2,
+          "plus_minus": 2.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.7,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 636,
+          "plus_minus": 11,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 22.6,
+          "plus_minus": 0.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 27.7,
+          "plus_minus": 1.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 180,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 70,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 111,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 2.82,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Copolymer of PA6 and PA6,6. 'conditioned' = the sheet's 'Wet Status'; the sheet gives no wetting procedure or moisture content. Z bending and Z notched impact are N/A."
+    },
+    {
+      "product": "Fiberon PA12-CF10",
+      "type": "PA-CF",
+      "product_url": "https://fiberon.polymaker.com/product/pa12-cf10/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA12-CF10_V1.1_EN.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 50,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "dry: all specimens annealed at 100 °C for 16 h; conditioned (the sheet's 'wet status'): annealed at 100 °C for 16 h, then immersed in water at 60 °C for 48 h, average moisture content 2.92%",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.06,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1806.6,
+          "plus_minus": 145.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 52.2,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 5.0,
+          "plus_minus": 1.0,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1452.8,
+          "plus_minus": 96.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 69.8,
+          "plus_minus": 2.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 33.7,
+          "plus_minus": 1.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 27.6,
+          "plus_minus": 3.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3311.2,
+          "plus_minus": 134.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 77.4,
+          "plus_minus": 1.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.2,
+          "plus_minus": 0.4,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2886.5,
+          "plus_minus": 144.8,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 112.4,
+          "plus_minus": 1.0,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 9.9,
+          "plus_minus": 0.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1622.0,
+          "plus_minus": 71.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 42.1,
+          "plus_minus": 1.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 5.3,
+          "plus_minus": 1.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1145.9,
+          "plus_minus": 76.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 52.2,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 41.2,
+          "plus_minus": 4.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 20.6,
+          "plus_minus": 4.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3131.7,
+          "plus_minus": 124.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 71.7,
+          "plus_minus": 0.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 5.3,
+          "plus_minus": 0.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2652.7,
+          "plus_minus": 57.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 91.8,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 10.2,
+          "plus_minus": 0.8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 170.2,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 105,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 131,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 1.5,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "10% carbon fiber PA12. Dry and conditioned values are given; thermal values are not marked dry or wet on the sheet. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PA6-CF20",
+      "type": "PA-CF",
+      "product_url": "https://fiberon.polymaker.com/product/pa6-cf20/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA6-CF20_V1.1_EN.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 50,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "dry: all specimens annealed at 100 °C for 16 h; conditioned (the sheet's 'wet status'): annealed at 100 °C for 16 h, then immersed in water at 60 °C for 48 h, average moisture content 5.30%",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.17,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 3759.5,
+          "plus_minus": 118.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 54.0,
+          "plus_minus": 5.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.9,
+          "plus_minus": 0.4,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2975.3,
+          "plus_minus": 174.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 71.3,
+          "plus_minus": 17.7,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 24.0,
+          "plus_minus": 1.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 7.5,
+          "plus_minus": 2.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 8636.5,
+          "plus_minus": 211.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 109.3,
+          "plus_minus": 2.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 2.1,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 7037.6,
+          "plus_minus": 205.4,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 161.0,
+          "plus_minus": 3.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 11.0,
+          "plus_minus": 0.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1056.1,
+          "plus_minus": 127.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 25.5,
+          "plus_minus": 1.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 6.7,
+          "plus_minus": 1.7,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 801.1,
+          "plus_minus": 24.1,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 29.2,
+          "plus_minus": 1.0,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 73.0,
+          "plus_minus": 2.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 25.2,
+          "plus_minus": 3.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2508.1,
+          "plus_minus": 82.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 54.7,
+          "plus_minus": 1.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 7.0,
+          "plus_minus": 0.9,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2286.2,
+          "plus_minus": 185.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 64.9,
+          "plus_minus": 4.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 35.6,
+          "plus_minus": 1.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 219.2,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 173,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 215,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 3.3,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "20% carbon fiber PA6. Dry and conditioned values are given; thermal values are not marked dry or wet on the sheet. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PA612-CF15",
+      "type": "PA-CF",
+      "product_url": "https://fiberon.polymaker.com/product/pa612-cf15/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/TDS_FIBERON-PA612-CF15_V1.1_EN.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 50,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "dry: all specimens annealed at 100 °C for 16 h; conditioned (the sheet's 'wet status'): annealed at 100 °C for 16 h, then immersed in water at 60 °C for 48 h, average moisture content 2.57%",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.03,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2786.4,
+          "plus_minus": 78.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 48.3,
+          "plus_minus": 3.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 2.1,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2264.8,
+          "plus_minus": 203.8,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 73.5,
+          "plus_minus": 3.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 29.9,
+          "plus_minus": 1.6,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 12.6,
+          "plus_minus": 1.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 5136.7,
+          "plus_minus": 192.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 91.9,
+          "plus_minus": 2.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 2.6,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 4583.5,
+          "plus_minus": 62.7,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 138.0,
+          "plus_minus": 2.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 8.1,
+          "plus_minus": 0.8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2386.8,
+          "plus_minus": 150.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 35.6,
+          "plus_minus": 3.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.7,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1764.5,
+          "plus_minus": 98.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 64.6,
+          "plus_minus": 2.0,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 41.0,
+          "plus_minus": 1.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 17.6,
+          "plus_minus": 2.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3990.8,
+          "plus_minus": 136.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 83.1,
+          "plus_minus": 2.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.1,
+          "plus_minus": 0.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3888.3,
+          "plus_minus": 56.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 118.1,
+          "plus_minus": 1.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 7.7,
+          "plus_minus": 0.5,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 206.2,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 114,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 175,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 2.2,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "15% carbon fiber PA612 (successor of PolyMide PA6-CF). Dry and conditioned values are given; thermal values are not marked dry or wet on the sheet. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PA6-GF25",
+      "type": "PA-GF",
+      "product_url": "https://fiberon.polymaker.com/product/pa6-gf25/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/TDS_FIBERON-PA6-GF25_V1.1_EN.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 50,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "dry: all specimens annealed at 100 °C for 16 h; conditioned (the sheet's 'wet status'): annealed at 100 °C for 16 h, then immersed in water at 60 °C for 48 h, average moisture content 4.57%",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.2,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 3375.9,
+          "plus_minus": 142.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 60.7,
+          "plus_minus": 1.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 4.0,
+          "plus_minus": 0.4,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2849.5,
+          "plus_minus": 282.1,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 99.9,
+          "plus_minus": 3.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 27.4,
+          "plus_minus": 0.5,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 16.2,
+          "plus_minus": 4.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 5356.9,
+          "plus_minus": 211.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 80.1,
+          "plus_minus": 1.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 2.4,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 4314.2,
+          "plus_minus": 120.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 133.8,
+          "plus_minus": 4.7,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "dry"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 10.0,
+          "plus_minus": 0.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "dry"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1164.7,
+          "plus_minus": 117.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 26.3,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 7.1,
+          "plus_minus": 0.9,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 836.3,
+          "plus_minus": 22.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 33.8,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 82.1,
+          "plus_minus": 2.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 17.5,
+          "plus_minus": 2.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1793.6,
+          "plus_minus": 83.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 40.2,
+          "plus_minus": 2.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.2,
+          "plus_minus": 0.7,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 1448.1,
+          "plus_minus": 38.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 47.8,
+          "plus_minus": 1.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341",
+          "condition": "conditioned"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 28.0,
+          "plus_minus": 1.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043",
+          "condition": "conditioned"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 211.7,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 157,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 191,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 3.33,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "25% glass fiber PA6 (successor of PolyMide PA6-GF). Dry and conditioned values are given; thermal values are not marked dry or wet on the sheet. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PETG-ESD",
+      "type": "PETG",
+      "product_url": "https://fiberon.polymaker.com/product/petg-esd/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PETG-ESD_V1.1_EN.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 290,
+        "bed_c": 80,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet (annealing N/A; drying 65 °C/3 h recommended)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.24,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 1626.4,
+          "plus_minus": 31.5,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 20.7,
+          "plus_minus": 0.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.8,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1150.9,
+          "plus_minus": 75.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 24.1,
+          "plus_minus": 1.2,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 29.3,
+          "plus_minus": 2.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 5.2,
+          "plus_minus": 0.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1983.0,
+          "plus_minus": 74.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 36.1,
+          "plus_minus": 0.9,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 7.3,
+          "plus_minus": 0.7,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 1650.8,
+          "plus_minus": 140.7,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 54.0,
+          "plus_minus": 2.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 5.7,
+          "plus_minus": 0.5,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 86,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 72,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 76,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.41,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "Static-dissipative PETG; Filamatch has no ESD type, so filed as PETG. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PETG-rCF08",
+      "type": "PETG-CF",
+      "product_url": "https://fiberon.polymaker.com/product/petg-rcf08/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PETG-rCF08_V1.0_EN.pdf",
+      "datasheet_version": "V1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "bed_c": 60,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "0-50%",
+        "conditioning": "not stated on the sheet (annealing N/A; drying 65 °C/3 h recommended)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.3,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2651.9,
+          "plus_minus": 51.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 41.1,
+          "plus_minus": 4.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.9,
+          "plus_minus": 0.3,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 1622.2,
+          "plus_minus": 104.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 47.8,
+          "plus_minus": 2.4,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 18.0,
+          "plus_minus": 1.1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3710.1,
+          "plus_minus": 151.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 59.8,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 5.7,
+          "plus_minus": 1.0,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3779.1,
+          "plus_minus": 40.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 94.6,
+          "plus_minus": 1.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 4.0,
+          "plus_minus": 0.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 81.6,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 65.7,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 68.6,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.55,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "8% recycled carbon fiber PETG. Z unnotched Charpy is blank on the sheet. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PET-CF17",
+      "type": "PET-CF",
+      "product_url": "https://fiberon.polymaker.com/product/pet-cf17/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PET-CF17_V1.0_EN.pdf",
+      "datasheet_version": "V1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 70,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "all specimens annealed at 120 °C for 10 h",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.34,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 3558.8,
+          "plus_minus": 260.4,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 27.9,
+          "plus_minus": 1.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 0.8,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2768.2,
+          "plus_minus": 422.6,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 43.4,
+          "plus_minus": 8.8,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 25.1,
+          "plus_minus": 2.8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 3.1,
+          "plus_minus": 0.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 5481.0,
+          "plus_minus": 223.7,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 65.9,
+          "plus_minus": 1.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 2.4,
+          "plus_minus": 0.5,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 4744.4,
+          "plus_minus": 136.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 109.3,
+          "plus_minus": 2.0,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 5.1,
+          "plus_minus": 0.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 238.4,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 105,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 147.5,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.53,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "17% carbon fiber PET. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PET-GF15",
+      "type": "PET-GF",
+      "product_url": "https://fiberon.polymaker.com/product/pet-gf15/",
+      "datasheet_url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_FIBERON_PET-GF15_v2.0_2026-02-02.pdf",
+      "datasheet_version": "v2.0 (2026-02-02)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 300,
+        "bed_c": 80,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "not stated for the mechanical bars; HDT is given both as printed and annealed (the sheet's annealing: 120 °C/16 h)",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.43,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 3428.9,
+          "plus_minus": 257.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 48.2,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 2.6,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2998.4,
+          "plus_minus": 92.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 80.3,
+          "plus_minus": 2.5,
+          "unit": "MPa",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 27.2,
+          "plus_minus": 2.0,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 13.9,
+          "plus_minus": 1.6,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 4144.2,
+          "plus_minus": 133.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 59.9,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 4.0,
+          "plus_minus": 0.5,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3705.4,
+          "plus_minus": 84.5,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 104.2,
+          "plus_minus": 2.4,
+          "unit": "MPa",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 8.7,
+          "plus_minus": 0.6,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 232.6,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 71.8,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa (annealed)"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 81.6,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa (annealed)"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.32,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "15% glass fiber PET. Bending strength: the sheet prints ISO 306, GB/T 1633 (a Vicat method) as its test method, copied as printed; likely ISO 178. HDT annealed values are entered; as printed the sheet gives 71.8 °C (1.8 MPa) and 81.6 °C (0.45 MPa). A V1.0 sheet is on fiberon.polymaker.com; v2.0 on polymaker.com is newer. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PPS-GF20",
+      "aliases": [
+        "PPS GF"
+      ],
+      "type": "PPS-GF",
+      "product_url": "https://fiberon.polymaker.com/product/pps-gf20/",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0548/7299/7945/files/TDS_FIBERON_PPS-GF20_V1.1.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": "330-350",
+        "bed_c": 90,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "all specimens annealed at 130 °C for 10 h",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.36,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2557.2,
+          "plus_minus": 101.2,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 22.9,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.1,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2605.7,
+          "plus_minus": 101.8,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 45.7,
+          "plus_minus": 1.1,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 27.3,
+          "plus_minus": 1.1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 4.3,
+          "plus_minus": 0.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 4552.0,
+          "plus_minus": 54.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 64.1,
+          "plus_minus": 2.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 2.0,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 4110.7,
+          "plus_minus": 124.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 102.3,
+          "plus_minus": 3.7,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 7.3,
+          "plus_minus": 0.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 272.5,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 125.8,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 236.3,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.11,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "20% glass fiber PPS, UL94 V0. Datasheet link is Polymaker's own Shopify CDN copy, linked from wiki.polymaker.com (no copy found on polymaker.com or fiberon.polymaker.com). HDT specimens annealed at 130 °C; the sheet says annealing at 230 °C raises HDT (0.45/1.8 MPa) to 248.9/219.6 °C. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PPS-CF10",
+      "type": "PPS-CF",
+      "product_url": "https://fiberon.polymaker.com/product/pps-cf10/",
+      "datasheet_url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PPS-CF10_V1.1_EN.pdf",
+      "datasheet_version": "V1.1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": "330-350",
+        "bed_c": 90,
+        "chamber_c": "room temperature",
+        "top_bottom_layers": 3,
+        "shells": 2,
+        "cooling_fan": "off",
+        "conditioning": "all specimens annealed at 125 °C for 16 h",
+        "orientation_note": "X-Y: bars printed flat; Z: bars printed upright (Z axis along the bar), per the sheet's specimen drawings"
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.29,
+          "unit": "g/cm3",
+          "standard": "ISO1183, GB/T1033"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "Z",
+          "value": 2790.0,
+          "plus_minus": 152.6,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "Z",
+          "value": 32.0,
+          "plus_minus": 5.1,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "Z",
+          "value": 1.6,
+          "plus_minus": 0.2,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "Z",
+          "value": 2619.3,
+          "plus_minus": 155.3,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "Z",
+          "value": 30.0,
+          "plus_minus": 5.2,
+          "unit": "MPa",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 11.4,
+          "plus_minus": 0.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "Z",
+          "value": 4.1,
+          "plus_minus": 1.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 5446.7,
+          "plus_minus": 149.0,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "XY",
+          "value": 59.4,
+          "plus_minus": 1.3,
+          "unit": "MPa",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "XY",
+          "value": 1.4,
+          "plus_minus": 0.1,
+          "unit": "%",
+          "standard": "ISO 527, GB/T 1040"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 4646.9,
+          "plus_minus": 136.9,
+          "unit": "MPa",
+          "standard": "ISO 178, GB/T 9341"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 94.3,
+          "plus_minus": 1.9,
+          "unit": "MPa",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 5.3,
+          "plus_minus": 0.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179, GB/T 1043"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 267.5,
+          "unit": "°C",
+          "standard": "ISO 306, GB/T 1633"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 133,
+          "unit": "°C",
+          "standard": "ISO 75 1.8MPa"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 252.5,
+          "unit": "°C",
+          "standard": "ISO 75 0.45MPa"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.225,
+          "unit": "%",
+          "standard": "70% RH, 23°C, equilibrium"
+        }
+      ],
+      "notes": "10% carbon fiber PPS. Bending strength: the sheet prints ISO 306, GB/T 1633 (a Vicat method) as its test method, copied as printed; likely ISO 178. The specimen drawings are labelled 'ASTM D638 (ISO 527, GB/T 1040)'."
+    },
+    {
+      "product": "Fiberon PPS-CF20",
+      "type": "PPS-CF",
+      "product_url": "https://fiberon.polymaker.com/product/pps-cf20/",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "Listed under 'Ultra Performance' on fiberon.polymaker.com (2026-11-08), but its product page returned HTTP 522 and no TDS was found on polymaker.com, fiberon.polymaker.com, wiki.polymaker.com or by web search. Possibly not yet released."
+    }
+  ]
+}

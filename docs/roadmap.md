@@ -21,21 +21,21 @@ The shared printer, spool and slot model behind it is already in place.
 
 ## Slicers
 
-- **PrusaSlicer and SuperSlicer:** the slots are kept (PrusaSlicer layout,
-  0.6). Next: prepare the project and estimate with PrusaSlicer's command
-  line.
+Done: Bambu Studio prepares projects by itself (0.5), printers with several
+nozzles or tools (0.6, see [design/multi-nozzle.md](design/multi-nozzle.md)),
+and Send to PrusaSlicer prepares the project (0.8).
+
 - **Cura and the OrcaSlicer family** (Creality Print, Elegoo Slicer,
   Snapmaker Orca, Anycubic Slicer Next): test and document.
-- **Bambu Studio** as a first-class target next to OrcaSlicer.
-- **Printers with several nozzles or tools** (Bambu Lab H2C, H3C, X2D,
-  Prusa XL and INDX, Snapmaker U1, IDEX): the plan is in
-  [design/multi-nozzle.md](design/multi-nozzle.md).
+- **IDEX printers** (two independent heads).
+- **Body settings in more slicers:** more settings per body (layer height,
+  modifiers), and seams.
 
 ## Palette
 
 - A light theme to match Fusion's light UI.
 - A full accessibility pass (screen readers, keyboard-only use).
-- Highlight a filament's bodies in Fusion when you click its row.
+- Spool prices from Spoolman or Bambuddy for the filament cost.
 
 ## Platform and distribution
 

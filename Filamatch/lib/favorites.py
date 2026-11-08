@@ -213,23 +213,11 @@ def _colors_close(left: str, right: str, tolerance: int = _COLOR_TOLERANCE) -> b
 
 
 def _lab_from_hex(color_hex_value: str) -> Tuple[float, float, float]:
-    """Convert ``#RRGGBB`` (sRGB, D65) to CIE L*a*b*."""
+    """Convert ``#RRGGBB`` (sRGB, D65) to CIE L*a*b* (see printer_model.lab_from_hex)."""
+    from . import printer_model
 
-    def linear(channel: int) -> float:
-        value = channel / 255.0
-        return value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
-
-    red, green, blue = (linear(channel) for channel in _rgb_from_hex(color_hex_value))
-    xyz = (
-        (0.4124 * red + 0.3576 * green + 0.1805 * blue) / 0.95047,
-        0.2126 * red + 0.7152 * green + 0.0722 * blue,
-        (0.0193 * red + 0.1192 * green + 0.9505 * blue) / 1.08883,
-    )
-    f_x, f_y, f_z = (
-        value ** (1.0 / 3.0) if value > 0.008856 else 7.787 * value + 16.0 / 116.0
-        for value in xyz
-    )
-    return 116.0 * f_y - 16.0, 500.0 * (f_x - f_y), 200.0 * (f_y - f_z)
+    red, green, blue = _rgb_from_hex(color_hex_value)  # raises FavoritesError on bad input
+    return printer_model.lab_from_hex("#{:02X}{:02X}{:02X}".format(red, green, blue))
 
 
 def nearest_swatch_template(color_hex_value: str) -> str:

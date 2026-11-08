@@ -1004,7 +1004,8 @@ def _check_join_touching_bodies(environment: _TestEnvironment) -> None:
             ).format(_CORE_NS, objects, items))
             archive.writestr(_MODEL_SETTINGS_PART, (
                 '<config><object id="1"><metadata key="name" value="Base"/><metadata key="extruder" value="2"/></object>'
-                '<object id="2"><metadata key="name" value="Inlay"/><metadata key="extruder" value="1"/></object></config>'
+                '<object id="2"><metadata key="name" value="Inlay"/><metadata key="extruder" value="1"/>'
+                '<metadata key="sparse_infill_density" value="100%"/></object></config>'
             ))
             archive.writestr(_PROJECT_SETTINGS_PART, "{}")
             archive.writestr("Metadata/thumbnail.png", b"png")
@@ -1032,8 +1033,10 @@ def _check_join_touching_bodies(environment: _TestEnvironment) -> None:
         (part.get("id"), {meta.get("key"): meta.get("value") for meta in part.findall("metadata")})
         for part in settings.iter("part")
     ]
-    _expect(parts == [("1", {"name": "Base", "extruder": "2"}), ("2", {"name": "Inlay", "extruder": "1"})],
-            "each part keeps its body's name and slot: {}".format(parts))
+    _expect(parts == [("1", {"name": "Base", "extruder": "2"}),
+                      ("2", {"name": "Inlay", "extruder": "1", "sparse_infill_density": "100%"})],
+            "each part keeps its body's name, slot and print settings: {}".format(parts))
+
     _expect(_PROJECT_SETTINGS_PART not in names and "Metadata/thumbnail.png" in names,
             "the copy drops project settings and keeps the rest")
     _expect(_layout_flags(joined) == [], "the joined object needs no --assemble")
@@ -1526,6 +1529,37 @@ def _check_bambu_studio_words(environment: _TestEnvironment) -> None:
     )
 
 
+def _check_infill_patterns(environment: _TestEnvironment) -> None:
+    """The slicer keeps the infill names it knows; unknown ones come back as its default."""
+    calls = {"count": 0}
+
+    def loading(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
+        calls["count"] += 1
+        out_dir = Path(_flag_value(command, "--outputdir") or "")
+        with zipfile.ZipFile(command[-1], "r") as archive:
+            text = archive.read(_MODEL_SETTINGS_PART).decode("utf-8")
+            model = archive.read("3D/3dmodel.model").decode("utf-8")
+        _expect(model.count("<object ") == len(candidate_names()), "one cube per known infill type")
+        known = {"gyroid", "zig-zag", "crosshatch", "cubic"}
+        text = re.sub(r'value="([a-z0-9-]+)"/></object>',
+                      lambda match: 'value="{}"/></object>'.format(match.group(1) if match.group(1) in known else "cubic"),
+                      text)
+        with zipfile.ZipFile(str(out_dir / "out.3mf"), "w") as archive:
+            archive.writestr(_MODEL_SETTINGS_PART, text)
+        return _FakeCompletedProcess(0)
+
+    def candidate_names() -> List[str]:
+        return list(body_settings.INFILL_PATTERNS)
+
+    environment.runner.cli_handler = loading
+    first = infill_patterns(environment.slicer_exe)
+    again = infill_patterns(environment.slicer_exe)
+    _expect(first == [name for name in body_settings.INFILL_PATTERNS if name in {"gyroid", "zig-zag", "crosshatch", "cubic"}]
+            and again == first and calls["count"] == 1,
+            "only names that come back unchanged count, asked once: {} ({} runs)".format(first, calls["count"]))
+    _expect(not list(environment.cache_root.glob("infill_*/")), "the temporary folder is removed")
+
+
 def _check_estimate_print(environment: _TestEnvironment) -> None:
     """A copy is sliced for time and grams; two nozzles get nozzle stats; failures raise."""
     project = environment.root / "estimate" / "project.3mf"
@@ -1550,7 +1584,7 @@ def _check_estimate_print(environment: _TestEnvironment) -> None:
     environment.runner.cli_handler = slicing
     estimate = estimate_print(project, environment.slicer_exe)
     _expect(
-        estimate == {"minutes": 43, "grams": 7.0, "plates": 1, "filament_grams": [2.7, 0.0, 4.3]},
+        estimate == {"minutes": 43, "grams": 7.0, "plates": 1, "cost": None, "filament_grams": [2.7, 0.0, 4.3]},
         "time, total and grams per slot (unused slot 2 is 0): {}".format(estimate),
     )
     _expect(seen.get("stats") == ["Standard#1", "High Flow#1"], "the copy names each nozzle: {}".format(seen))
@@ -1599,6 +1633,9 @@ def _check_estimate_print(environment: _TestEnvironment) -> None:
     else:
         raise AssertionError("a slicer that always crashes must raise")
     _expect(not list((environment.cache_root).glob("estimate_*")), "the temporary folder is removed")
+    _expect(print_cost({1: 2.71, 3: 4.28}, ["20", "18", "25.99"]) == round((2.71 * 20 + 4.28 * 25.99) / 1000, 2)
+            and print_cost({1: 2.0, 2: 0.0}, ["20"]) == 0.04 and print_cost({1: 2.0}, None) is None
+            and print_cost({1: 2.0}, ["n/a"]) is None, "cost: grams at each preset's price per kg; unknown prices give none")
 
     def two_plates(command: List[str], runner: _FakeRunner) -> _FakeCompletedProcess:
         out_dir = Path(_flag_value(command, "--outputdir") or "")
@@ -1613,7 +1650,7 @@ def _check_estimate_print(environment: _TestEnvironment) -> None:
 
     environment.runner.cli_handler = two_plates
     estimate = estimate_print(project, environment.slicer_exe)
-    _expect(estimate == {"minutes": 66, "grams": 7.0, "plates": 2, "filament_grams": [4.1, 3.0]},
+    _expect(estimate == {"minutes": 66, "grams": 7.0, "plates": 2, "cost": None, "filament_grams": [4.1, 3.0]},
             "every plate counts, also for a filament on two plates: {}".format(estimate))
 
 
@@ -2308,6 +2345,7 @@ def _selftest() -> int:
         ("slicer kind and name come from the app path", _check_slicer_names),
         ("a preset's exact filament type (ABS-GF) is kept", _check_filament_types),
         ("a copy is sliced for the print time and grams", _check_estimate_print),
+        ("the slicer says which infill types it accepts", _check_infill_patterns),
         ("online printers get their vendor's own filament presets", _check_remote_filament_presets),
         ("mixed nozzle sizes keep the bridge width within the smallest", lambda environment: _check_bridge_line_width()),
         ("touching bodies are joined into one object with parts", _check_join_touching_bodies),

@@ -583,8 +583,8 @@ def _coerce_mapping(mapping: Any) -> Dict[str, int]:
         raise ExportError("mapping is not a valid name-to-extruder mapping: %s" % exc) from exc
 
 
-def _injector_accepts_filaments(injector: Any) -> bool:
-    """Return ``True`` when ``injector.inject`` accepts a ``filaments`` keyword."""
+def _injector_accepts(injector: Any, keyword: str) -> bool:
+    """Return ``True`` when ``injector.inject`` accepts the keyword (``filaments``, ``object_settings``)."""
     inject = getattr(injector, "inject", None)
     if not callable(inject):
         return False
@@ -593,7 +593,7 @@ def _injector_accepts_filaments(injector: Any) -> bool:
     except (TypeError, ValueError):
         logger.debug("Could not introspect the injector's inject() signature.", exc_info=True)
         return False
-    if "filaments" in parameters:
+    if keyword in parameters:
         return True
     return any(
         parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
@@ -676,6 +676,7 @@ def export_and_inject(
     filaments: Optional[Mapping[int, Any]] = None,
     write_project_settings: bool = False,
     injector: Any = None,
+    object_settings: Optional[Mapping[str, Mapping[str, str]]] = None,
 ) -> ExportResult:
     """Export the design and inject slicer metadata atomically.
 
@@ -697,6 +698,8 @@ def export_and_inject(
             installed injector supports it).
         injector: Optional module/object exposing ``inject``; defaults to the
             imported :mod:`threemf_injector` module.
+        object_settings: Print settings of single bodies by body name
+            (Bambu Studio / OrcaSlicer keys, see body_settings.to_bambu).
 
     Returns:
         An :class:`ExportResult` populated from the injector's result.
@@ -715,7 +718,7 @@ def export_and_inject(
     temp_path = destination.with_suffix(_TEMP_SUFFIX)
     _remove_file_quietly(temp_path)
 
-    filaments_supported = _injector_accepts_filaments(injector_module)
+    filaments_supported = _injector_accepts(injector_module, "filaments")
     pass_filaments = bool(write_project_settings and filaments is not None)
     if pass_filaments and not filaments_supported:
         logger.warning(
@@ -731,6 +734,11 @@ def export_and_inject(
     }
     if pass_filaments:
         inject_kwargs["filaments"] = filaments
+    if object_settings:
+        if _injector_accepts(injector_module, "object_settings"):
+            inject_kwargs["object_settings"] = object_settings
+        else:
+            logger.warning("The 3MF injector cannot write print settings of single bodies; they are left out.")
 
     try:
         try:

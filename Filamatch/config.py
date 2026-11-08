@@ -31,7 +31,7 @@ from pathlib import Path
 
 ADDIN_NAME = "Filamatch"
 COMPANY_NAME = "Percosys"
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 
 #: Writes debug messages to the TEXT COMMANDS window when True.
 DEBUG = False
@@ -49,6 +49,8 @@ PALETTE_DIR = ADDIN_DIR / "palette"
 CATALOG_FILE = ADDIN_DIR / "data" / "filaments.json"
 #: What Filamatch knows about printers (lib/printer_catalog.py).
 PRINTERS_FILE = ADDIN_DIR / "data" / "printers.json"
+#: Filament rules for the design check (lib/design_check.py).
+FILAMENT_RULES_FILE = ADDIN_DIR / "data" / "filament_rules.json"
 MANIFEST_FILE = ADDIN_DIR / "{}.manifest".format(ADDIN_NAME)
 
 DATA_DIR_ENV = "FILAMATCH_DATA_DIR"

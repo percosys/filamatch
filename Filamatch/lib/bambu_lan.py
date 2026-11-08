@@ -53,6 +53,7 @@ from .printer_model import (
     SpoolInfo,
     normalize_color_hex,
     nozzle_flow,
+    nozzle_material,
 )
 
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
@@ -783,11 +784,13 @@ def nozzles_of(report: Mapping[str, Any]) -> Tuple[NozzleInfo, ...]:
         if isinstance(item, Mapping):
             diameter = _float(item.get("diameter"))
             if diameter and diameter > 0:
-                found.append(NozzleInfo(_int(item.get("id"), len(found)), diameter, nozzle_flow(item.get("type"))))
+                found.append(NozzleInfo(_int(item.get("id"), len(found)), diameter, nozzle_flow(item.get("type")),
+                                        nozzle_material(item.get("type"))))
     if not found:
         diameter = _float(report.get("nozzle_diameter"))
         if diameter and diameter > 0:
-            found.append(NozzleInfo(0, diameter, nozzle_flow(report.get("nozzle_type"))))
+            found.append(NozzleInfo(0, diameter, nozzle_flow(report.get("nozzle_type")),
+                                    nozzle_material(report.get("nozzle_type"))))
     return tuple(sorted(found, key=lambda item: item.id))
 
 
@@ -1164,11 +1167,14 @@ def _check_nozzles() -> None:
         {"id": 1, "diameter": 0.6, "type": "HS01", "wear": 0.0},
         {"id": 0, "diameter": 0.4, "type": "HH01", "wear": 0.0},
     ]}, "extruder": {"info": [{"id": 0}, {"id": 1}]}}, "nozzle_diameter": "0.4", "nozzle_type": "HH01"}
-    _expect(nozzles_of(h2d) == (NozzleInfo(0, 0.4, "High Flow"), NozzleInfo(1, 0.6, "Standard")),
-            "H2D: both nozzles by id: {}".format(nozzles_of(h2d)))
+    _expect(nozzles_of(h2d) == (NozzleInfo(0, 0.4, "High Flow", "hardened_steel"),
+                                NozzleInfo(1, 0.6, "Standard", "hardened_steel")),
+            "H2D: both nozzles by id, hardened steel by the type code: {}".format(nozzles_of(h2d)))
     x1c = {"device": {"nozzle": {"0": {"info": 136, "temp": 26}, "info": 247}},
            "nozzle_diameter": "0.4", "nozzle_type": "hardened_steel"}
-    _expect(nozzles_of(x1c) == (NozzleInfo(0, 0.4, ""),), "X1C: one nozzle, flow unknown")
+    _expect(nozzles_of(x1c) == (NozzleInfo(0, 0.4, "", "hardened_steel"),), "X1C: one nozzle, flow unknown")
+    a1 = {"nozzle_diameter": "0.4", "nozzle_type": "stainless_steel"}
+    _expect(nozzles_of(a1) == (NozzleInfo(0, 0.4, "", "stainless_steel"),), "A1: a stainless steel nozzle")
     _expect(nozzles_of({}) == (), "no nozzle data")
 
 

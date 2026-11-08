@@ -1,0 +1,620 @@
+{
+ "schema": 1,
+ "version": "2026-11-08 tier 1 (generic)",
+ "about": "Generic as-printed values per filament type: printed test bars from makers' data sheets, typed in by hand with their source. The type's value is the median of its data sheets. Rough estimates (see uncertainty_percent), never design values. docs/as-printed/strength-model.md.",
+ "patterns": {
+  "default": {
+   "stiffness_exponent": 2.0,
+   "stiffness_factor": 1.0,
+   "strength_exponent": 1.5,
+   "strength_factor": 0.3,
+   "also": [
+    "cubic",
+    "adaptivecubic",
+    "quartercubic",
+    "supportcubic",
+    "3dhoneycomb",
+    "concentric",
+    "crosshatch",
+    "lateral-lattice"
+   ],
+   "source": "Gibson & Ashby, Cellular Solids, 2nd ed. (1997): open-cell foam law (E ~ rho^2, strength ~ 0.3 rho^1.5); used for patterns without a fitted source"
+  },
+  "gyroid": {
+   "stiffness_exponent": 1.68,
+   "stiffness_factor": 0.79,
+   "strength_exponent": 1.5,
+   "strength_factor": 0.3,
+   "also": [
+    "tpmsd",
+    "tpmsfk"
+   ],
+   "source": "Stiffness: power fit to the measured points of Bean, Lopez-Anido & Vel 2022, Appl. Sci. 12:2180, doi:10.3390/app12042180 (PLA, compression). Strength: Gibson & Ashby foam law"
+  },
+  "grid": {
+   "stiffness_exponent": 1.55,
+   "stiffness_factor": 0.65,
+   "strength_exponent": 2.71,
+   "strength_factor": 2.0,
+   "also": [
+    "rectilinear",
+    "alignedrectilinear",
+    "line",
+    "zig-zag",
+    "zigzag",
+    "crosszag",
+    "lockedzag",
+    "archimedeanchords",
+    "hilbertcurve",
+    "octagramspiral"
+   ],
+   "source": "Power fit to Table 2 of Leon-Becerra, Gonzalez-Estrada & Quiroga 2021, ACS Omega 6:30993, doi:10.1021/acsomega.1c04295 (PLA, in-plane compression, rho 0.29-0.62)"
+  },
+  "triangles": {
+   "stiffness_exponent": 1.02,
+   "stiffness_factor": 0.25,
+   "strength_exponent": 1.73,
+   "strength_factor": 0.735,
+   "also": [
+    "tri-hexagon",
+    "stars"
+   ],
+   "source": "Power fit to Table 2 of Leon-Becerra et al. 2021, ACS Omega 6:30993 (PLA, in-plane compression, rho 0.24-0.45)"
+  },
+  "honeycomb": {
+   "stiffness_exponent": 3.29,
+   "stiffness_factor": 0.46,
+   "strength_exponent": 2.72,
+   "strength_factor": 0.6,
+   "also": [
+    "lateral-honeycomb"
+   ],
+   "source": "Power fit to Table 2 of Leon-Becerra et al. 2021, ACS Omega 6:30993 (PLA, in-plane compression, rho 0.36-0.67); weakest (in-plane) direction"
+  },
+  "lightning": {
+   "stiffness_exponent": 1.0,
+   "stiffness_factor": 0.0,
+   "strength_exponent": 1.0,
+   "strength_factor": 0.0,
+   "source": "assumed: lightning infill only holds up the top skins, so the core carries nothing"
+  }
+ },
+ "types": [
+  {
+   "type": "PA-CF",
+   "match": [
+    "\\b(PA|PAHT|PPA|NYLON)\\d*\\b.*\\bCF",
+    "\\b(PA|PAHT|PPA)\\d*-?CF"
+   ],
+   "uncertainty_percent": 40,
+   "poisson": {
+    "value": 0.36,
+    "source": "assumed: no measurement for this type found; printed ABS and PC measure 0.29-0.39 (Cantrell et al. 2017, Rapid Prototyping Journal, doi:10.1108/RPJ-03-2016-0042)"
+   },
+   "note": "Dry values. Moist polyamide is much weaker (Polymaker: about half).",
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "PA6-CF (TDS V3.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0584/7236/6216/files/Bambu_PA6-CF_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "280 °C nozzle, 100 °C bed, 100 mm/s, dried 80 °C / 12 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 4430,
+      "e_z_mpa": 2170,
+      "uts_xy_mpa": 102,
+      "uts_z_mpa": 48
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Bambu Lab",
+     "product": "PAHT-CF (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0380/5149/files/Bambu_PAHT-CF_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "290 °C nozzle, 100 °C bed, dried 80 °C / 12 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 3860,
+      "e_z_mpa": 2180,
+      "uts_xy_mpa": 88,
+      "uts_z_mpa": 64
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "Fiberon PA6-CF20 (TDS V1.1, dry)",
+     "url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA6-CF20_V1.1_EN.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill, annealed 100 °C / 16 h, dry",
+     "print_settings": "300 °C nozzle, 50 °C bed; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 8636.5,
+      "e_z_mpa": 3759.5,
+      "uts_xy_mpa": 109.3,
+      "uts_z_mpa": 54.0
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "Fiberon PA12-CF10 (TDS V1.1, dry)",
+     "url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA12-CF10_V1.1_EN.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill, annealed 100 °C / 16 h, dry",
+     "print_settings": "300 °C nozzle, 50 °C bed; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 3311.2,
+      "e_z_mpa": 1806.6,
+      "uts_xy_mpa": 77.4,
+      "uts_z_mpa": 52.2
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "BASF Forward AM",
+     "product": "Ultrafuse PAHT CF15 (TDS v3.5, dry)",
+     "url": "https://move.forward-am.com/hubfs/AES%20Documentation/Reinforced%20Filaments/PAHT%20CF15/TDS/Ultrafuse_PAHT_CF15_TDS_EN_v3.5.pdf",
+     "standard": "ISO 527",
+     "specimen": "printed bars, flat (XY) and upright (ZX), dry",
+     "print_settings": "0.6 mm hardened nozzle, 285 °C, 110 °C bed, 45 mm/s; layer height not stated",
+     "values": {
+      "e_xy_mpa": 8386,
+      "e_z_mpa": 3532,
+      "uts_xy_mpa": 103.2,
+      "uts_z_mpa": 18.2
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "PETG-CF",
+   "match": [
+    "\\bPETG\\b.*\\bR?CF",
+    "\\bPETG-?R?CF"
+   ],
+   "uncertainty_percent": 40,
+   "poisson": {
+    "value": 0.36,
+    "source": "assumed: no measurement for this type found; printed ABS and PC measure 0.29-0.39 (Cantrell et al. 2017, Rapid Prototyping Journal, doi:10.1108/RPJ-03-2016-0042)"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "PETG-CF (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0380/5149/files/Bambu_PETG-CF_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "255 °C nozzle, 70 °C bed, 150 mm/s, annealed 65 °C / 8 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2460,
+      "e_z_mpa": 1340,
+      "uts_xy_mpa": 59,
+      "uts_z_mpa": 38
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "Fiberon PETG-rCF08 (TDS V1.0)",
+     "url": "https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PETG-rCF08_V1.0_EN.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "270 °C nozzle, 60 °C bed, not annealed; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 3710.1,
+      "e_z_mpa": 2651.9,
+      "uts_xy_mpa": 59.8,
+      "uts_z_mpa": 41.1
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "PLA-CF",
+   "match": [
+    "\\bPLA\\b.*\\bCF",
+    "\\bPLA-?CF",
+    "\\bCF[- ]?PLA\\b"
+   ],
+   "uncertainty_percent": 40,
+   "poisson": {
+    "value": 0.35,
+    "source": "assumed as PLA: Gawel et al. 2023, Polymers 15:1651, doi:10.3390/polym15071651 (printed PLA, 100% infill)"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "PLA-CF (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0584/7236/6216/files/Bambu_PLA-CF_Technical_Data_Sheet_V3.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "230 °C nozzle, 35 °C bed, 180 mm/s, annealed 55 °C / 8 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2790,
+      "e_z_mpa": 2160,
+      "uts_xy_mpa": 38,
+      "uts_z_mpa": 26
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "PolyLite PLA-CF (TDS V5.4)",
+     "url": "https://cdn.shopify.com/s/files/1/0548/7299/7945/files/PolyLite_PLA-CF_TDS_EN_V5.4.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "230 °C nozzle, 50 °C bed; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 3280.7,
+      "e_z_mpa": 2213.1,
+      "uts_xy_mpa": 31.2,
+      "uts_z_mpa": 15.1
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Overture",
+     "product": "CF PLA (TDS V1.1)",
+     "url": "https://cdn.shopify.com/s/files/1/0207/3624/5824/files/OVERTURE_CF_PLA_TDS_EN.pdf",
+     "standard": "ASTM D638 (ISO 527, GB/T 1040)",
+     "specimen": "printed bars, 100% infill",
+     "print_settings": "200 °C nozzle, 40 °C bed, 45 mm/s; nozzle size and layer height not stated; Z modulus not given",
+     "values": {
+      "e_xy_mpa": 2945.26,
+      "uts_xy_mpa": 28.28,
+      "uts_z_mpa": 12.54
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "PLA",
+   "match": [
+    "\\bPLA\\b(?!.*\\b(GF|CF)\\b)"
+   ],
+   "uncertainty_percent": 30,
+   "poisson": {
+    "value": 0.35,
+    "source": "Gawel et al. 2023, Polymers 15:1651, doi:10.3390/polym15071651 (printed PLA, ISO 527, 100% infill, 0.14 mm layers)"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "PLA Basic (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0380/5149/files/Bambu_PLA_Basic_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "220 °C nozzle, 35 °C bed, 200 mm/s, annealed 55 °C / 8 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2680,
+      "e_z_mpa": 2160,
+      "uts_xy_mpa": 39,
+      "uts_z_mpa": 35
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "PolyLite PLA (TDS V5.4)",
+     "url": "https://cdn.shopify.com/s/files/1/0548/7299/7945/files/PolyLite_PLA_TDS_EN_V5.4.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "230 °C nozzle, 50 °C bed, fan on; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 3426.9,
+      "e_z_mpa": 3064.9,
+      "uts_xy_mpa": 52.3,
+      "uts_z_mpa": 40.5
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Prusament",
+     "product": "PLA (TDS v1.1)",
+     "url": "https://prusament.com/wp-content/uploads/2022/10/PLA_Prusament_TDS_2021_10_EN.pdf",
+     "standard": "ISO 527-1",
+     "specimen": "printed bars, flat (horizontal), 2 perimeters, 100% rectilinear infill",
+     "print_settings": "Original Prusa MK3/MK3S, 0.20 mm layers, 215 °C nozzle; no Z value (on-edge bars are not Z)",
+     "values": {
+      "e_xy_mpa": 2300,
+      "uts_xy_mpa": 51
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "UltiMaker",
+     "product": "PLA (TDS)",
+     "url": "https://um-support-files.ultimaker.com/materials/2.85mm/tds/PLA/Ultimaker-PLA-TDS-v5.00.pdf",
+     "standard": "ASTM D3039",
+     "specimen": "printed bars, 100% infill, flat (XY) and upright (Z)",
+     "print_settings": "UltiMaker S5, AA 0.4 print core, 0.15 mm layers, Cura 4.9, 2.85 mm filament",
+     "values": {
+      "e_xy_mpa": 3250,
+      "e_z_mpa": 3071,
+      "uts_xy_mpa": 52.5,
+      "uts_z_mpa": 33.1
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "PETG",
+   "match": [
+    "\\bPETG?\\b(?!.*\\b(GF|CF|RCF)\\b)"
+   ],
+   "uncertainty_percent": 35,
+   "poisson": {
+    "value": 0.36,
+    "source": "assumed: no measurement for this type found; printed ABS and PC measure 0.29-0.39 (Cantrell et al. 2017, Rapid Prototyping Journal, doi:10.1108/RPJ-03-2016-0042)"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "PETG Basic (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0380/5149/files/Bambu_PETG_Basic_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "255 °C nozzle, 70 °C bed, 150 mm/s, annealed 65 °C / 8 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 1460,
+      "e_z_mpa": 1120,
+      "uts_xy_mpa": 48,
+      "uts_z_mpa": 39
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Bambu Lab",
+     "product": "PETG HF (TDS V1.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0584/7236/6216/files/Bambu_PETG_HF_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "255 °C nozzle, 70 °C bed, 200 mm/s, annealed 75 °C / 8 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 1810,
+      "e_z_mpa": 1540,
+      "uts_xy_mpa": 34,
+      "uts_z_mpa": 23
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "PolyLite PETG (TDS V6.0)",
+     "url": "https://polymaker.com/wp-content/uploads/TDS_Polymaker_PolyLite-PETG_V6.0_2026-06-09_EN.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "240 °C nozzle, 80 °C bed, fan off; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2116.8,
+      "e_z_mpa": 1898.7,
+      "uts_xy_mpa": 50.8,
+      "uts_z_mpa": 42.8
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Prusament",
+     "product": "PETG (TDS v1.1)",
+     "url": "https://prusament.com/wp-content/uploads/2022/10/PETG_Prusament_TDS_2021_10_EN.pdf",
+     "standard": "ISO 527-1",
+     "specimen": "printed bars, flat (horizontal), 2 perimeters, 100% rectilinear infill",
+     "print_settings": "Original Prusa MK3/MK3S, 0.20 mm layers, 250 °C nozzle, 80 °C bed; no Z value (on-edge bars are not Z)",
+     "values": {
+      "e_xy_mpa": 1500,
+      "uts_xy_mpa": 47
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "UltiMaker",
+     "product": "PETG (TDS v1.00)",
+     "url": "https://um-support-files.ultimaker.com/materials/2.85mm/tds/PETG/Ultimaker-PETG-TDS-v1.00.pdf",
+     "standard": "ASTM D3039",
+     "specimen": "printed bars, 100% infill, flat (XY) and upright (Z)",
+     "print_settings": "UltiMaker S5, AA 0.4 print core, 0.15 mm layers, Cura 4.9, 2.85 mm filament",
+     "values": {
+      "e_xy_mpa": 1939,
+      "e_z_mpa": 1711,
+      "uts_xy_mpa": 46.2,
+      "uts_z_mpa": 19.0
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "ABS",
+   "match": [
+    "\\bABS\\b(?!.*\\b(GF|CF)\\b)"
+   ],
+   "uncertainty_percent": 30,
+   "poisson": {
+    "value": 0.36,
+    "source": "Cantrell et al. 2017, Rapid Prototyping Journal, doi:10.1108/RPJ-03-2016-0042 (printed ABS, 0.36-0.38 in every orientation)"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "ABS (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0584/7236/6216/files/Bambu_ABS_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "260 °C nozzle, 80 °C bed, 200 mm/s, annealed 80 °C / 12 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2200,
+      "e_z_mpa": 1960,
+      "uts_xy_mpa": 41,
+      "uts_z_mpa": 32
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "PolyLite ABS (TDS V5.6)",
+     "url": "https://polymaker.com/wp-content/uploads/lana-downloads/TDS_Polymaker_PolyLite-ABS_V5.6_2025-12-30_EN.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "260 °C nozzle, 90 °C bed, 90 °C chamber, fan off; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2246.6,
+      "e_z_mpa": 2080.9,
+      "uts_xy_mpa": 33.4,
+      "uts_z_mpa": 29.7
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "UltiMaker",
+     "product": "ABS (TDS v5.00)",
+     "url": "https://um-support-files.ultimaker.com/materials/2.85mm/tds/ABS/Ultimaker-ABS-TDS-v5.00.pdf",
+     "standard": "ASTM D3039",
+     "specimen": "printed bars, 100% infill, flat (XY) and upright (Z)",
+     "print_settings": "UltiMaker S5, AA 0.4 print core, 0.15 mm layers, Cura 4.9, 2.85 mm filament",
+     "values": {
+      "e_xy_mpa": 1962,
+      "e_z_mpa": 1699,
+      "uts_xy_mpa": 38.1,
+      "uts_z_mpa": 19.0
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "ASA",
+   "match": [
+    "\\bASA\\b(?!.*\\b(GF|CF)\\b)"
+   ],
+   "uncertainty_percent": 30,
+   "poisson": {
+    "value": 0.36,
+    "source": "assumed as ABS (a similar styrene polymer): Cantrell et al. 2017, Rapid Prototyping Journal, doi:10.1108/RPJ-03-2016-0042"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "ASA (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0584/7236/6216/files/Bambu_ASA_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "260 °C nozzle, 80 °C bed, 200 mm/s, annealed 80 °C / 12 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2450,
+      "e_z_mpa": 2120,
+      "uts_xy_mpa": 52,
+      "uts_z_mpa": 35
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "PolyLite ASA (TDS V5.4)",
+     "url": "https://cdn.shopify.com/s/files/1/0548/7299/7945/files/PolyLite_ASA_TDS_EN_V5.4.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "260 °C nozzle, 90 °C bed, 90 °C chamber; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2379,
+      "e_z_mpa": 1965,
+      "uts_xy_mpa": 43.8,
+      "uts_z_mpa": 32
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Prusament",
+     "product": "ASA (TDS v1.1)",
+     "url": "https://prusament.com/wp-content/uploads/2022/10/ASA_Prusament_TDS_2022_16_EN.pdf",
+     "standard": "ISO 527-1",
+     "specimen": "printed bars, flat (horizontal), 2 perimeters, 100% rectilinear infill",
+     "print_settings": "Original Prusa MK3/MK3S, 0.20 mm layers, 265 °C nozzle, 110 °C bed; no Z value (on-edge bars are not Z)",
+     "values": {
+      "e_xy_mpa": 1600,
+      "uts_xy_mpa": 42
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  },
+  {
+   "type": "PC",
+   "match": [
+    "\\bPC\\b(?!.*\\b(GF|CF)\\b)",
+    "POLYCARBONATE"
+   ],
+   "uncertainty_percent": 35,
+   "poisson": {
+    "value": 0.36,
+    "source": "Cantrell et al. 2017, Rapid Prototyping Journal, doi:10.1108/RPJ-03-2016-0042 (printed PC, 0.29-0.39 by raster; middle value)"
+   },
+   "sources": [
+    {
+     "maker": "Bambu Lab",
+     "product": "PC (TDS V2.0)",
+     "url": "https://cdn.shopify.com/s/files/1/0584/7236/6216/files/Bambu_PC_Technical_Data_Sheet.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 100% infill, annealed and dried before the test",
+     "print_settings": "270 °C nozzle, 100 °C bed, 200 mm/s, annealed 80 °C / 12 h; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2110,
+      "e_z_mpa": 1450,
+      "uts_xy_mpa": 62,
+      "uts_z_mpa": 56
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Polymaker",
+     "product": "PolyLite PC (TDS V5.4)",
+     "url": "https://cdn.shopify.com/s/files/1/0548/7299/7945/files/PolyLite_PC_TDS_EN_V5.4.pdf",
+     "standard": "ISO 527, GB/T 1040",
+     "specimen": "printed bars, 2 walls, 3 top/bottom layers, 100% infill",
+     "print_settings": "260 °C nozzle, 100 °C bed, 90 °C chamber; nozzle size and layer height not stated",
+     "values": {
+      "e_xy_mpa": 2497,
+      "e_z_mpa": 2371,
+      "uts_xy_mpa": 69.1,
+      "uts_z_mpa": 52.8
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "Prusament",
+     "product": "PC Blend (TDS v1.1)",
+     "url": "https://prusament.com/wp-content/uploads/2022/10/PCBlend_Prusament_TDS_2022_16_EN.pdf",
+     "standard": "ISO 527-1",
+     "specimen": "printed bars, flat (horizontal), 2 perimeters, 100% rectilinear infill",
+     "print_settings": "Original Prusa MK3/MK3S, 0.20 mm layers, 275 °C nozzle; no Z value (on-edge bars are not Z)",
+     "values": {
+      "e_xy_mpa": 1900,
+      "uts_xy_mpa": 63
+     },
+     "accessed": "2026-11-08"
+    },
+    {
+     "maker": "UltiMaker",
+     "product": "PC (TDS v5.00)",
+     "url": "https://um-support-files.ultimaker.com/materials/2.85mm/tds/PC/Ultimaker-PC-TDS-v5.00.pdf",
+     "standard": "ASTM D3039",
+     "specimen": "printed bars, 100% infill, flat (XY) and upright (Z)",
+     "print_settings": "UltiMaker S5, AA 0.4 print core, 0.15 mm layers, Cura 4.9, 2.85 mm filament",
+     "values": {
+      "e_xy_mpa": 2394,
+      "e_z_mpa": 2255,
+      "uts_xy_mpa": 53.3,
+      "uts_z_mpa": 25.2
+     },
+     "accessed": "2026-11-08"
+    }
+   ]
+  }
+ ]
+}

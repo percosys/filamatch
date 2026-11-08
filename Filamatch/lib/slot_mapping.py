@@ -41,15 +41,14 @@ def _field(obj: Any, name: str, default: Any = None) -> Any:
     return getattr(obj, name, default)
 
 
-def color_distance(first: str, second: str) -> int:
-    """Return the Euclidean RGB distance between two ``#RRGGBB`` colours."""
-    def rgb(value: Any) -> Tuple[int, int, int]:
-        text = printer_model.normalize_color_hex(value)
-        return int(text[1:3], 16), int(text[3:5], 16), int(text[5:7], 16)
+def color_distance(first: str, second: str) -> float:
+    """How different two ``#RRGGBB`` colours look (CIEDE2000 delta E, 0 to about 100).
 
-    red_a, green_a, blue_a = rgb(first)
-    red_b, green_b, blue_b = rgb(second)
-    return int(((red_a - red_b) ** 2 + (green_a - green_b) ** 2 + (blue_a - blue_b) ** 2) ** 0.5)
+    Measured the way people see colour, not as RGB numbers: a design's
+    Bambu Green against a PolyLite green spool is 8.8 (the same colour in
+    another shade), black against near-black 4.3.
+    """
+    return round(printer_model.color_difference(first, second), 1)
 
 
 def score_slot(material: Any, slot: Any) -> int:
@@ -72,16 +71,16 @@ def score_slot(material: Any, slot: Any) -> int:
     material_color = str(_field(material, "color_hex", "#808080") or "#808080")
     slot_color = str(_field(slot, "color_hex", "") or _field(spool, "color_hex", ""))
     distance = color_distance(material_color, slot_color)
-    if distance == 0:
+    if distance < 1.0:  # looks identical
         score += 60
-    elif distance <= 12:
+    elif distance <= 5.0:  # very close
         score += 50
-    elif distance <= 40:
+    elif distance <= 12.0:  # the same colour in another shade
         score += 25
-    elif distance <= 90:
+    elif distance <= 25.0:
         score += 5
     else:
-        score -= min(30, distance // 15)
+        score -= min(30, int(distance // 3))
     manufacturer = str(_field(material, "manufacturer", "") or "").strip().lower()
     brand = str(_field(spool, "brand", "") or "").strip().lower()
     if manufacturer and brand and (manufacturer in brand or brand in manufacturer):
@@ -428,11 +427,18 @@ def _check_overrides() -> None:
 def _check_colors() -> None:
     """Colour distance helper is symmetric and bounded."""
     _expect(color_distance("#000000", "#000000") == 0, "identical colours must be zero")
-    _expect(color_distance("#000000", "#FFFFFF") > 400, "black/white distance mismatch")
+    _expect(color_distance("#000000", "#FFFFFF") == 100.0, "black against white is 100")
     _expect(
-        color_distance("#FF6600", "#FF6601") <= 2,
+        color_distance("#FF6600", "#FF6601") < 1.0,
         "near-identical colours must be close",
     )
+    # The owner's AMS (2026-11-08): a Bambu Green design and the PolyLite green
+    # spool are one colour in two shades; green and grey are not.
+    _expect(5.0 < color_distance("#00AE42", "#0ACC38") <= 12.0 and color_distance("#00AE42", "#898989") > 25.0,
+            "perceived colour: green shades close, green and grey far")
+    # RGB numbers call dark navy and black closer than two light greys that look alike.
+    _expect(color_distance("#D0D0D0", "#C6C6C6") < color_distance("#000000", "#1A1A40"),
+            "two light greys look closer than black and dark navy")
 
 
 def _check_identical_spools() -> None:

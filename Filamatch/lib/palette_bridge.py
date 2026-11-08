@@ -40,6 +40,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from . import bambu_lan
+from . import body_settings
+from . import design_check
 from . import testing
 
 from .. import config
@@ -83,6 +85,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "auto_library_update": True,
     # Slice a copy after sending for print time, filament and the spool check.
     "estimate_enabled": True,
+    # Shown before the filament cost; the slicer presets' prices have no currency.
+    "currency_symbol": "$",
     # Save filament presets built from the Open Filament Database in the
     # slicer's own user presets (filament_presets.save_to_slicer).
     "save_slicer_presets": False,
@@ -97,6 +101,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     # Bambu printers read directly over the LAN (see bambu_lan.LanPrinter);
     # each access code lives in the keychain, the file keeps it empty.
     "bambu_lan_printers": [],
+    # The As printed tab's own settings (lib/as_printed_bridge.py owns them).
+    "as_printed": {},
 }
 
 #: Settings whose values live in the OS keychain (see ``secret_store``) when
@@ -766,6 +772,11 @@ def _detected_material_payload(material: Any) -> Dict[str, Any]:
         "body_count": len(body_names),
         "bodies": body_names,
         "slot": getattr(material, "slot", 0),
+        # False: the type is Filamatch's fallback ("PLA"), not the filament's.
+        "in_catalog": bool(getattr(material, "in_catalog", False)),
+        # Temperature group, abrasive filler and bed range for the design check.
+        "traits": design_check.filament_traits(
+            getattr(material, "filament_type", ""), getattr(material, "display_name", "")),
     }
 
 
@@ -773,15 +784,63 @@ def _materials_payload(design: Any, entries: Sequence[Any]) -> List[Dict[str, An
     """Detect the assembly's materials and convert them into palette rows."""
     if design is None:
         return []
-    try:
-        from . import materials_workflow
+    from . import materials_workflow
 
+    try:
         detected = materials_workflow.collect_assembly_materials(design, entries)
+    except materials_workflow.NoMaterialsFoundError:
+        LOGGER.info("The active design has no solid bodies yet.")
+        return []
     except Exception:
         LOGGER.exception("Could not detect assembly materials")
         log_message("Could not detect assembly materials: {}".format(traceback.format_exc()))
         return []
-    return [_detected_material_payload(material) for material in detected]
+    try:
+        placed = list(materials_workflow.iter_placed_bodies(design))
+        thinnest = design_check.thinnest_by_material(placed)
+    except Exception:  # The thin-detail check is a hint; detection must not fail on it.
+        LOGGER.exception("Could not measure the bodies for thin details")
+        placed, thinnest = [], {}
+    bodies_by_material = _body_rows(placed)
+    rows = [_detected_material_payload(material) for material in detected]
+    for row in rows:
+        row["detail_width_mm"] = thinnest.get(row["material_id"])
+        row["body_list"] = bodies_by_material.get(row["material_id"], [])
+    return rows
+
+
+def _body_rows(placed: Sequence[Tuple[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """Each filament's bodies for the palette, by ``material_id``.
+
+    One row per body (a component placed twice is one body, ``copies`` 2):
+    ``{token, name, component, copies, settings, summary}``; ``component`` is
+    "" for a body of the design's top level.  ``token`` finds the body again
+    (set_body_settings, select_bodies).
+    """
+    rows: Dict[str, List[Dict[str, Any]]] = {}
+    by_token: Dict[str, Dict[str, Any]] = {}
+    for material_id, body in placed:
+        native = getattr(body, "nativeObject", None) or body
+        token = str(getattr(native, "entityToken", "") or "")
+        if not token:
+            continue
+        if token in by_token:
+            by_token[token]["copies"] += 1
+            continue
+        component = getattr(native, "parentComponent", None)
+        in_occurrence = getattr(body, "nativeObject", None) is not None
+        settings = body_settings.read_body(native)
+        row = {
+            "token": token,
+            "name": str(getattr(native, "name", "") or ""),
+            "component": str(getattr(component, "name", "") or "") if in_occurrence else "",
+            "copies": 1,
+            "settings": settings,
+            "summary": body_settings.describe(settings),
+        }
+        by_token[token] = row
+        rows.setdefault(material_id, []).append(row)
+    return rows
 
 
 def _materials_used_payload(detected: Sequence[Any], result: Any) -> List[Dict[str, Any]]:
@@ -1048,6 +1107,8 @@ def _bambuddy_context_payload(
                         "side": _nozzle_side(nozzle, len(printer.nozzles)),
                         "diameter": nozzle.diameter,
                         "flow": nozzle.flow,
+                        "material": nozzle.material,
+                        "hardness": design_check.nozzle_hardness(nozzle.material),
                     }
                     for nozzle in getattr(printer, "nozzles", ()) or ()
                 ],
@@ -1066,6 +1127,7 @@ def _bambuddy_context_payload(
                 "filament_type": slot.filament_type,
                 "color_hex": slot.color_hex,
                 "display_name": _bambuddy_slot_display_name(slot),
+                "traits": design_check.filament_traits(slot.filament_type, _bambuddy_slot_display_name(slot)),
                 "spool_display_name": slot.spool.display_name if slot.spool is not None else "",
 
                 "spool_id": slot.spool.id if slot.spool is not None else 0,
@@ -1247,6 +1309,87 @@ def _import_bambuddy_slots(
     except Exception as exc:
         LOGGER.exception("Could not import Bambuddy spools")
         _send_error(palette, "bambuddyImportResult", _error_text(exc))
+
+
+def _handle_use_loaded_filament(data: Mapping[str, Any], palette: Any) -> None:
+    """Replace one design filament on its bodies with the spool loaded in a slot.
+
+    The spool is imported like ``bambuddy_import`` (Favorites and the design);
+    the slot stays chosen for the new material.  Replies ``loadedFilamentUsed``.
+    """
+    try:
+        from . import printer_sources
+
+        material_id = str(data.get("material_id") or "").strip()
+        slot_key = str(data.get("slot_key") or "").strip()
+        if not material_id or not slot_key:
+            raise ValueError("A design filament and a printer slot are needed.")
+        settings = _bambuddy_settings_for_request(data)
+        if _active_design() is None or _active_app() is None:
+            raise RuntimeError("Open a Fusion design first.")
+    except Exception as exc:
+        LOGGER.exception("Could not start use_loaded_filament")
+        _send_error(palette, "loadedFilamentUsed", _error_text(exc))
+        return
+
+    def finish(context: Any, error: Optional[BaseException]) -> None:
+        if error is not None:
+            _send_error(palette, "loadedFilamentUsed", _error_text(error))
+            return
+        _use_loaded_filament(material_id, slot_key, settings, context, palette)
+
+    _run_job("printer", lambda: printer_sources.fetch_context(settings), finish)
+
+
+def _use_loaded_filament(
+    material_id: str, slot_key: str, settings: Mapping[str, Any], context: Any, palette: Any
+) -> None:
+    """Fusion UI thread part of :func:`_handle_use_loaded_filament`."""
+    try:
+        from . import inventory_sync, materials_workflow
+
+        design, app = _active_design(), _active_app()
+        if design is None or app is None:
+            raise RuntimeError("Open a Fusion design first.")
+        printer_id = int(settings.get("bambuddy_printer_id") or 0)
+        slots = [slot for slot in context.slots if slot.printer_id == printer_id]
+        if not any(slot.key == slot_key and slot.loaded for slot in slots):
+            raise RuntimeError("That printer slot has no spool now. Read the printer again.")
+        entries, results = inventory_sync.sync_slots_to_favorites(app, design, slots, selected_keys=[slot_key])
+        if not results or getattr(results[0], "design_material", None) is None:
+            raise RuntimeError("The loaded filament could not be added to the design.")
+        material = results[0].design_material
+        changed = materials_workflow.replace_body_material(design, material_id, material)
+        new_id = materials_workflow.material_identity(material)
+        slot_map = dict(load_settings().get("bambuddy_slot_map") or {})
+        slot_map.pop(material_id, None)
+        slot_map[new_id] = slot_key
+        save_settings({"bambuddy_slot_map": slot_map})
+        try:
+            from . import openfilament
+
+            openfilament.append_user_catalog([entry.to_catalog_dict() for entry in entries])
+        except Exception:
+            LOGGER.exception("Could not keep the loaded filament in the user catalog")
+        catalog_entries = _load_catalog_entries()
+        display_name = results[0].display_name
+        log_message("Replaced a design filament with the loaded {} on {} body(ies)".format(display_name, changed))
+        _send(palette, "loadedFilamentUsed", {
+            "ok": True,
+            "replaced": changed,
+            "display_name": display_name,
+            "old_material_id": material_id,
+            "material_id": new_id,
+            "slot_key": slot_key,
+            "slot_map": slot_map,
+            "favorites": _favorites_summary(app),
+            "materials": _materials_payload(design, catalog_entries),
+            "catalog": _catalog_payload(catalog_entries),
+            "categories": _categories_payload(catalog_entries),
+        })
+    except Exception as exc:
+        LOGGER.exception("Could not use the loaded filament")
+        _send_error(palette, "loadedFilamentUsed", _error_text(exc))
 
 
 def _handle_init(palette: Any) -> None:
@@ -1473,10 +1616,13 @@ def _design_name(design: Any) -> str:
 
 
 def design_fingerprint(design: Any) -> str:
-    """Return a cheap signature of every body and its physical material.
+    """Return a cheap signature of every body, its physical material and its
+    own print settings.
 
-    Assigning, removing or swapping a material, adding or deleting a body, and
-    switching designs all change it; moving or orbiting does not.
+    Assigning, removing or swapping a material, adding or deleting a body,
+    changing a body's print settings (also from another add-in, such as
+    Printegrity, that writes the same attribute) and switching designs all
+    change it; moving or orbiting does not.
     """
     if design is None:
         return ""
@@ -1491,10 +1637,11 @@ def design_fingerprint(design: Any) -> str:
             for body in component.bRepBodies:
                 material = getattr(body, "material", None)
                 rows.append(
-                    "{}|{}|{}".format(
+                    "{}|{}|{}|{}".format(
                         component_key,
                         body.name,
                         getattr(material, "id", "") if material else "",
+                        body_settings.stored_text(body),
                     )
                 )
     except Exception:
@@ -1666,6 +1813,19 @@ def _profiles_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
                 break
         if not process and processes:
             process = processes[0]["name"]
+    try:
+        # The infill types this slicer accepts, for the body settings menu.
+        infill_patterns = [{"value": name, "label": body_settings.pattern_label(name)}
+                           for name in slicer_profiles.infill_patterns(slicer_exe)] if slicer_exe else []
+    except Exception:
+        LOGGER.exception("Could not read the slicer's infill types")
+        infill_patterns = []
+    try:
+        # The chosen printer's values the As printed estimate needs.
+        printer_values = {"nozzle": slicer_profiles.printer_nozzle(slicer_exe, vendor, printer)} if printer else {}
+    except Exception:
+        LOGGER.exception("Could not read the printer's nozzle")
+        printer_values = {}
     return {
         "ok": True,
         "slicers": [
@@ -1675,6 +1835,10 @@ def _profiles_payload(data: Mapping[str, Any]) -> Dict[str, Any]:
         "vendors": vendors,
         "printers": printers,
         "processes": processes,
+        "infill_patterns": infill_patterns,
+        "printer_values": printer_values,
+        # Other slicers' names for the same infill ("zig-zag" is OrcaSlicer's "rectilinear").
+        "infill_aliases": body_settings.PATTERN_ALIASES.get(slicer_profiles.slicer_kind(slicer_exe), {}),
         "imported": slicer_profiles.imported_profiles(),
         "selected": {
             "slicer_path": slicer_exe,
@@ -2337,6 +2501,7 @@ def _handle_export(data: Mapping[str, Any], palette: Any) -> None:
     try:
         from . import exporter
         from . import materials_workflow
+        from . import slicer_profiles
 
         output_path = str(data.get("output_path") or "").strip()
         if not output_path:
@@ -2376,6 +2541,13 @@ def _handle_export(data: Mapping[str, Any], palette: Any) -> None:
             return
 
         mapping = materials_workflow.build_mapping(detected)
+        # Print settings set on single bodies, by their (now unique) names, with
+        # infill types under the chosen slicer's names.
+        object_settings = _body_print_settings(design, slicer_profiles.slicer_kind(
+            str(orca.get("path") or settings.get("slicer_path") or settings.get("orca_path") or "")))
+        if object_settings:
+            log_message("Own print settings on {} body(ies): {}".format(
+                len(object_settings), ", ".join(sorted(object_settings))))
         source_appearance = materials_workflow.find_source_appearance(design, _active_app())
         output = Path(output_path).expanduser()
         base_output = (
@@ -2399,6 +2571,7 @@ def _handle_export(data: Mapping[str, Any], palette: Any) -> None:
                 mapping=mapping,
                 filaments=None,
                 write_project_settings=False,
+                object_settings=object_settings,
             )
         except exporter.InjectionFailedError as exc:
             LOGGER.exception("Export succeeded but material metadata injection failed")
@@ -2791,8 +2964,8 @@ def _start_print_estimate(
             _send(palette, "printEstimate", {"ok": False, "output_path": str(project)})
             return
         spools = _spool_check(detected, manifest, result.get("filament_grams") or [])
-        log_message("Print estimate: {} min, {} g, {} plate(s)".format(
-            result.get("minutes"), result.get("grams"), result.get("plates", 1)))
+        log_message("Print estimate: {} min, {} g, {} plate(s), filament cost {}".format(
+            result.get("minutes"), result.get("grams"), result.get("plates", 1), result.get("cost")))
         for spool in spools:
             if not spool["enough"]:
                 log_message(
@@ -2959,6 +3132,79 @@ def _handle_save_printer_report(palette: Any) -> None:
         _send(palette, "printerReportResult", dict(result, ok=True))
 
     _run_job("printer-report", work, finish)
+
+
+def _body_print_settings(design: Any, slicer_kind: str = "") -> Dict[str, Dict[str, str]]:
+    """Print settings of single bodies by body name, as Bambu Studio / OrcaSlicer keys."""
+    from . import materials_workflow
+
+    found: Dict[str, Dict[str, str]] = {}
+    for _material_id, body in materials_workflow.iter_placed_bodies(design):
+        settings = body_settings.read_body(body)
+        if settings:
+            found[str(getattr(body, "name", "") or "")] = body_settings.to_bambu(settings, slicer_kind)
+    return found
+
+
+def _handle_set_body_settings(payload: Mapping[str, Any], palette: Any) -> None:
+    """Store print settings on bodies by entity token (``bodySettingsSaved``); empty settings clear them."""
+    try:
+        settings = body_settings.normalize(payload.get("settings") or {})
+    except ValueError as exc:  # A value the user typed: say what is wrong, no traceback.
+        _send_error(palette, "bodySettingsSaved", str(exc).capitalize() + ".")
+        return
+    try:
+        design = _active_design()
+        if design is None:
+            raise RuntimeError("Open a Fusion design first.")
+        count = 0
+        for token in payload.get("tokens") or []:
+            found = design.findEntityByToken(str(token))
+            if found:
+                body_settings.write_body(found[0], settings)
+                count += 1
+        summary = body_settings.describe(settings) or "the print process settings"
+        log_message("Print settings for {} body(ies): {}".format(count, summary))
+        _send(palette, "bodySettingsSaved", {
+            "ok": True,
+            "count": count,
+            "settings": settings,
+            "materials": _materials_payload(design, _load_catalog_entries()),
+        })
+    except Exception as exc:
+        LOGGER.exception("Palette set_body_settings failed")
+        _send_error(palette, "bodySettingsSaved", _error_text(exc))
+
+
+def _handle_select_bodies(payload: Mapping[str, Any], palette: Any) -> None:
+    """Select bodies in Fusion (``bodiesSelected`` replies): all bodies of the
+    ``material_ids``, or the bodies with the ``tokens`` (every placed copy)."""
+    from . import materials_workflow
+
+    wanted = {str(value) for value in payload.get("material_ids") or [] if str(value)}
+    tokens = {str(value) for value in payload.get("tokens") or [] if str(value)}
+    try:
+        app = _active_app()
+        ui = getattr(app, "userInterface", None) if app is not None else None
+        if ui is None:
+            raise RuntimeError("Fusion's user interface is not available.")
+        selections = ui.activeSelections
+        selections.clear()
+        count = 0
+        for material_id, body in materials_workflow.iter_placed_bodies(_active_design()):
+            native = getattr(body, "nativeObject", None) or body
+            if material_id not in wanted and str(getattr(native, "entityToken", "") or "") not in tokens:
+                continue
+            try:
+                selections.add(body)
+                count += 1
+            except Exception:  # A hidden body cannot be selected.
+                LOGGER.debug("Could not select a body", exc_info=True)
+        log_message("Selected {} body(ies) in Fusion".format(count))
+        _send(palette, "bodiesSelected", {"ok": True, "count": count})
+    except Exception as exc:
+        LOGGER.exception("Palette select_bodies failed")
+        _send_error(palette, "bodiesSelected", _error_text(exc))
 
 
 def _handle_open_material_browser(palette: Any) -> None:
@@ -3269,6 +3515,12 @@ def dispatch(action: str, data: Any, palette: Any) -> None:
         _handle_bambuddy_import(payload, palette)
     elif action == "open_material_browser":
         _handle_open_material_browser(palette)
+    elif action == "select_bodies":
+        _handle_select_bodies(payload, palette)
+    elif action == "use_loaded_filament":
+        _handle_use_loaded_filament(payload, palette)
+    elif action == "set_body_settings":
+        _handle_set_body_settings(payload, palette)
     elif action == "openfilament_search":
         _handle_openfilament_search(payload, palette)
     elif action == "openfilament_import":
@@ -3291,9 +3543,23 @@ def dispatch(action: str, data: Any, palette: Any) -> None:
         _handle_bambu_lan_remove(payload, palette)
     elif action == "get_log":
         _handle_get_log(palette)
-    else:
+    elif not _dispatch_module(action, payload, palette):
         LOGGER.warning("Unknown palette action %r", action)
         log_message("Unknown palette action: {!r}".format(action))
+
+
+def _dispatch_module(action: str, payload: Mapping[str, Any], palette: Any) -> bool:
+    """Hand an action to another palette module (the As printed tab); True when it took it."""
+    try:
+        from . import as_printed_bridge
+    except ImportError:
+        return False
+    try:
+        return bool(as_printed_bridge.dispatch(action, payload, palette))
+    except Exception:
+        LOGGER.exception("The As printed tab failed on %r", action)
+        log_message("The As printed tab failed on {!r}: {}".format(action, traceback.format_exc()))
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -3718,14 +3984,16 @@ def _self_test() -> int:
     )
 
     # Design change detection: the fingerprint follows bodies and their materials.
-    def fake_design(first: str, second: str) -> Any:
-        def body(name: str, material_id: str) -> Any:
+    def fake_design(first: str, second: str, own: str = "") -> Any:
+        def body(name: str, material_id: str, settings: str = "") -> Any:
             material = types.SimpleNamespace(id=material_id) if material_id else None
-            return types.SimpleNamespace(name=name, material=material)
+            attribute = types.SimpleNamespace(value=settings) if settings else None
+            return types.SimpleNamespace(name=name, material=material, nativeObject=None,
+                                         attributes=types.SimpleNamespace(itemByName=lambda group, key: attribute))
 
         component = types.SimpleNamespace(
             id="c1", name="Root", material=None,
-            bRepBodies=[body("Body1", first), body("Body2", second)],
+            bRepBodies=[body("Body1", first, own), body("Body2", second)],
         )
         return types.SimpleNamespace(
             allComponents=[component],
@@ -3736,9 +4004,10 @@ def _self_test() -> int:
     _check(
         baseline == design_fingerprint(fake_design("A", "B"))
         and baseline != design_fingerprint(fake_design("A", "C"))
+        and baseline != design_fingerprint(fake_design("A", "B", '{"infill": 30}'))
         and baseline.startswith("Bracket:")
         and design_fingerprint(None) == "",
-        "the design fingerprint follows body materials",
+        "the design fingerprint follows body materials and their own print settings",
     )
     refreshed: List[Any] = []
     current = {"design": fake_design("A", "B")}

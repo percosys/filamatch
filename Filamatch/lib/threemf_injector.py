@@ -765,12 +765,15 @@ def _validate_extruder(value: object, context: str) -> int:
 def build_model_settings_config(
     assignments: Mapping[int, int],
     object_names: Mapping[int, str],
+    object_settings: Optional[Mapping[int, Mapping[str, str]]] = None,
 ) -> str:
     """Build the ``Metadata/model_settings.config`` XML for the given assignments.
 
     Returns the exact XML text written into the 3MF archive; each object gets a
     ``<metadata key="name">`` entry when its name is known and always a
     ``<metadata key="extruder">`` entry with a 1-based extruder number.
+    ``object_settings`` adds print settings of an object (Bambu Studio /
+    OrcaSlicer keys such as ``sparse_infill_density``).
     """
     lines: List[str] = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -785,6 +788,10 @@ def build_model_settings_config(
         if isinstance(object_name, str) and object_name:
             lines.append(f'    <metadata key="name" value={quoteattr(object_name)}/>')
         lines.append(f'    <metadata key="extruder" value="{extruder}"/>')
+        for key, value in sorted((object_settings or {}).get(object_id, {}).items()):
+            if key in ("name", "extruder") or not re.fullmatch(r"[A-Za-z0-9_]+", str(key)):
+                raise MappingError(f"invalid print setting {key!r} for object id {object_id}")
+            lines.append(f"    <metadata key={quoteattr(str(key))} value={quoteattr(str(value))}/>")
         lines.append("  </object>")
     lines.append("</config>")
     return "\n".join(lines) + "\n"
@@ -1324,6 +1331,26 @@ def _verify_repacked_archive(
         raise ThreeMFError(f"could not verify repacked 3MF output: {exc}") from exc
 
 
+def _resolve_object_settings(
+    objects: Sequence[ThreeMFObject],
+    object_settings: Mapping[str, Mapping[str, str]],
+    assignments: Mapping[int, int],
+) -> Dict[int, Dict[str, str]]:
+    """Print settings by top-level object id, matched by name like the extruders.
+
+    When several named bodies end up in one object, the first one's settings count.
+    """
+    resolved: Dict[int, Dict[str, str]] = {}
+    for obj in sorted(objects, key=lambda item: item.id):
+        names = [name for name in obj.names if name in object_settings and object_settings[name]]
+        if not names:
+            continue
+        for ancestor_id in obj.ancestor_ids:
+            if ancestor_id in assignments and ancestor_id not in resolved:
+                resolved[ancestor_id] = {str(key): str(value) for key, value in object_settings[names[0]].items()}
+    return resolved
+
+
 def _build_object_names(
     objects: Sequence[ThreeMFObject],
     assignments: Mapping[int, int],
@@ -1371,6 +1398,7 @@ def inject(
     only_mapped: bool = False,
     filaments: Optional[Mapping[int, FilamentSlot]] = None,
     strict: bool = False,
+    object_settings: Optional[Mapping[str, Mapping[str, str]]] = None,
 ) -> InjectionResult:
     """Inject slicer metadata into a 3MF archive.
 
@@ -1395,6 +1423,9 @@ def inject(
     same top-level object with different extruders, and
     :class:`FilamentSettingsError` for malformed filament tables or existing
     project settings payloads.
+
+    *object_settings* maps body names to print settings of their object
+    (Bambu Studio / OrcaSlicer keys, see body_settings.to_bambu).
     """
     source_path = Path(input_path)
     destination_path = Path(output_path)
@@ -1415,7 +1446,9 @@ def inject(
                 )
             )
             object_names = _build_object_names(objects, assignments)
-            config_xml = build_model_settings_config(assignments, object_names)
+            config_xml = build_model_settings_config(
+                assignments, object_names, _resolve_object_settings(objects, object_settings or {}, assignments)
+            )
 
             project_settings_xml: Optional[str] = None
             project_settings_payload: Optional[Dict[str, Any]] = None
@@ -1889,6 +1922,24 @@ def _self_test_cases(tmp_dir: Path) -> List[Tuple[str, Callable[[], None]]]:
         assert config[2]["name"] == "Bracket", config[2]
         assert config[4]["name"] == "Clamp Assembly", config[4]
         assert 5 not in config, "nested object id 5 must resolve to its build-item ancestor 4"
+
+    def check_object_settings() -> None:
+        output = output_dir / "settings.3mf"
+        inject(fixture_path, main_mapping, output, object_settings={
+            "Bracket": {"sparse_infill_density": "40%", "top_shell_layers": "6"},
+            "Clamp Jaw": {"wall_loops": "5"},
+            "Bushing": {},
+        })
+        config = _self_test_config_metadata(output)
+        assert config[2] == {"name": "Bracket", "extruder": "1", "top_shell_layers": "6",
+                             "sparse_infill_density": "40%"}, config[2]
+        assert config[4]["wall_loops"] == "5" and "wall_loops" not in config[3], config
+        try:
+            build_model_settings_config({2: 1}, {}, {2: {"extruder": "3"}})
+        except MappingError:
+            pass
+        else:
+            raise AssertionError("a print setting may not replace the extruder")
 
     def check_extract_objects() -> None:
         with zipfile.ZipFile(fixture_path, "r") as archive:
@@ -2666,6 +2717,7 @@ def _self_test_cases(tmp_dir: Path) -> List[Tuple[str, Callable[[], None]]]:
         ("invalid filament files and slots raise FilamentSettingsError", check_invalid_filament_files),
         ("build_project_settings_config fills gaps and merges existing settings", check_build_project_settings_config),
         ("inject with filaments writes both managed entries and preserves the rest", check_inject_with_filaments),
+        ("print settings of a body reach its object", check_object_settings),
         ("existing project_settings.config is merged and replaced in place", check_existing_project_settings_merge),
         ("CLI --filaments end-to-end and --list-objects rejection", check_cli_filaments_end_to_end),
         ("CLI end-to-end succeeds and failure/no-arg exits are correct", check_cli_end_to_end),

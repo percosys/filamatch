@@ -31,6 +31,7 @@ imported; subprocess and urllib are behind replaceable hooks), and the
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import math
@@ -54,6 +55,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .. import config
+from . import body_settings
 from . import filament_presets
 from . import printer_catalog
 from .project_fixes import (  # noqa: F401 - re-exported: callers and the self-test use these names here
@@ -1661,9 +1663,16 @@ def list_processes(
             }
             for preset in _scan_local_processes(root)
         ]
-        return _filter_compatible_processes(
-            local_processes, printer, default_process
-        )
+        processes = _filter_compatible_processes(local_processes, printer, default_process)
+        for process in processes:
+            # The process's own infill, walls and layers: the palette shows them
+            # in empty body setting fields.
+            try:
+                process["values"] = body_settings.process_values(
+                    _flatten_local_preset(Path(process["process_path"])), "bambu")
+            except (SlicerProfilesError, OSError, ValueError):
+                process["values"] = {}
+        return processes
 
     if vendor == "imported":
         summary = imported_profiles()
@@ -2800,12 +2809,16 @@ def _join_touching_bodies(base_path: Path, work_dir: Path) -> Optional[Path]:
             return None
     extruders: Dict[str, str] = {}
     body_names: Dict[str, str] = {}
+    # Print settings of single bodies (body_settings) move with them onto their parts.
+    body_settings_by_id: Dict[str, Dict[str, str]] = {}
     for element in ET.fromstring(settings_text).findall("object"):
         for meta in element.findall("metadata"):
             if meta.get("key") == "extruder":
                 extruders[str(element.get("id"))] = str(meta.get("value"))
             elif meta.get("key") == "name":
                 body_names[str(element.get("id"))] = str(meta.get("value"))
+            elif meta.get("key"):
+                body_settings_by_id.setdefault(str(element.get("id")), {})[str(meta.get("key"))] = str(meta.get("value"))
     joined_id = str(max(int(key) for key in objects if str(key).isdigit()) + 1)
     components = "".join(
         '<component objectid="{}" transform="{}"/>'.format(
@@ -2824,13 +2837,18 @@ def _join_touching_bodies(base_path: Path, work_dir: Path) -> Optional[Path]:
         count=1,
         flags=re.S,
     )
+    def metadata(values: Mapping[str, str]) -> str:
+        return "".join('<metadata key="{}" value="{}"/>'.format(_xml_escape(key), _xml_escape(value))
+                       for key, value in sorted(values.items()))
+
     parts = "".join(
         '<part id="{0}" subtype="normal_part"><metadata key="name" value="{1}"/>'
-        '<metadata key="extruder" value="{2}"/></part>'.format(
+        '<metadata key="extruder" value="{2}"/>{3}</part>'.format(
             item.get("objectid"),
             # The slot record's name first: the slot check matches bodies by it.
             _xml_escape(body_names.get(str(item.get("objectid"))) or str(objects[item.get("objectid")].get("name") or "Body")),
             extruders.get(str(item.get("objectid")), "1"),
+            metadata(body_settings_by_id.get(str(item.get("objectid")), {})),
         )
         for item in items
     )
@@ -3202,9 +3220,10 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
     without it Bambu Studio's command line stops with "No valid nozzle found".
 
     Returns:
-        ``{"minutes": int, "grams": float, "plates": int, "filament_grams":
-        [float, ...]}`` for all plates together; ``filament_grams`` has one
-        entry per filament slot (0 when unused).
+        ``{"minutes": int, "grams": float, "plates": int, "cost": float or
+        None, "filament_grams": [float, ...]}`` for all plates together;
+        ``filament_grams`` has one entry per filament slot (0 when unused),
+        ``cost`` is the filament cost at the presets' prices per kg.
 
     Raises:
         SlicerProfilesError: If the slicer fails or reports no estimate.
@@ -3268,6 +3287,7 @@ def estimate_print(project_3mf: Path, slicer_exe: Any) -> Dict[str, Any]:
             "minutes": int(round(sum(seconds) / 60.0)),
             "grams": round(sum(grams), 1),
             "plates": len(seconds),
+            "cost": print_cost(used, settings.get("filament_cost")),
             # One entry per project filament (slot 1, 2, ...); an unused one is 0.
             "filament_grams": [round(used.get(number, 0.0), 1) for number in range(1, max(used, default=0) + 1)],
         }
@@ -3296,6 +3316,141 @@ def _prepare_prusa_project(
         log_tail="",
         built_presets=tuple(result["built_presets"]),
     )
+
+
+def printer_nozzle(slicer_exe: Any, vendor_id: str, printer_name: str) -> Optional[float]:
+    """The first nozzle's size of a printer preset in mm, or None when unknown.
+
+    PrusaSlicer's and Bambu Studio's own presets say it; otherwise the name
+    does ("... 0.6 nozzle").
+    """
+    try:
+        if slicer_kind(slicer_exe) == "prusa":
+            from . import prusa_profiles
+
+            sizes = prusa_profiles.string_list(prusa_profiles.bundle_for(
+                resolve_slicer_executable(slicer_exe), vendor_id).flat("printer", printer_name).get("nozzle_diameter", ""))
+            if sizes:
+                return float(sizes[0])
+        elif vendor_id == "bambu_local":
+            root = _bambu_system_dir()
+            for preset in _scan_local_machines(root) if root is not None else []:
+                if preset["name"] == printer_name:
+                    sizes = _flatten_local_preset(Path(preset["path"])).get("nozzle_diameter")
+                    if isinstance(sizes, list) and sizes:
+                        return float(sizes[0])
+    except Exception:
+        logger.debug("Could not read the nozzle of %r", printer_name, exc_info=True)
+    found = re.search(r"(\d+(?:\.\d+)?)\s*(?:mm\s*)?nozzle", str(printer_name or ""), re.I)
+    return float(found.group(1)) if found else None
+
+
+def infill_patterns(slicer_exe: Any) -> List[str]:
+    """The infill types a slicer accepts, by its own names, asked once per slicer version.
+
+    PrusaSlicer lists them in its help.  Bambu Studio and OrcaSlicer do not:
+    when they load a 3MF they keep an object's infill type they know and put
+    their default in place of one they do not, so a 3MF with one small cube
+    per known name (body_settings.INFILL_PATTERNS) is loaded and saved once
+    (well under a second); the names that come back unchanged are the ones it
+    accepts.  Cached per executable and its modification time.
+
+    Raises:
+        SlicerProfilesError: If the slicer gives no answer.
+    """
+    exe = resolve_slicer_executable(slicer_exe)
+    if slicer_kind(exe) == "prusa":
+        from . import prusa_profiles
+
+        try:
+            return prusa_profiles.infill_patterns(exe)
+        except prusa_profiles.PrusaProfilesError as exc:
+            raise SlicerProfilesError(str(exc)) from exc
+    try:
+        stamp = int(os.stat(exe).st_mtime)
+    except OSError:
+        stamp = 0
+    cache = _cache_root() / "infill_patterns_{}_{}.json".format(hashlib.sha1(exe.encode("utf-8")).hexdigest()[:12], stamp)
+    cached = (_read_json_file(cache) or {}).get("patterns") if cache.is_file() else None
+    if isinstance(cached, list) and cached:
+        return [str(name) for name in cached]
+    names = list(body_settings.INFILL_PATTERNS)
+    _cache_root().mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix="infill_", dir=str(_cache_root())))
+    try:
+        probe = work / "patterns.3mf"
+        _write_pattern_probe(probe, names)
+        # In the temporary folder: OrcaSlicer writes "00000.log" where it runs.
+        _run_command([exe, "--export-3mf", "out.3mf", "--outputdir", str(work), str(probe)],
+                     CLI_TIMEOUT_SECONDS, cwd=str(work))
+        found: Dict[str, str] = {}
+        if (work / "out.3mf").is_file():
+            with zipfile.ZipFile(str(work / "out.3mf"), "r") as archive:
+                if _MODEL_SETTINGS_PART in archive.namelist():
+                    for element in ET.fromstring(archive.read(_MODEL_SETTINGS_PART)).findall("object"):
+                        # The slicer numbers the objects anew; their names ("p7") stay.
+                        values = {meta.get("key"): str(meta.get("value")) for meta in element.findall("metadata")}
+                        if values.get("name", "").startswith("p") and "sparse_infill_pattern" in values:
+                            found[values["name"][1:]] = values["sparse_infill_pattern"]
+        accepted = [name for number, name in enumerate(names, start=1) if found.get(str(number)) == name]
+    finally:
+        shutil.rmtree(str(work), ignore_errors=True)
+    if not accepted:
+        raise SlicerProfilesError("{} did not say which infill types it has".format(slicer_name(exe)))
+    cache.write_text(json.dumps({"patterns": accepted}), encoding="utf-8")
+    return accepted
+
+
+def _write_pattern_probe(path: Path, names: Sequence[str]) -> None:
+    """A 3MF with one 5 mm cube per infill type name, each object asking for its name."""
+    corners = [(x, y, z) for z in (0, 5) for y in (0, 5) for x in (0, 5)]
+    faces = [(0, 2, 1), (1, 2, 3), (4, 5, 6), (5, 7, 6), (0, 1, 4), (1, 5, 4),
+             (2, 6, 3), (3, 6, 7), (0, 4, 2), (2, 4, 6), (1, 3, 5), (3, 7, 5)]
+    objects, items, settings = [], [], []
+    for number, name in enumerate(names, start=1):
+        dx, dy = (number - 1) % 6 * 12, (number - 1) // 6 * 12
+        objects.append('<object id="{}" name="p{}" type="model"><mesh><vertices>{}</vertices><triangles>{}</triangles>'
+                       '</mesh></object>'.format(
+                           number, number,
+                           "".join('<vertex x="{}" y="{}" z="{}"/>'.format(x + dx, y + dy, z) for x, y, z in corners),
+                           "".join('<triangle v1="{}" v2="{}" v3="{}"/>'.format(*face) for face in faces)))
+        items.append('<item objectid="{}"/>'.format(number))
+        settings.append('<object id="{0}"><metadata key="name" value="p{0}"/><metadata key="extruder" value="1"/>'
+                        '<metadata key="sparse_infill_pattern" value="{1}"/></object>'.format(number, _xml_escape(name)))
+    with zipfile.ZipFile(str(path), "w") as archive:
+        archive.writestr("[Content_Types].xml", (
+            '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/'
+            'content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.'
+            'relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-'
+            '3dmodel+xml"/></Types>'))
+        archive.writestr("_rels/.rels", (
+            '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/'
+            '2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.'
+            'com/3dmanufacturing/2013/01/3dmodel"/></Relationships>'))
+        archive.writestr("3D/3dmodel.model", (
+            '<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xmlns="{}"><resources>{}</resources>'
+            '<build>{}</build></model>').format(_CORE_NS, "".join(objects), "".join(items)))
+        archive.writestr(_MODEL_SETTINGS_PART, "<config>{}</config>".format("".join(settings)))
+
+
+def print_cost(grams_by_filament: Mapping[int, float], prices: Any) -> Optional[float]:
+    """The filament cost of a print: each filament's grams at its preset's price per kg.
+
+    ``grams_by_filament`` by 1-based filament number; ``prices`` the
+    project's ``filament_cost`` (one price per kg per filament, as the slicer
+    presets give it).  None when a used filament has no price.
+    """
+    if not isinstance(prices, list) or not grams_by_filament:
+        return None
+    total = 0.0
+    for number, grams in grams_by_filament.items():
+        if grams <= 0:
+            continue
+        try:
+            total += grams * float(str(prices[number - 1]).strip()) / 1000.0
+        except (IndexError, ValueError):
+            return None
+    return round(total, 2)
 
 
 def apply_printer_nozzles(project_3mf: Path, nozzles: Sequence[Any]) -> List[str]:
