@@ -21,6 +21,17 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.9:** **Printed weight and strength.** A printed part is not
+> solid plastic: Filamatch estimates each body's weight as printed (or
+> slices it for the exact grams), and with one switch gives Fusion the
+> printed density, stiffness and strength for its mass and Simulation.
+> Stiffness and strength come from the filament's own data sheet (16 Bambu
+> Lab and 23 Polymaker engineering filaments) or generic values for its
+> type. Also new: a design check (too many filaments, hot and cool
+> filaments on one bed, fibre filament on a soft nozzle, bodies thinner
+> than the nozzle), print settings per body, and the filament cost. See
+> the [changelog](CHANGELOG.md).
+>
 > **New in 0.8:** **Send to PrusaSlicer** prepares the project too:
 > PrusaSlicer's own printers and prints (and the ones you saved yourself),
 > a filament preset that fits the printer on every tool, each body on its
@@ -278,6 +289,10 @@ OrcaSlicer's user presets and never replaces one.
 
 - [User guide](docs/user-guide.md): every screen, troubleshooting, slicer compatibility.
 - [How it works](docs/how-it-works.md): architecture, 3MF metadata, file locations.
+- Printed weight and strength: the [mass model](docs/as-printed/mass-model.md),
+  the [strength model](docs/as-printed/strength-model.md) and the
+  [filament data sheets](Filamatch/data/datasheets/README.md) with a link to
+  each maker's sheet.
 - [Roadmap](docs/roadmap.md): planned features.
 - [Development](docs/development.md): project layout, tests, releases.
 - [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)

@@ -1,7 +1,8 @@
 # Filamatch for Autodesk Fusion
 
 Give every body in your design a real filament, match it to the spools on your
-printer, and send the design to OrcaSlicer ready to print.
+printer, see its weight and strength as printed, and send the design to
+OrcaSlicer, Bambu Studio or PrusaSlicer ready to print.
 
 **Install:** put this `Filamatch` folder into Fusion's add-ins folder and
 restart Fusion:
