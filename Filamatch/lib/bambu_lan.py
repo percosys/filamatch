@@ -28,6 +28,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import os
 import socket
 import ssl
@@ -744,11 +745,27 @@ def _default_label(ams_id: int, tray_id: int) -> str:
     return "AMS {} - T{}".format(ams_id + 1, tray_id + 1)
 
 
-def _side(extruder: Optional[int]) -> str:
+#: Printers whose nozzles Bambu Studio names "Main" (left: direct drive, the
+#: whole bed) and "Auxiliary" (right: Bowden, a narrower bed).
+MAIN_AUX_MODELS = ("X2D",)
+
+
+def side_names(model: Any) -> Tuple[str, str]:
+    """The (left, right) nozzle names a printer's owner knows: Main/Auxiliary on an X2D, else Left/Right."""
+    text = str(model or "").upper()
+    if any(name in text for name in MAIN_AUX_MODELS):
+        return "Main", "Auxiliary"
+    return "Left", "Right"
+
+
+def _side(extruder: Optional[int], model: Any = "") -> str:
+    """Short side in a slot label: "L"/"R", or "Main"/"Aux" on an X2D; "" when unknown."""
+    left, right = side_names(model)
+    short = {"Left": "L", "Right": "R", "Auxiliary": "Aux"}
     if extruder == EXTRUDER_LEFT:
-        return "L"
+        return short.get(left, left)
     if extruder == EXTRUDER_RIGHT:
-        return "R"
+        return short.get(right, right)
     return ""
 
 
@@ -845,7 +862,7 @@ def build_slots(
         if unit_id < 0:
             continue
         extruder = extruders.get(unit_id) if dual else None
-        side = _side(extruder)
+        side = _side(extruder, printer.model)
         is_ht = AMS_HT_FIRST_ID <= unit_id <= AMS_HT_LAST_ID
         if is_ht:
             ht_index += 1
@@ -872,7 +889,7 @@ def build_slots(
                 continue
             extruder = EXTRUDER_RIGHT if slot_id == VIRTUAL_MAIN_ID else EXTRUDER_LEFT
             tray_index = slot_id - VIRTUAL_DEPUTY_ID
-            label = "External ({})".format(_side(extruder))
+            label = "External ({})".format(_side(extruder, printer.model))
         else:
             if any(slot.ams_id == EXTERNAL_UNIT_ID for slot in slots):
                 continue
@@ -891,7 +908,7 @@ def product_name(version: Mapping[str, Any]) -> str:
     return ""
 
 
-def unit_summary(slots: Sequence[SlotInfo]) -> List[Dict[str, Any]]:
+def unit_summary(slots: Sequence[SlotInfo], model: Any = "") -> List[Dict[str, Any]]:
     """Group slots into units for the Settings test result."""
     units: List[Dict[str, Any]] = []
     by_unit: Dict[str, Dict[str, Any]] = {}
@@ -902,9 +919,10 @@ def unit_summary(slots: Sequence[SlotInfo]) -> List[Dict[str, Any]]:
             unit_label = slot.slot_label
         else:
             unit_label = "AMS {}".format(slot.ams_id + 1)
-            side = _side(slot.extruder)
+            # The side as the slot label names it ("(L)", "(Main)").
+            side = re.search(r"\(([^)]*)\)$", slot.slot_label or "")
             if side:
-                unit_label += " ({})".format(side)
+                unit_label += " ({})".format(side.group(1))
         unit = by_unit.get(unit_label)
         if unit is None:
             unit = {"label": unit_label, "slots": []}
@@ -912,7 +930,7 @@ def unit_summary(slots: Sequence[SlotInfo]) -> List[Dict[str, Any]]:
             units.append(unit)
         unit["slots"].append(
             {
-                "label": _short_slot_label(slot),
+                "label": _short_slot_label(slot, model),
                 "filament": slot_filament_label(slot) if slot.loaded else "",
                 "color_hex": slot.color_hex if slot.loaded else "",
                 "loaded": slot.loaded,
@@ -921,10 +939,11 @@ def unit_summary(slots: Sequence[SlotInfo]) -> List[Dict[str, Any]]:
     return units
 
 
-def _short_slot_label(slot: SlotInfo) -> str:
-    """Slot label inside its unit group: ``T2``, ``Left``, ``Right``."""
+def _short_slot_label(slot: SlotInfo, model: Any = "") -> str:
+    """Slot label inside its unit group: ``T2``, ``Left``, ``Right`` (``Main``/``Auxiliary`` on an X2D)."""
     if slot.ams_id == EXTERNAL_UNIT_ID:
-        return {EXTRUDER_LEFT: "Left", EXTRUDER_RIGHT: "Right"}.get(slot.extruder, "Spool")
+        left, right = side_names(model)
+        return {EXTRUDER_LEFT: left, EXTRUDER_RIGHT: right}.get(slot.extruder, "Spool")
     return "T{}".format(slot.tray_id + 1)
 
 
@@ -961,7 +980,7 @@ class ProbeResult:
             "model": self.model,
             "name_suggestion": self.model,
             "certificate": self.certificate,
-            "units": unit_summary(self.slots),
+            "units": unit_summary(self.slots, self.model),
             "slot_count": len(self.slots),
             "loaded_count": sum(1 for slot in self.slots if slot.loaded),
         }
@@ -1198,6 +1217,15 @@ def _check_h2d_fixture() -> None:
     _expect("AMS HT 1 (L)" in labels, labels)
     _expect(labels[-2:] == ["External (L)", "External (R)"], labels)
     _expect([slot.key for slot in slots[-2:]] == ["7:255:0", "7:255:1"], "external keys as in Bambuddy")
+    x2d = parse_slots(PrinterInfo(id=7, name="X2D", model="X2D"), data["print"])
+    x2d_labels = [slot.slot_label for slot in x2d]
+    _expect(x2d_labels[0] == "AMS 1 - T1 (Main)" and x2d_labels[4] == "AMS 2 - T1 (Aux)"
+            and x2d_labels[-2:] == ["External (Main)", "External (Aux)"]
+            and [slot.key for slot in x2d] == [slot.key for slot in slots],
+            "an X2D names its nozzles Main/Aux; the slots and keys stay the same: {}".format(x2d_labels))
+    _expect([unit["label"] for unit in unit_summary(x2d, "X2D")][:2] == ["AMS 1 (Main)", "AMS 2 (Aux)"]
+            and unit_summary(slots, "H2D")[0]["label"] == "AMS 1 (L)",
+            "the Settings test groups by the same side names")
     by_label = {slot.slot_label: slot for slot in slots}
     ht = by_label["AMS HT 1 (L)"]
     _expect(not ht.loaded and ht.spool is None, "empty AMS HT slot must not be loaded")

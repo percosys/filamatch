@@ -21,6 +21,9 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.11:** a **light theme**: the palette follows Fusion's light
+> or dark theme, and its text has better contrast.
+>
 > **New in 0.10:** **any printer**: a manual printer takes your printer's
 > nozzle and which filament is in each slot, so Prusa, Creality, Klipper
 > and other printers get the same slot matching and slicer presets as a
@@ -216,7 +219,7 @@ the printer.
 |---|---|---|
 | Bambu Lab H2C | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side and slices it; the estimate works | Loaded spools, printing |
 | Bambu Lab H3C | Send to Bambu prepares the project; Bambu Studio 2.9.1 opens it with its 9 nozzles and slices it; the estimate works. OrcaSlicer 2.5 cannot slice the H3C, so Filamatch refuses it | Loaded spools, printing |
-| Bambu Lab X2D | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side; the estimate works | Slicing in the app, loaded spools, printing; the "(L)" / "(R)" labels may be swapped (Bambu Studio says "Main" and "Auxiliary") |
+| Bambu Lab X2D | Send to Bambu and Send to Orca prepare the project; Bambu Studio 2.9.1 opens it with each filament on its AMS side; the estimate works | Slicing in the app, loaded spools, printing; the "Main" / "Aux" side labels are not checked on a real printer |
 | Prusa XL 5T | Send to Orca prepares the project with Prusa's filament presets; OrcaSlicer 2.5 opens and slices it; the estimate matches. Send to PrusaSlicer prepares it with PrusaSlicer 2.9.7's own presets and estimates it (command line) | Opening the PrusaSlicer project in the app, loaded spools (not read from Prusa printers), printing |
 | Prusa CORE One INDX 4T / 8T, MMU3 | Send to Orca prepares the project and estimates it (OrcaSlicer 2.5 command line). Send to PrusaSlicer prepares and estimates the MK4 MMU3 and the CORE One (PrusaSlicer 2.9.7 command line) | Opening in the app; the INDX 8T estimate often fails because OrcaSlicer crashes; printing |
 | Snapmaker U1 (0.4 nozzles, and 0.4 + 0.6 nozzles) | Send to Orca prepares the project with each body on its tool and estimates it (OrcaSlicer 2.5 command line). The 0.4 set gets Snapmaker's filament presets; the mixed set gets OrcaSlicer's generic ones, because Snapmaker's presets list only the 0.4 U1 | Opening in the app, the Snapmaker Orca app, loaded spools, printing |

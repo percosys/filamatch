@@ -1139,6 +1139,7 @@ def _bambuddy_context_payload(
                 "nozzles": [
                     {
                         "side": _nozzle_side(nozzle, len(printer.nozzles)),
+                        "side_label": _nozzle_side_label(nozzle, len(printer.nozzles), printer.model),
                         "diameter": nozzle.diameter,
                         "flow": nozzle.flow,
                         "material": nozzle.material,
@@ -1424,6 +1425,53 @@ def _use_loaded_filament(
         _send_error(palette, "loadedFilamentUsed", _error_text(exc))
 
 
+#: Fusion's UserInterfaceThemes: Classic and Light Gray are light, Dark Blue
+#: and Dark Gray dark; 4 ("match the device") follows the operating system.
+_LIGHT_THEMES, _DARK_THEMES, _DEVICE_THEME = (0, 1), (2, 3), 4
+_THEME_CACHE: Dict[str, Any] = {"at": 0.0, "theme": ""}
+
+
+def ui_theme(app: Any) -> str:
+    """"light" or "dark": the palette's colours follow Fusion's interface theme.
+
+    Read again at most every 30 seconds (the palette asks on every refresh).
+    """
+    if _THEME_CACHE["theme"] and time.time() - float(_THEME_CACHE["at"]) < 30.0:
+        return str(_THEME_CACHE["theme"])
+    try:
+        value = int(app.preferences.generalPreferences.userInterfaceTheme)
+    except Exception:
+        value = _DEVICE_THEME
+    if value in _LIGHT_THEMES:
+        theme = "light"
+    elif value in _DARK_THEMES:
+        theme = "dark"
+    else:
+        theme = _system_theme()
+    _THEME_CACHE.update(at=time.time(), theme=theme)
+    return theme
+
+
+def _system_theme() -> str:
+    """The operating system's light or dark appearance ("dark" when it cannot be read)."""
+    try:
+        if sys.platform == "darwin":
+            # Prints "Dark" in dark mode; fails (no key) in light mode.
+            result = subprocess.run(["/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle"],
+                                    capture_output=True, text=True, timeout=2)
+            return "dark" if "dark" in (result.stdout or "").lower() else "light"
+        if sys.platform.startswith("win"):
+            import winreg  # type: ignore[import-not-found]
+
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+            light, _kind = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            return "light" if int(light) else "dark"
+    except Exception:
+        LOGGER.debug("Could not read the system appearance", exc_info=True)
+    return "dark"
+
+
 def _handle_init(palette: Any) -> None:
     """Send catalog, detected materials, settings and library info to the palette."""
     from . import printer_sources
@@ -1460,6 +1508,7 @@ def _handle_init(palette: Any) -> None:
             "profiles": _profiles_summary(),
             "openfilament": _openfilament_summary(),
             "custom_library": custom_library_payload,
+            "ui_theme": ui_theme(app),
         }
         payload.update(_printer_source_payload(settings))
         log_message(
@@ -1616,6 +1665,7 @@ def _handle_refresh_materials(palette: Any, fingerprint: Optional[str] = None) -
                 "ok": True,
                 "design_name": _design_name(design),
                 "materials": _materials_payload(design, entries),
+                "ui_theme": ui_theme(_active_app()),
             },
         )
     except Exception as exc:
@@ -2331,9 +2381,18 @@ def _nozzle_side(nozzle: Any, count: int) -> str:
     return "right" if int(getattr(nozzle, "id", -1)) == bambu_lan.EXTRUDER_RIGHT else "left"
 
 
-def _nozzle_text(nozzle: Any, count: int) -> str:
+def _nozzle_side_label(nozzle: Any, count: int, model: Any = "") -> str:
+    """The name the owner knows for one of two nozzles: "Left"/"Right", "Main"/"Auxiliary" on an X2D."""
+    side = _nozzle_side(nozzle, count)
+    if not side:
+        return ""
+    left, right = bambu_lan.side_names(model)
+    return left if side == "left" else right
+
+
+def _nozzle_text(nozzle: Any, count: int, model: Any = "") -> str:
     """"Left 0.4 High Flow" for one of two nozzles, "0.4 Standard" for a single one."""
-    side = _nozzle_side(nozzle, count).capitalize()
+    side = _nozzle_side_label(nozzle, count, model)
     side = side + " " if side else ""
     size = "{:g}".format(float(getattr(nozzle, "diameter", 0.0) or 0.0))
     return (side + size + " " + str(getattr(nozzle, "flow", "") or "")).strip()
@@ -2352,7 +2411,7 @@ def _apply_printer_nozzles(output: Path, slot_rows: Optional[types.SimpleNamespa
     try:
         if slicer_profiles.apply_printer_nozzles(output, nozzles):
             log_message("The project uses the printer's nozzles: {}".format(
-                ", ".join(_nozzle_text(nozzle, len(nozzles)) for nozzle in nozzles)))
+                ", ".join(_nozzle_text(nozzle, len(nozzles), getattr(printer, "model", "")) for nozzle in nozzles)))
     except Exception as exc:
         LOGGER.exception("Could not write the printer's nozzles")
         log_message("The project keeps the preset's nozzle flow: {}".format(_error_text(exc)))
@@ -4376,7 +4435,8 @@ def _self_test() -> int:
     two = (printer_model.NozzleInfo(0, 0.4, "High Flow"), printer_model.NozzleInfo(1, 0.6, "Standard"))
     _check(
         [_nozzle_text(nozzle, 2) for nozzle in two] == ["Right 0.4 High Flow", "Left 0.6 Standard"]
-        and _nozzle_text(printer_model.NozzleInfo(0, 0.4, ""), 1) == "0.4",
+        and _nozzle_text(printer_model.NozzleInfo(0, 0.4, ""), 1) == "0.4"
+        and [_nozzle_text(nozzle, 2, "X2D") for nozzle in two] == ["Auxiliary 0.4 High Flow", "Main 0.6 Standard"],
         "nozzles read as Left/Right size flow",
     )
 

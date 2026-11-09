@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.11.0 – Light theme
+
+The palette now matches Fusion's light and dark themes, and its text is
+easier to read.
+
+**New**
+- **Light theme.** The palette now follows Fusion's theme: light in
+  Fusion's light themes, dark in the dark ones. With Fusion set to follow
+  the computer, it follows macOS or Windows.
+
+**Changed**
+- Better contrast: small grey text and the main button are easier to read
+  (every text colour is at least 4.5:1 on its background, in both themes).
+- **Bambu Lab X2D:** the nozzle sides now say "Main" and "Aux", as Bambu
+  Studio does, in place of "(L)" and "(R)".
+
+**Tested**
+Both themes were checked in the palette preview (Home and Settings), and
+the light theme by hand in Fusion. Every text colour was measured against its
+background (at least 4.5:1), and all 107 buttons and fields have a name a
+screen reader can say. Not tested: a full screen reader and keyboard-only
+run, and the X2D labels on a real X2D.
+
+The slicer test matrix is unchanged against 0.10.0 (24 cases the same).
+
 ## 0.10.0 – Manual printer and more data sheets
 
 Filamatch now works with any printer: set up its slots by hand. The

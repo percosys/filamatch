@@ -1847,7 +1847,21 @@
    * settings and library status.
    * @param {object} payload
    */
+  /**
+   * Follow Fusion's interface theme ("light" or "dark"; dark when unknown).
+   * @param {*} theme
+   */
+  function applyTheme(theme) {
+    var value = asString(theme) === 'light' ? 'light' : 'dark';
+    if (document.documentElement.getAttribute('data-theme') !== value) {
+      document.documentElement.setAttribute('data-theme', value);
+    }
+  }
+
   function handleInitData(payload) {
+    if (payload.ok !== false && payload.ui_theme) {
+      applyTheme(payload.ui_theme);
+    }
     if (payload.ok === false) {
       var initError = 'Fusion could not initialise the palette: ' + replyError(payload);
       ingestLogSnapshot(payload.log, { replace: true });
@@ -2061,6 +2075,9 @@
    * @param {object} payload
    */
   function handleMaterialsData(payload) {
+    if (payload && payload.ui_theme) {
+      applyTheme(payload.ui_theme);
+    }
     ingestLogSnapshot(payload.log);
 
     if (payload.favorites) {
@@ -5979,6 +5996,9 @@
       DEMO_INIT.settings.printer_source = state.demoPrinterSource;
       DEMO_INIT.printer_configured = demoPrinterConfigured();
       DEMO_INIT.bambu_lan = { printers: state.demoLanPrinters.slice() };
+      /* The preview follows the browser's light or dark appearance. */
+      DEMO_INIT.ui_theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+        ? 'light' : 'dark';
       return DEMO_INIT;
     },
 
@@ -7916,7 +7936,7 @@
    */
   function nozzleSummary(nozzles) {
     return nozzles.map(function (nozzle) {
-      var side = asString(nozzle.side);
+      var side = asString(nozzle.side_label) || asString(nozzle.side);
       return [side ? side.charAt(0).toUpperCase() + side.slice(1) : '', Number(nozzle.diameter) + ' mm',
         asString(nozzle.flow)].filter(Boolean).join(' ');
     }).join(' · ');
@@ -8379,7 +8399,8 @@
     var abrasive = filaments.filter(function (item) { return item.traits.abrasive === true; });
     if (soft.length && abrasive.length) {
       var nozzle = soft[0];
-      var where = selectedNozzles().length > 1 && asString(nozzle.side) ? ' (' + asString(nozzle.side) + ')' : '';
+      var sideName = asString(nozzle.side_label).toLowerCase() || asString(nozzle.side);
+      var where = selectedNozzles().length > 1 && sideName ? ' (' + sideName + ')' : '';
       fixes.push({
         text: joinNames(abrasive.map(function (item) { return item.name; })) +
           (abrasive.length > 1 ? ' have' : ' has') + ' carbon or glass fibre. It wears out the ' +

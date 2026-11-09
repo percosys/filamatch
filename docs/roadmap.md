@@ -34,8 +34,10 @@ and Send to PrusaSlicer prepares the project (0.8).
 
 ## Palette
 
-- A light theme to match Fusion's light UI.
-- A full accessibility pass (screen readers, keyboard-only use).
+Done: a light theme that follows Fusion, and better contrast (0.11).
+
+- A screen reader and keyboard-only test (colour contrast and control
+  names are checked).
 - Spool prices from Spoolman or Bambuddy for the filament cost.
 
 ## Platform and distribution

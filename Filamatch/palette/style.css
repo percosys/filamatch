@@ -20,7 +20,7 @@
   /* Text */
   --text: #e8ecf1;
   --text-muted: #98a3b0;
-  --text-faint: #6f7a86;
+  --text-faint: #909ba7;
 
   /* Accents (Autodesk/Fusion blue) */
   --accent: #0696d7;
@@ -28,11 +28,34 @@
   --accent-soft: rgba(6, 150, 215, 0.18);
   --accent-border: rgba(6, 150, 215, 0.45);
   --on-accent: #ffffff;
+  /* Filled buttons: deep enough for white text (4.5:1). */
+  --accent-fill: #077cb9;
+  --accent-fill-hover: #0670a8;
 
   /* Status colours */
   --success: #46c08a;
   --warning: #e3a33a;
   --error: #ef6b70;
+
+  /* Tints and text on them; each has a light value below. */
+  --scrollbar: #3a434e;
+  --scrollbar-hover: #4a5561;
+  --warning-bg: #392f1b;
+  --warning-border: #6b5526;
+  --warning-text: #f0c66b;
+  --warning-strong: #ffd98a;
+  --error-bg: #3a2023;
+  --error-border: #6e3438;
+  --error-text: #ff9a9d;
+  --text-soft: #c6d0da;
+  --code-text: #c9d3dd;
+  --info-text: #7fb8dd;
+  --accent-text: #cfe6f5;
+  --accent-text-muted: #9cc9e4;
+  --hover-tint: rgba(255, 255, 255, 0.03);
+  --swatch-unknown-a: #2b323a;
+  --swatch-unknown-b: #20252b;
+  color-scheme: dark;
 
   /* Metrics */
   --radius: 4px;
@@ -41,6 +64,54 @@
   /* Typography */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Fusion's light themes (Classic, Light Gray, or the device in light mode):
+   app.js sets data-theme="light". Text keeps at least 4.5:1 on its panel. */
+:root[data-theme="light"] {
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --panel-alt: #eef0f3;
+  --panel-hover: #e6eaee;
+  --input-bg: #ffffff;
+  --border: #c9d0d8;
+  --border-strong: #a7b1bc;
+  --border-subtle: #e2e6ea;
+
+  --text: #1d2329;
+  --text-muted: #556170;
+  --text-faint: #636e7b;
+
+  --accent: #0670a8;
+  --accent-hover: #075f8f;
+  --accent-soft: rgba(6, 112, 168, 0.12);
+  --accent-border: rgba(6, 112, 168, 0.45);
+  --on-accent: #ffffff;
+  --accent-fill: #0670a8;
+  --accent-fill-hover: #075f8f;
+
+  --success: #1e7a50;
+  --warning: #8f5a00;
+  --error: #be3439;
+
+  --scrollbar: #c3cad2;
+  --scrollbar-hover: #a7b1bc;
+  --warning-bg: #fff4dc;
+  --warning-border: #e3bd72;
+  --warning-text: #6f4600;
+  --warning-strong: #5a3800;
+  --error-bg: #fde8e9;
+  --error-border: #eb9a9e;
+  --error-text: #a3262c;
+  --text-soft: #2f3741;
+  --code-text: #2f3741;
+  --info-text: #0b5f8f;
+  --accent-text: #054e75;
+  --accent-text-muted: #0b5f8f;
+  --hover-tint: rgba(0, 0, 0, 0.035);
+  --swatch-unknown-a: #d9dee4;
+  --swatch-unknown-b: #eef1f4;
+  color-scheme: light;
 }
 
 * {
@@ -98,7 +169,7 @@ code {
 /* Scrollbars (WebKit / Chromium and Firefox fallback). */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3a434e transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -108,12 +179,12 @@ code {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a434e;
+  background: var(--scrollbar);
   border: 2px solid var(--input-bg);
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a5561;
+  background: var(--scrollbar-hover);
 }
 
 
@@ -162,14 +233,14 @@ code {
 }
 
 .banner--warning {
-  background: #392f1b;
-  border-color: #6b5526;
-  color: #f0c66b;
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--warning-text);
 }
 
 .banner--error {
-  background: #3a2023;
-  border-color: #6e3438;
+  background: var(--error-bg);
+  border-color: var(--error-border);
   color: var(--error);
 }
 
@@ -178,7 +249,7 @@ code {
 }
 
 .banner strong {
-  color: #ffd98a;
+  color: var(--warning-strong);
 }
 
 .note {
@@ -232,20 +303,20 @@ code {
 }
 
 .btn--primary {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
   color: var(--on-accent);
 }
 
 .btn--primary:hover:not(:disabled) {
-  border-color: var(--accent-hover);
-  background: var(--accent-hover);
+  border-color: var(--accent-fill-hover);
+  background: var(--accent-fill-hover);
 }
 
 .btn--ghost {
   border-color: var(--border);
   background: transparent;
-  color: #c6d0da;
+  color: var(--text-soft);
   font-weight: 500;
 }
 
@@ -425,7 +496,7 @@ code {
 }
 
 .status--info {
-  color: #7fb8dd;
+  color: var(--info-text);
 }
 
 .status--success {
@@ -479,7 +550,7 @@ code {
 .category-chip.is-active {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: #cfe6f5;
+  color: var(--accent-text);
 }
 
 .category-chip__count {
@@ -489,7 +560,7 @@ code {
 }
 
 .category-chip.is-active .category-chip__count {
-  color: #9cc9e4;
+  color: var(--accent-text-muted);
 }
 
 /* --------------------------------------------------------------------------
@@ -577,7 +648,7 @@ code {
 }
 
 .catalog-row__label:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover-tint);
 }
 
 .catalog-row__checkbox {
@@ -600,7 +671,7 @@ code {
 }
 
 .swatch--unknown {
-  background: repeating-linear-gradient(45deg, #2b323a, #2b323a 2px, #20252b 2px, #20252b 4px);
+  background: repeating-linear-gradient(45deg, var(--swatch-unknown-a), var(--swatch-unknown-a) 2px, var(--swatch-unknown-b) 2px, var(--swatch-unknown-b) 4px);
 }
 
 .swatch--large {
@@ -639,7 +710,7 @@ code {
   border: 1px solid var(--accent-border);
   border-radius: 999px;
   background: var(--accent-soft);
-  color: #cfe6f5;
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -722,7 +793,7 @@ code {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--input-bg);
-  color: #c9d3dd;
+  color: var(--code-text);
   font-family: var(--mono);
   font-size: 11px;
   line-height: 1.45;
@@ -761,16 +832,16 @@ code {
 
 .log-line__text {
   min-width: 0;
-  color: #c6d0da;
+  color: var(--text-soft);
   overflow-wrap: anywhere;
 }
 
 .log-line--warning .log-line__text {
-  color: #f0c66b;
+  color: var(--warning-text);
 }
 
 .log-line--error .log-line__text {
-  color: #ff9a9d;
+  color: var(--error-text);
 }
 
 .log-empty {
