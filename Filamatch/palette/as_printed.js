@@ -320,8 +320,14 @@
     if (found && found.error) {
       notes.push({ text: 'Slicer check: ' + found.error, kind: 'warning' });
     }
-    if (typeof row.grams === 'number' && !row.strength) {
+    if (typeof row.grams === 'number' && !row.strength && row.strength_none === 'flexible') {
+      notes.push({ text: 'Flexible filament: a linear simulation does not fit it, so it gets no printed stiffness ' +
+        'and strength. Fusion keeps the material\u2019s own values.', kind: 'warning' });
+    } else if (typeof row.grams === 'number' && !row.strength) {
       notes.push({ text: 'No stiffness and strength data for this filament type yet.', kind: '' });
+    } else if (row.strength && row.strength.kind === 'material') {
+      notes.push({ text: 'No printed test data for this filament: its own Fusion values, scaled for the infill. ' +
+        'Often too strong (\u00b1' + row.strength.uncertainty_percent + '%).', kind: 'warning' });
     } else if (row.strength && row.strength.kind === 'datasheet') {
       notes.push({ text: 'Stiffness and strength from its own data sheet.', kind: '' });
     } else if (row.strength && row.strength_from === 'name') {
@@ -407,6 +413,12 @@
     var values = info.values || {};
     var moist = info.conditioned || {};
     var parts = [name + ', \u00b1' + info.uncertainty_percent + '%:'];
+    if (info.kind === 'material') {
+      parts.push('E ' + stiffness(values.e_xy_mpa) + ', tensile ' + stress(values.uts_xy_mpa) +
+        ' in every direction, scaled for the infill.');
+      (info.notes || []).forEach(function (note) { parts.push(note); });
+      return parts.join(' ');
+    }
     if (values.e_xy_mpa) {
       parts.push('E ' + stiffness(values.e_xy_mpa) + ' along' +
         (values.e_z_mpa ? ', ' + stiffness(values.e_z_mpa) + ' across' : '') + ';');

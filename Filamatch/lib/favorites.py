@@ -335,6 +335,90 @@ def _set_density(material: Any, entry: Any, label: str) -> None:
         )
 
 
+#: Names the solid values in a filament material's description.
+SOLID_VALUES_NOTE = "solid values: typical print, "
+#: Says Filamatch wrote none (the printed values look for "solid values:", so this must not contain it).
+NO_SOLID_VALUES_NOTE = "no solid values ({})"
+
+
+def solid_values(entry: Any) -> Optional[Tuple[Dict[str, float], str]]:
+    """The filament's solid stiffness and strength (MPa, ``material_copy`` keys) and their basis.
+
+    Its own data sheet when Filamatch has it, else its type's generic values
+    (``strength_model``), as a typical print at 100% infill: between along and
+    across the layers. ``None`` when there is no data for the filament, and
+    for a flexible one (a linear simulation does not fit it).
+    """
+    try:
+        from . import strength_model
+
+        data = strength_model.load()
+    except Exception:
+        logger.warning("Could not read the stiffness and strength data (continuing).", exc_info=True)
+        return None
+    if _is_flexible(entry):
+        return None
+    maker = str(_entry_field(entry, "manufacturer", "") or "").strip()
+    product_line = str(_entry_field(entry, "product_line", "") or "").strip()
+    basis = data.product_for(["{} {}".format(maker, product_line)])
+    if basis is None:
+        for field in ("slicer_filament_type", "category"):
+            found = data.match(str(_entry_field(entry, field, "") or ""))
+            if found:
+                basis = data.types.get(found)
+                break
+    if basis is None:
+        return None
+    e_mpa, yield_mpa, tensile_mpa, _notes = strength_model.base_values(basis, "typical")
+    poisson = float(basis.poisson)
+    values = {
+        "e_mpa": e_mpa,
+        "poisson": poisson,
+        "shear_mpa": e_mpa / (2.0 * (1.0 + poisson)),
+        "yield_mpa": yield_mpa,
+        "tensile_mpa": tensile_mpa,
+    }
+    return values, basis.label
+
+
+def _is_flexible(entry: Any) -> bool:
+    """True for a flexible filament (TPU, TPE, ...), by its type or name."""
+    try:
+        from . import strength_model
+    except Exception:
+        return False
+    return strength_model.is_flexible(*(str(_entry_field(entry, field, "") or "")
+                                        for field in ("slicer_filament_type", "category", "product_line")))
+
+
+def _set_solid_values(material: Any, entry: Any, description: str, label: str) -> None:
+    """Write the filament's solid stiffness and strength onto a material, best effort.
+
+    The colour-matched template brings its own mechanical values (a blue one
+    made an ABS 6.9 GPa stiff), and Fusion Simulation uses them. The
+    description names what replaced them. A filament without data, or a
+    flexible one, keeps the values it has, and its description says so.
+    """
+    if getattr(material, "materialProperties", None) is None:
+        return
+    solid = solid_values(entry)
+    if solid is None:
+        reason = "flexible filament" if _is_flexible(entry) else "no data for this filament"
+        _set_description(material, "{} | {}".format(description, NO_SOLID_VALUES_NOTE.format(reason)), label)
+        return
+    values, basis = solid
+    try:
+        from . import material_copy
+
+        left_out = material_copy.write_values(material, values, None)
+    except Exception:
+        logger.warning("Could not write the solid values of %s (continuing).", label, exc_info=True)
+        return
+    if left_out:
+        logger.info("Solid values of %s: %s", label, left_out)
+    _set_description(material, "{} | {}{}".format(description, SOLID_VALUES_NOTE, basis), label)
+
+
 def _resolve_template(
     app: Any, design: Any, entry: Any, template_material: Any
 ) -> Any:
@@ -1220,6 +1304,7 @@ def ensure_favorite_filament(
     )
     _set_description(favorite, description, "favorite material {!r}".format(catalog_id))
     _set_density(favorite, entry, "favorite material {!r}".format(catalog_id))
+    _set_solid_values(favorite, entry, description, "favorite material {!r}".format(catalog_id))
     favorite_appearance = _color_favorite_appearance(app, favorite, catalog_id, normalized_hex)
 
     design_materials = _safe_get(design, "materials", "the active design")
@@ -1261,6 +1346,7 @@ def ensure_favorite_filament(
         _apply_appearance_color_properties(design_appearance, normalized_hex)
     _set_description(design_material, description, "design material {!r}".format(catalog_id))
     _set_density(design_material, entry, "design material {!r}".format(catalog_id))
+    _set_solid_values(design_material, entry, description, "design material {!r}".format(catalog_id))
     _warn_on_design_material_color(design_material, catalog_id, normalized_hex)
     logger.info(
         "Favorite filament %r ready (color %s, replaced_existing=%s, relinked_bodies=%d).",
@@ -2568,6 +2654,85 @@ def _check_migration_rollback() -> None:
         )
 
 
+class _FakeMechanicalProperty:
+    def __init__(self, value: Any, units: str) -> None:
+        self.value = value
+        self.units = units
+
+
+class _FakeMechanicalProperties:
+    def __init__(self, props: Dict[str, _FakeMechanicalProperty]) -> None:
+        self._props = props
+
+    def itemById(self, prop_id: str) -> Optional[_FakeMechanicalProperty]:
+        return self._props.get(prop_id)
+
+
+class _FakeMechanicalMaterial:
+    """A material with Fusion's mechanical property ids and units (a blue template's values)."""
+
+    def __init__(self) -> None:
+        self.description = "Filamatch | x"
+        self.props = {
+            "structural_Behavior": _FakeMechanicalProperty("structural_transverse_isotropic", ""),
+            "structural_Young_modulus": _FakeMechanicalProperty(6890000.0, "Kilopascal"),
+            "structural_Poisson_ratio": _FakeMechanicalProperty(0.34, "Unitless"),
+            "structural_Shear_modulus": _FakeMechanicalProperty(2570000.0, "Kilopascal"),
+            "structural_Minimum_yield_stress": _FakeMechanicalProperty(51710.0, "Kilopascal"),
+            "structural_Minimum_tensile_strength": _FakeMechanicalProperty(51710.0, "Kilopascal"),
+        }
+        self.materialProperties = _FakeMechanicalProperties(self.props)
+
+
+def _check_solid_values() -> None:
+    """Data sheet first, then the type's generic values; no data or no properties: unchanged."""
+    paht = FakeCatalogEntry("bambu_paht_cf_black", "#161616", category="PA-CF", product_line="PAHT-CF",
+                            slicer_filament_type="PA-CF")
+    material = _FakeMechanicalMaterial()
+    _set_solid_values(material, paht, "Filamatch | PA-CF | Bambu Lab - PAHT-CF - Black", "test")
+    props = material.props
+    _expect(abs(props["structural_Young_modulus"].value - 3020000.0) < 1.0,
+            "PAHT-CF: typical E = mean of the sheet's XY 3860 and Z 2180 MPa, in kPa, got {}".format(
+                props["structural_Young_modulus"].value))
+    _expect(abs(props["structural_Minimum_tensile_strength"].value - 69500.0) < 1.0,
+            "PAHT-CF: typical tensile = mean of 92 and 47 MPa, in kPa")
+    poisson = props["structural_Poisson_ratio"].value
+    _expect(abs(props["structural_Shear_modulus"].value - 3020000.0 / (2 * (1 + poisson))) < 1.0,
+            "shear modulus follows E and Poisson's ratio")
+    _expect(props["structural_Behavior"].value == "structural_isotropic", "the values are isotropic")
+    _expect(material.description.endswith(SOLID_VALUES_NOTE + "Bambu Lab PAHT-CF (data sheet V3.0)"),
+            "the description names the data sheet, got {!r}".format(material.description))
+    _expect(material.description.startswith("Filamatch | PA-CF | Bambu Lab - PAHT-CF - Black | "),
+            "the description keeps its first parts")
+
+    pla = _FakeMechanicalMaterial()
+    _set_solid_values(pla, FakeCatalogEntry("bambu_pla_basic_black", "#161616"), "Filamatch | PLA | y", "test")
+    _expect(pla.description == "Filamatch | PLA | y | " + SOLID_VALUES_NOTE + "PLA (generic)",
+            "a filament without a data sheet gets its type's generic values, got {!r}".format(pla.description))
+    _expect(1000000.0 < pla.props["structural_Young_modulus"].value < 4000000.0,
+            "generic PLA stiffness is 1-4 GPa")
+
+    unknown = _FakeMechanicalMaterial()
+    _set_solid_values(unknown, FakeCatalogEntry("x_y", "#161616", category="WOOD", manufacturer="Nobody",
+                                                product_line="Oak", slicer_filament_type="WOOD"),
+                      "Filamatch | WOOD | z", "test")
+    _expect(unknown.props["structural_Young_modulus"].value == 6890000.0
+            and unknown.description == "Filamatch | WOOD | z | no solid values (no data for this filament)",
+            "a filament without data keeps its values and says so, got {!r}".format(unknown.description))
+    _expect("solid values:" not in unknown.description, "the printed values must not take it for solid values")
+
+    tpu = _FakeMechanicalMaterial()
+    _set_solid_values(tpu, FakeCatalogEntry("bambu_tpu_95a_hf_grey", "#808080", category="TPU",
+                                            product_line="TPU 95A HF", slicer_filament_type="TPU"),
+                      "Filamatch | TPU | Bambu Lab - TPU 95A HF - Grey", "test")
+    _expect(tpu.props["structural_Young_modulus"].value == 6890000.0
+            and tpu.description.endswith("| no solid values (flexible filament)"),
+            "a flexible filament gets no solid values, got {!r}".format(tpu.description))
+
+    bare = FakeLibraryMaterial("bare")
+    _set_solid_values(bare, paht, "Filamatch | PA-CF | w", "test")  # no materialProperties: no error
+
+
 def _check_shared_body() -> None:
     """Wrappers of one native body (shared component) are relinked and counted once."""
     from . import materials_workflow
@@ -2642,6 +2807,7 @@ def _selftest() -> int:
         ("a failed favorite add keeps the old favorite names", _check_failed_add_keeps_names),
         ("a failed migration leaves the design unchanged", _check_migration_rollback),
         ("a body in a component used twice is relinked and counted once", _check_shared_body),
+        ("filament materials get their own solid values, not the template's", _check_solid_values),
     )
     try:
         for label, scenario in scenarios:

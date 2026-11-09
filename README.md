@@ -21,6 +21,11 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.9.1:** every Filamatch filament gets its real stiffness and
+> strength in Fusion (from its data sheet or generic values for its type),
+> instead of the values of the stock material it was copied from. Checked
+> with a free FEA program ([static check](docs/as-printed/strength-model.md#what-is-tested)).
+>
 > **New in 0.9:** **Printed weight and strength.** A printed part is not
 > solid plastic: Filamatch estimates each body's weight as printed (or
 > slices it for the exact grams), and with one switch gives Fusion the

@@ -146,6 +146,10 @@ weighs as printed, from the print settings (a body's own settings count).
   first across the layers. **Safe** uses that weakest direction (and the
   moist values of a nylon, when its data sheet has them). **Typical** is
   between along and across the layers.
+- With the switch off, Fusion uses the filament's solid values: a typical
+  print at 100% infill, from its data sheet or the generic values for its
+  type. The filament material's description in Fusion says which one
+  ("solid values: typical print, ...").
 - **Where the values come from** names the source of each filament: its own
   data sheet (Bambu Lab and Polymaker engineering filaments, for example
   "Bambu Lab PAHT-CF (data sheet V3.0)"), else generic values for its type,

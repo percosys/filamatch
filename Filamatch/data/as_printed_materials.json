@@ -276,7 +276,7 @@
   {
    "type": "PLA",
    "match": [
-    "\\bPLA\\b(?!.*\\b(GF|CF)\\b)"
+    "\\bPLA\\b(?!.*\\b(GF|CF)\\d*\\b)"
    ],
    "uncertainty_percent": 30,
    "poisson": {
@@ -347,7 +347,7 @@
   {
    "type": "PETG",
    "match": [
-    "\\bPETG?\\b(?!.*\\b(GF|CF|RCF)\\b)"
+    "\\bPETG?\\b(?!.*\\b(GF|CF|RCF)\\d*\\b)"
    ],
    "uncertainty_percent": 35,
    "poisson": {
@@ -433,7 +433,7 @@
   {
    "type": "ABS",
    "match": [
-    "\\bABS\\b(?!.*\\b(GF|CF)\\b)"
+    "\\bABS\\b(?!.*\\b(GF|CF)\\d*\\b)"
    ],
    "uncertainty_percent": 30,
    "poisson": {
@@ -491,7 +491,7 @@
   {
    "type": "ASA",
    "match": [
-    "\\bASA\\b(?!.*\\b(GF|CF)\\b)"
+    "\\bASA\\b(?!.*\\b(GF|CF)\\d*\\b)"
    ],
    "uncertainty_percent": 30,
    "poisson": {
@@ -547,7 +547,7 @@
   {
    "type": "PC",
    "match": [
-    "\\bPC\\b(?!.*\\b(GF|CF)\\b)",
+    "\\bPC\\b(?!.*\\b(GF|CF)\\d*\\b)",
     "POLYCARBONATE"
    ],
    "uncertainty_percent": 35,

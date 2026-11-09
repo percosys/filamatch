@@ -334,6 +334,31 @@ def _set(prop: Any, value: float) -> None:
         prop.value = value
 
 
+def read_values(material: Any) -> Optional[Dict[str, float]]:
+    """A material's own stiffness and strength (MPa; StrengthEstimate keys), or None when Fusion gives none.
+
+    A direction-dependent value gives its lowest direction.
+    """
+    found: Dict[str, float] = {}
+    try:
+        for prop_id, key, is_stress in MECHANICAL_PROPERTIES:
+            prop = material.materialProperties.itemById(prop_id)
+            if prop is None:
+                continue
+            value = min(prop.values) if getattr(prop, "hasMultipleValues", False) and prop.values else prop.value
+            value = float(value)
+            if is_stress:
+                factor = stress_factor(getattr(prop, "units", ""))
+                if factor is None:
+                    continue
+                value /= factor
+            if value > 0:
+                found[key] = value
+    except Exception:
+        return None
+    return found if "e_mpa" in found and "tensile_mpa" in found else None
+
+
 def write_values(material: Any, values: Optional[Mapping[str, float]], source: Any) -> str:
     """Write stiffness and strength into a copy (MPa, converted to Fusion's units).
 
@@ -742,6 +767,9 @@ def _self_test() -> int:
     _check("young modulus" in result.note and "furlongs" in result.note and not result.error
            and props["structural_Young_modulus"].value == 2.0e6 and props["structural_Shear_modulus"].values == [919.0] * 3,
            "an unknown unit is left out and said; a direction-dependent value is set in every direction")
+    _check(read_values(pla) == {"e_mpa": 2000.0, "poisson": 0.35, "shear_mpa": 800.0, "yield_mpa": 40.0,
+                                "tensile_mpa": 50.0} and read_values(object()) is None,
+           "a material's own stiffness and strength are read in MPa (none from an object without them)")
     restore(design, [(bracket, "")])
     clean_up(design)
 

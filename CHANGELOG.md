@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.9.1 – Real stiffness and strength for filament materials
+
+Fusion Simulation now gets sensible values from every Filamatch filament,
+with **Fusion uses the printed values** on or off. If you added filaments
+before 0.9.1, add them again (**Add filaments**) to update them.
+
+**Fixed**
+- **Filament materials have their filament's own stiffness and strength.**
+  Filamatch makes a filament's Fusion material from the stock material
+  nearest in colour, and it kept that material's mechanical values: a blue
+  Bambu Lab ABS was 6.89 GPa stiff (real ABS is about 2.2 GPa), a black
+  PAHT-CF only 0.91 GPa. Now the material gets the values of a typical
+  print at 100% infill (between along and across the layers): from the
+  filament's data sheet when Filamatch has it, else the generic values for
+  its type. The material's description names them ("solid values: typical
+  print, Bambu Lab PAHT-CF (data sheet V3.0)"). This is what Fusion
+  Simulation uses while **Fusion uses the printed values** is off. A
+  filament without data, or a flexible one (TPU, TPE...), keeps the stock
+  values, and its description says "no solid values (...)": do not trust a
+  simulation with it. Filaments you added before get the values the next
+  time Filamatch adds or updates them.
+- **Printed values of a filament without data.** A material with neither a
+  data sheet nor a known type (for example Fusion's "Nylon 6/6") kept its
+  solid stiffness and strength next to its printed density. Now its own
+  values are scaled for the infill like every other body, with the warning
+  "No printed test data for this filament ... Often too strong (±60%)". A
+  Filamatch filament without data gets no printed stiffness and strength
+  (its values are a stock material's), and neither does a flexible
+  filament: a linear simulation does not fit it. A filled type with a
+  number ("ABS-GF30") no longer counts as its plain type.
+
+**New**
+- `scripts/as_printed_static_check.py`: a static check of the printed values
+  with the free FEA program scikit-fem (see
+  [the strength model](docs/as-printed/strength-model.md#what-is-tested)).
+
+**What is tested:** in Fusion 2706.1.17, 23 Filamatch favorites were updated:
+21 got their data sheet or generic values (for example Bambu Lab ABS 6.89 →
+2.08 GPa, PAHT-CF 0.91 → 3.02 GPa), the TPU and a generic ABS-GF30 were
+marked "no solid values". A Static Stress study used the "as printed"
+copies with exactly Filamatch's values; Fusion solves only in the cloud, so
+the study was not solved. The free FEA check instead: three test parts, the
+deflections within 1.5–8 % of beam theory, the values on the safe side in
+bending. Module self-tests and test files pass.
+
 ## 0.9.0 – Printed weight and strength, design check
 
 **New**

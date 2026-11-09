@@ -379,6 +379,40 @@ def parse_datasheets(raws: List[Mapping[str, Any]], types: StrengthData) -> Tupl
     return tuple(products)
 
 
+#: Flexible filaments: a linear simulation does not fit them, so they get no stiffness and strength.
+FLEXIBLE_PATTERN = re.compile(r"\b(TPU|TPE|TPC|PEBA|FLEX)", re.IGNORECASE)
+
+
+def is_flexible(*texts: str) -> bool:
+    """True when a type or name says the filament is flexible (TPU, TPE, ...)."""
+    return any(FLEXIBLE_PATTERN.search(str(text or "")) for text in texts)
+
+
+#: A filament without printed data: its own Fusion values (often molded), scaled for the infill.
+MATERIAL_UNCERTAINTY_PERCENT = 60
+
+
+def material_basis(name: str, values: Mapping[str, float]) -> TypeData:
+    """Base values from a material's own Fusion values (MPa; StrengthEstimate keys), one value for every direction.
+
+    For a filament with neither a data sheet nor a type: better than its
+    solid values with a printed density. Marked as not printed data.
+    """
+    single = {}
+    for prop, key in (("e", "e_mpa"), ("uts", "tensile_mpa"), ("yield", "yield_mpa")):
+        if values.get(key):
+            for direction in ("xy", "z"):
+                number = float(values[key])
+                single["{}_{}_mpa".format(prop, direction)] = Range(number, number, number, 1)
+    nu = float(values.get("poisson") or 0.0)
+    return TypeData(
+        name=name, values=single, poisson=nu if 0.2 <= nu < 0.5 else DEFAULT_POISSON,
+        uncertainty_percent=MATERIAL_UNCERTAINTY_PERCENT, sources=("{} (Fusion material)".format(name),),
+        label="{} (its own Fusion values)".format(name), kind="material",
+        notes=("No printed test data for this material: its own Fusion values (often for molded parts, "
+               "stronger than printed), scaled for the infill.",))
+
+
 _CACHE: Dict[str, StrengthData] = {}
 
 
@@ -610,13 +644,26 @@ def _self_test() -> int:
            and estimate(data, "PLA", "safe", 10.0, 10.0, 15.0, "gyroid").basis == "PLA (generic)",
            "an estimate names its basis")
 
+    own = material_basis("Nylon 6/6", {"e_mpa": 2930.0, "tensile_mpa": 82.75, "yield_mpa": 82.75, "poisson": 0.6})
+    scaled = estimate(data, own, "safe", 10.0, 5.0, 20.0, "gyroid")
+    _check(own.kind == "material" and own.poisson == DEFAULT_POISSON and own.uncertainty_percent == 60
+           and abs(scaled.e_mpa - 2930.0 * (0.5 + 0.5 * 0.2 ** 2)) < 1e-9 and scaled.basis == "Nylon 6/6 (its own Fusion values)"
+           and any("No printed test data" in note for note in scaled.notes),
+           "a material without printed data: its own Fusion values, scaled for the infill, and marked so")
+
+    _check(is_flexible("TPU 95A") and is_flexible("", "Bambu Lab TPU 95A HF - Grey") and is_flexible("PolyFlex TPU95")
+           and not is_flexible("PLA", "PETG HF") and data.match("ABS-GF30") is None,
+           "flexible filaments are told apart; a number after GF/CF still keeps a filled type out")
+
     real = load()
     _check(all(real.types[name].values["uts_xy_mpa"].count >= 1 for name in real.types) and real.types,
            "the bundled data file follows the rules ({} types)".format(len(real.types)))
     _check(len(real.products) >= 30 and real.product_for(["Bambu Lab PAHT-CF"]) is not None
            and real.product_for(["Bambu Lab ASA Aero"]) is None
            and real.product_for(["Polymaker PPS GF"]) is real.product_for(["Polymaker Fiberon PPS-GF20"]) is not None
-           and all(real.product_for(["Polymaker " + name]) is None for name in ("PA12 CF", "PA6 CF", "PA6 GF", "PC", "PETG CF")),
+           and all(real.product_for(["Polymaker " + name]) is None for name in ("PA12 CF", "PA6 CF", "PA6 GF", "PC", "PETG CF"))
+           and real.match("Generic - ABS-GF30 - Black") is None and real.match("PLA-GF10") is None
+           and real.match("PETG-CF10") == "PETG-CF" and real.match("ABS") == "ABS",
            "Filamatch's data sheets load as tier 2 ({} products)".format(len(real.products)))
 
     print()

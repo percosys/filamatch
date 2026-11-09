@@ -65,6 +65,13 @@ WEIGHT_ATTRIBUTE = ("Filamatch", "printed_weight")
 #: The design attribute that keeps the strength case ("safe" / "typical").
 CASE_ATTRIBUTE = ("Filamatch", "printed_strength")
 
+#: Descriptions of Filamatch's own filament materials (and those of its old name). Their own
+#: mechanical values are a colour template's unless Filamatch wrote solid values.
+FILAMATCH_PREFIXES = ("Filamatch | ", "FusionFilament Bridge | ")
+
+#: Bases made from a material's own Fusion values (a filament without printed data), by label.
+_MATERIAL_BASES: Dict[str, strength_model.TypeData] = {}
+
 #: The last slicer check, per body token: the settings key it was sliced with,
 #: the volume it had and the density for Fusion. Apply uses it while the
 #: body's settings and shape are unchanged.
@@ -144,7 +151,7 @@ def _product_texts(material: Any, info: Mapping[str, Any]) -> List[str]:
     texts: List[str] = []
     description = str(getattr(material, "description", "") or "")
     parts = [part.strip() for part in description.split("|")]
-    if description.startswith("Filamatch | ") and len(parts) > 2:
+    if description.startswith(FILAMATCH_PREFIXES) and len(parts) > 2:
         named = [piece.strip() for piece in parts[2].split(" - ")]
         texts.append(" ".join(named[:2]))
     for text in (str(info.get("name") or ""), str(getattr(material, "name", "") or "")):
@@ -181,7 +188,7 @@ def strength_type(data: strength_model.StrengthData, material: Any,
     info = filament_types.get(name)
     info = info if isinstance(info, Mapping) else {}
     candidates: List[Tuple[str, str]] = []
-    if info.get("catalog") or description.startswith("Filamatch | "):
+    if info.get("catalog") or description.startswith(FILAMATCH_PREFIXES):
         if info.get("type"):
             candidates.append((str(info["type"]), "catalog"))
         parts = description.split("|")
@@ -270,6 +277,21 @@ def survey(design: Any, defaults: mass_model.PrintSettings, filament_types: Opti
         if data is not None:
             filament = material_copy.solid_material(design, entry.body.material)
             basis, how = strength_basis(data, filament, filament_types)
+            if not basis and filament is not None:
+                description = str(getattr(filament, "description", "") or "")
+                info = filament_types.get(str(filament.name))
+                kind = str(info.get("type") or "") if isinstance(info, Mapping) else ""
+                if strength_model.is_flexible(kind, str(filament.name), description):
+                    row["strength_none"] = "flexible"
+                elif description.startswith(FILAMATCH_PREFIXES) and "solid values:" not in description:
+                    row["strength_none"] = "no_data"  # a colour template's values, not the filament's
+                else:
+                    own = material_copy.read_values(filament)
+                    if own:
+                        basis, how = strength_model.material_basis(str(filament.name), own), "material"
+                        _MATERIAL_BASES[basis.label] = basis
+                    else:
+                        row["strength_none"] = "no_data"
             if basis:
                 strength = strength_model.estimate(data, basis, case, geometry.volume_cm3, result.shell_cm3,
                                                    settings.infill_percent, settings.infill_pattern,
@@ -310,7 +332,7 @@ def _strength_types(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     found: Dict[str, Any] = {}
     for row in rows:
         label = (row.get("strength") or {}).get("basis")
-        base = data.basis(label) if data is not None and label else None
+        base = (data.basis(label) if data is not None and label else None) or _MATERIAL_BASES.get(label or "")
         if base is None or label in found:
             continue
         found[label] = {"kind": base.kind, "type": base.name, "sources": list(base.sources),
@@ -624,7 +646,30 @@ def _self_test() -> int:
                "steel gets none")
         dispatch("as_printed_estimate", {"process_values": process}, palette)
         _check(palette.sent[-1][1]["bodies"][0]["strength"] is None,
-               "a material that is not in the catalog and has no type in its name gets no strength values")
+               "a material that is not in the catalog, has no type in its name and no values of its own gets none")
+        saved_read = material_copy.read_values
+        material_copy.read_values = lambda material: {"e_mpa": 2930.0, "tensile_mpa": 82.75, "yield_mpa": 82.75,
+                                                      "poisson": 0.39}
+        try:
+            dispatch("as_printed_estimate", {"process_values": process}, palette)
+            reply = palette.sent[-1][1]
+            filament.description = "FusionFilament Bridge | Other | Some - Unknown - Grey"
+            dispatch("as_printed_estimate", {"process_values": process}, palette)
+            template = palette.sent[-1][1]["bodies"][0]
+            filament.description = ""
+            dispatch("as_printed_estimate", {"process_values": process, "filament_types": {
+                filament.name: {"type": "TPU", "catalog": True, "name": "Bambu Lab TPU 95A HF - Grey"}}}, palette)
+            flexible = palette.sent[-1][1]["bodies"][0]
+        finally:
+            material_copy.read_values = saved_read
+            filament.description = ""
+        own = reply["bodies"][0]["strength"]
+        _check(own["kind"] == "material" and reply["bodies"][0]["strength_from"] == "material"
+               and own["e_mpa"] < 2930.0 and reply["strength_types"][own["basis"]]["uncertainty_percent"] == 60,
+               "a filament without printed data gets its own Fusion values scaled for the infill, never solid ones")
+        _check(template["strength"] is None and template["strength_none"] == "no_data"
+               and flexible["strength"] is None and flexible["strength_none"] == "flexible",
+               "a Filamatch material without data (a colour template's values) and a flexible filament get no values")
         dispatch("as_printed_set_case", {"case": "typical"}, palette)
         dispatch("as_printed_estimate", {"process_values": process, "filament_types": known}, palette)
         typical = palette.sent[-1][1]

@@ -112,12 +112,19 @@ across the layers, in MPa or GPa, dry and conditioned. Notes:
 
 ## Not in the data yet
 
-- **TPU:** the makers' moduli differ by seven times (9 to 67 MPa), and a
-  linear simulation does not fit a rubber-like part. TPU bodies get no
-  values.
+- **Flexible filaments (TPU, TPE, ...):** the makers' moduli differ by
+  seven times (9 to 67 MPa), and a linear simulation does not fit a
+  rubber-like part. These bodies get no printed values; the body line warns
+  that Fusion keeps the material's own values.
 - Glass-fibre types, PCTG, HIPS, PVA, PET-CF and plain PA, unless the
-  product has its own data sheet (tier 2). Without one these bodies get no
-  values, and the body line says so.
+  product has its own data sheet (tier 2).
+- A filament with neither a data sheet nor a type (for example Fusion's
+  "Nylon 6/6") uses its own Fusion values, scaled for the infill like the
+  others, ±60 %. Not for Filamatch's own filament materials without data:
+  their values are a colour template's, so they get none. These are often for molded parts, so they are too strong
+  for a print; the body line warns. Without its own values a body gets none,
+  and the body line says so. (Before, such a copy kept the solid values next
+  to the printed density, which looked safer than it is.)
 
 ## Known limits
 
@@ -137,5 +144,19 @@ across the layers, in MPa or GPa, dry and conditioned. Notes:
   100 %, the data sheets: units, dry and moist, exact names), `material_copy` (Fusion's units, isotropic, putting the filament's
   values back) and `as_printed_bridge` (a data sheet by description or
   display name, types from the catalog and from the name, the case per design).
-- Not tested yet: Fusion itself (the property writes, the units, the
-  isotropic choice, a Simulation study), and real printed parts.
+- In Fusion (2706.1.17): the copies get E, shear modulus, Poisson's ratio,
+  yield and tensile strength in Fusion's own units, isotropic; Safe and
+  Typical change them in place; the switch off removes them. A Static Stress
+  study's Study Materials use the copies ("Same as Model") with exactly
+  these values. The study was not solved: Fusion solves in the cloud only,
+  and the account had no Flex tokens.
+- Static check with a free FEA program instead,
+  `scripts/as_printed_static_check.py` (scikit-fem): three test parts with
+  the values Filamatch wrote, each fixed at one end with a force on its top.
+  The deflections match beam theory within 1.5–8 % (the wide plate is
+  stiffer than a beam), the safety factors 2.3 (bar), 2.4 (block) and 12
+  (plate). So Fusion gets values that behave as this model says.
+
+  ![Three test parts bent under load, coloured by stress as a share of the printed yield strength](../images/static-check.png)
+
+- Not tested yet: real printed parts.
