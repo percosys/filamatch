@@ -1,0 +1,548 @@
+{
+  "schema": 1,
+  "maker": "eSUN",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "ABS",
+      "type": "ABS",
+      "product_url": "https://www.esun3d.com/abs-product",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links only an SDS and REACH/RoHS papers."
+    },
+    {
+      "product": "ABS+",
+      "type": "ABS",
+      "product_url": "https://www.esun3d.com/abs-pro-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS/eSUN_ABS_Filament_TDS_V4.0.pdf",
+      "datasheet_version": "Version 4.0 (Nov.2021)",
+      "specimen": {
+        "nozzle_c": "230-270",
+        "bed_c": 95,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "0%",
+        "speed_mm_s": 40,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.06, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 40, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 30, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 68, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 1203, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 42, "unit": "kJ/m2", "standard": "GB/T 1843"}
+      ],
+      "notes": "Sheet title is 'ABS+' (the file name says ABS; it is the ABS+ sheet). The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Heat distortion temperature 73 °C (GB/T 1634) is left out: the sheet gives no load. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ABS-ESD",
+      "type": "ABS",
+      "product_url": "https://www.esun3d.com/abs-esd-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS-ESD/ABS-ESD_TDS-EN.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": 270,
+        "bed_c": 90,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "10-40%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 0.97, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "XY", "value": 38, "plus_minus": 2, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 22, "plus_minus": 5, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4.8, "plus_minus": 2.5, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 3.1, "plus_minus": 1.5, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 63, "plus_minus": 2.1, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_strength", "direction": "Z", "value": 35.9, "plus_minus": 3.0, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2263, "plus_minus": 100, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "Z", "value": 1677, "plus_minus": 64, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 19.29, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "impact_strength_notched", "direction": "Z", "value": 2.1, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 96, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Printed test bars (the sheet: 'standard samples printed by eSUN'). Antistatic (surface resistance 10^9 ohm). Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ASA+",
+      "type": "ASA",
+      "product_url": "https://www.esun3d.com/asa-pro-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ASA/ASA__TDS_V1_.pdf",
+      "datasheet_version": "Version 1.0 (JUN.2024)",
+      "specimen": {
+        "nozzle_c": 275,
+        "bed_c": 90,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "50%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta, max volumetric flow 10 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.06, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 35.7, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 18.0, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 66.5, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 2363.9, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 14.9, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 95.5, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Page 1 shows JUN.2024 Version 1.0, page 2 Dec.2023 Version 1.0. The sheet lists a print test condition (100% infill) but also says the properties 'are obtained based on the injection molding spline test'; unclear whether printed or moulded bars. No direction given. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "eABS-CF",
+      "aliases": [
+        "ABS+CF"
+      ],
+      "type": "ABS-CF",
+      "product_url": "https://www.esun3d.com/eabs-cf-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS-CF/ABS-CF_TDS_V1_2024.07.25.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": 270,
+        "bed_c": 100,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "0%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta, max volumetric flow 4 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.06, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "Z", "value": 29.9, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 5.7, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 76.2, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2694, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 3.5, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 94.9, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Values are labelled X-Y or Z (printed orientations) with a 100% infill print test condition, but the sheet's footer also says the properties 'are obtained based on the injection molding spline test' (probably a template leftover); unclear, read as printed bars. Tensile values are Z only; flexural and impact X-Y only. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "eABS-GF",
+      "type": "ABS-GF",
+      "product_url": "https://www.esun3d.com/eabs-gf-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS-GF/ABS-GF_TDS_V1_2024.07.25.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": 270,
+        "bed_c": 100,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "0%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta, max volumetric flow 4 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.07, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "Z", "value": 27.2, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 3.98, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 76.4, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2459.6, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 5.6, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 96.1, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Page 2 shows Dec.2023 Version 1.0. Values are labelled X-Y or Z (printed orientations) with a 100% infill print test condition, but the sheet's footer also says the properties 'are obtained based on the injection molding spline test' (probably a template leftover); unclear, read as printed bars. Tensile values are Z only; flexural and impact X-Y only. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "eABS-HT",
+      "type": "ABS",
+      "product_url": "https://www.esun3d.com/eabs-ht-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS-HT/ABS-HT_TDS_V1_2024.07.25.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": 260,
+        "bed_c": 100,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 95,
+        "cooling_fan": "0%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta, max volumetric flow 10 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.04, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "Z", "value": 35.7, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 3.78, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 60.7, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1898.8, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 14, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 104.4, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Page 2 shows Dec.2023 Version 1.0. Values are labelled X-Y or Z (printed orientations) with a 100% infill print test condition, but the sheet's footer also says the properties 'are obtained based on the injection molding spline test' (probably a template leftover); unclear, read as printed bars. Test bars at 95% infill. Tensile values are Z only; flexural and impact X-Y only. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "eABS Max",
+      "type": "ABS",
+      "product_url": "https://www.esun3d.com/eabs-max-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS-FR/eSUN_eABS_Max_Filament_TDS_V4.0.pdf",
+      "datasheet_version": "Version 4.0 (Nov.2021)",
+      "specimen": {
+        "nozzle_c": "230-270",
+        "bed_c": 100,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "0%",
+        "speed_mm_s": 40,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.05, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 45, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 30, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 58, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 2400, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 48, "unit": "kJ/m2", "standard": "GB/T 1843"}
+      ],
+      "notes": "Flame retardant, UL94 V-0 (halogen-free) per the sheet's description. The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Heat distortion temperature N/A on the sheet. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "eABS+HS",
+      "aliases": [
+        "ABS+HS"
+      ],
+      "type": "ABS",
+      "product_url": "https://www.esun3d.com/eabshs-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/ABS_HS/eABS_HS.pdf",
+      "datasheet_version": "Version 4.0 (July.2023)",
+      "specimen": {
+        "nozzle_c": 250,
+        "bed_c": 45,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "100%",
+        "speed_mm_s": 50,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.04, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 39, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 21, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 58, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 1906, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 41, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 89, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ePA-CF",
+      "type": "PA-CF",
+      "product_url": "https://www.esun3d.com/epa-cf-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PA-CF/eSUN_ePA-CF_Filament_TDS_V4.0.pdf",
+      "datasheet_version": "Version 4.0 (Nov.2021)",
+      "specimen": {
+        "nozzle_c": "240-300",
+        "bed_c": 80,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "0%",
+        "speed_mm_s": 40,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.24, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 140, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 10.61, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 140, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 4363, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 18.67, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 155, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Nylon 6/66 copolymer with 20% carbon fibre. The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Dry or conditioned not stated. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ePA",
+      "type": "PA",
+      "product_url": "https://www.esun3d.com/epa-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PA/eSUN_ePA_Filament_TDS_V4.0.pdf",
+      "datasheet_version": "Version 4.0 (Nov.2021)",
+      "specimen": {
+        "nozzle_c": "240-290",
+        "bed_c": 80,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "0%",
+        "speed_mm_s": 40,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.12, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 52.45, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 175.32, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 58, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 1370, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 18.4, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 50, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Sheet title is 'PA' (nylon 6/66 copolymer). The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Dry or conditioned not stated. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "PA12+CF",
+      "aliases": [
+        "PA12-CF"
+      ],
+      "type": "PA12-CF",
+      "product_url": "https://www.esun3d.com/epa12cf-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PA12_CF/PA12_CF_TDS_V1_2024.07.09.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": 290,
+        "bed_c": 100,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "10%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta, max volumetric flow 4 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.07, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "Z", "value": 38.2, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 18.2, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 64.1, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2092.3, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 7, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 131.9, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "PA12 with 15% carbon fibre. Values are labelled X-Y or Z (printed orientations) with a 100% infill print test condition, but the sheet's footer also says the properties 'are obtained based on the injection molding spline test' (probably a template leftover); unclear, read as printed bars. Tensile values are Z only; flexural and impact X-Y only. Dry or conditioned not stated. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ePEEK-Industrial",
+      "type": "PEEK",
+      "product_url": "https://www.esun3d.com/epeek-industrial-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PEEK-Industrial0.25KG/ePEEK-Industrial.2022.pdf",
+      "datasheet_version": "Version 4.0 (Nov.2022)",
+      "specimen": {
+        "nozzle_c": "380-440",
+        "bed_c": 80,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "100%",
+        "speed_mm_s": 20,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.3, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 100, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 40, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 170, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 4200, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 6.5, "unit": "kJ/m2", "standard": "GB/T 1843"}
+      ],
+      "notes": "Sheet title is 'PEEK-Industrial'. The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Annealed or not for the tests not stated (the sheet recommends annealing 150 °C 1 h, 200 °C 1 h, 150 °C 30 min). Heat distortion temperature 152 °C (GB/T 1634) is left out: the sheet gives no load. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ePLA-CF",
+      "aliases": [
+        "PLA-CF"
+      ],
+      "type": "PLA-CF",
+      "product_url": "https://www.esun3d.com/epla-cf-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PLA-CF/ePLA-CF.pdf",
+      "datasheet_version": "Version 4.0 (July.2023)",
+      "specimen": {
+        "nozzle_c": "190-230",
+        "bed_c": 45,
+        "shells": 4,
+        "top_bottom_layers": 4,
+        "infill_percent": 20,
+        "cooling_fan": "100%",
+        "speed_mm_s": 50,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "no orientation given; 0.4 mm nozzle, Simplify3D v4.1.2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.21, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "", "value": 39, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "", "value": 4.27, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "", "value": 103, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "", "value": 5003, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "", "value": 5.08, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 53, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "The sheet says the properties 'are obtained based on the injection molding spline test' but also lists a 'Print test condition' (Simplify3D, 20% infill, 4 shells); unclear whether the bars were printed or injection-moulded. No direction given. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "PC-ESD",
+      "type": "PC",
+      "product_url": "https://www.esun3d.com/pc-esd-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PC-ESD/PC-ESD_TDS-EN.pdf",
+      "datasheet_version": "Version 2.0 (NOV.2025)",
+      "specimen": {
+        "nozzle_c": 280,
+        "bed_c": 100,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "0%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.22, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "XY", "value": 60, "plus_minus": 2, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 33, "plus_minus": 5, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 5.8, "plus_minus": 2.1, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 3.7, "plus_minus": 1.5, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 100, "plus_minus": 2.1, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_strength", "direction": "Z", "value": 45, "plus_minus": 5.0, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2894, "plus_minus": 100, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "Z", "value": 1713, "plus_minus": 55, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "heat_deflection_045", "direction": "", "value": 105, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Page 1 shows NOV.2025 Version 2.0; pages 2-3 (mechanical values, test conditions) show JUL.2024 Version 1.0. Printed test bars (the sheet: 'standard samples printed by eSUN'). Antistatic (surface resistance 10^6-10^9 ohm). Izod impact is left out: the sheet gives ranges, 5-11 kJ/m2 (X-Y) and 2-3 kJ/m2 (Z)."
+    },
+    {
+      "product": "PC-HT",
+      "type": "PC",
+      "product_url": "https://www.esun3d.com/pc-ht-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PC-HT/PC-HT-TDS-EN.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": "290-300",
+        "bed_c": "100-110",
+        "shells": 3,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "0%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0, max flow 4 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.23, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "XY", "value": 67.6, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 50.6, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 7.3, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 4.9, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 97.2, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_strength", "direction": "Z", "value": 76.3, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2353.5, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2340.6, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 13.6, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "impact_strength_notched", "direction": "Z", "value": 2.4, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 113.6, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "The linked file is in Chinese only (title 'PC 耐温', heat-resistant PC), despite '-EN' in its name. PC blended with PET and PCTG. Printed test bars (the sheet: standard samples printed by eSUN). Impact is notched Izod (the sheet says 缺口, notched)."
+    },
+    {
+      "product": "PET-CF",
+      "type": "PET-CF",
+      "product_url": "https://www.esun3d.com/pet-cf-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PET-CF/PET-CF_TDS.pdf",
+      "datasheet_version": "Version 1.0 (JUL.2024)",
+      "specimen": {
+        "nozzle_c": 300,
+        "bed_c": 70,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "0%",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table; no drawing of the orientations. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta, max volumetric flow 4 mm3/s"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.42, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "XY", "value": 80.32, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 22, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3.61, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 2.11, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 135.6, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_strength", "direction": "Z", "value": 33.4, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8264.15, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2165.01, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 7.16, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "impact_strength_notched", "direction": "Z", "value": 2.12, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 75, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Printed test bars (the sheet: 'standard samples printed by eSUN'). Annealed or not for the mechanical tests not stated. Heat distortion 75 °C (0.45 MPa) as printed; the sheet gives 145 °C (0.45 MPa) after annealing. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "PET-FR",
+      "type": "PET",
+      "product_url": "https://www.esun3d.com/pet-fr-product",
+      "datasheet_url": "https://www.esun3d.com/media/esun/catalog/certification/product/PET-FR/PET-FR-TDS-EN.pdf",
+      "datasheet_version": "Version 1.0 (Apr.2025)",
+      "specimen": {
+        "nozzle_c": "300-320",
+        "bed_c": 70,
+        "shells": 2,
+        "top_bottom_layers": 3,
+        "infill_percent": 100,
+        "cooling_fan": "off",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "X-Y and Z as labelled in the table. Bambu P1S 0.4 mm nozzle, OrcaSlicer 2.1.0 Beta"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.52, "unit": "g/cm3", "standard": "GB/T 1033"},
+        {"property": "tensile_strength", "direction": "XY", "value": 47.66, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 20, "unit": "MPa", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3.94, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 2.38, "unit": "%", "standard": "GB/T 1040"},
+        {"property": "flexural_strength", "direction": "XY", "value": 76.4, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_strength", "direction": "Z", "value": 26.8, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3869.28, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "flexural_modulus", "direction": "Z", "value": 1533.26, "unit": "MPa", "standard": "GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 5.99, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "impact_strength_notched", "direction": "Z", "value": 2.2, "unit": "kJ/m2", "standard": "GB/T 1843"},
+        {"property": "heat_deflection_045", "direction": "", "value": 75, "unit": "°C", "standard": "GB/T 1634"}
+      ],
+      "notes": "Flame retardant, UL94 V0. Printed test bars (the sheet: 'standard samples printed by eSUN'). Annealed or not for the mechanical tests not stated. Heat distortion 75 °C (0.45 MPa); the sheet gives 130 °C (0.45 MPa) after annealing at 100 °C for 4-8 h. Impact is 'IZOD Impact Strength' (GB/T 1843); the table does not say notched, but the sheet's impact specimen drawing shows a notched bar, so it is recorded as notched."
+    },
+    {
+      "product": "ASA-LW",
+      "type": "ASA",
+      "product_url": "https://www.esun3d.com/asa-lw-product",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "Lightweight foaming ASA. No technical data sheet found: the product page links no documents."
+    },
+    {
+      "product": "ePA12",
+      "type": "PA",
+      "product_url": "https://www.esun3d.com/epa12-product",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "PA12 nylon. No technical data sheet found: the product page links no documents."
+    },
+    {
+      "product": "ePETG-CF",
+      "aliases": [
+        "PETG+CF"
+      ],
+      "type": "PETG-CF",
+      "product_url": "https://www.esun3d.com/epetg-cf-product",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No own technical data sheet: the product page's TDS link (PETG-CF/PET-CF_TDS.pdf) is byte-identical to the PET-CF sheet, so it is not used for PETG-CF."
+    }
+  ]
+}

@@ -30,8 +30,9 @@ The code is `Filamatch/lib/strength_model.py`. The data is
    of its data sheets. Its range is their lowest and highest value.
 3. **The case.** Fusion Simulation uses one value for every direction. So
    you choose:
-   - **Safe** (the default): the lowest Z value of the data sheets. Printed
-     parts break across the layers first. For a nylon whose sheet gives moist
+   - **Safe** (the default): the weakest bar of the data sheets, across the
+     layers (Z) or, when a sheet says that is lower, along them. Printed parts
+     break across the layers first. For a nylon whose sheet gives moist
      (conditioned) values, Safe uses those.
    - **Typical:** the average of the XY and Z medians (dry for nylons).
 4. **Layer height.** The data sheets test at about 0.2 mm layers with a
@@ -99,10 +100,21 @@ are in the data file. Notes:
 Filamatch keeps them in `Filamatch/data/datasheets/` (format and rules in its
 README; each value has its sheet's URL, version and test standard). The model
 reads tensile modulus and tensile strength (or yield, where higher) along and
-across the layers, in MPa or GPa, dry and conditioned. Notes:
+across the layers, in MPa, GPa, psi or ksi, dry and conditioned. Notes:
 
 - Bambu Lab ASA Aero is left out: its test bars were dense, but a print
   foams.
+- Only XY and Z bars are read. An on-edge "XZ" bar (Prusament's "vertical")
+  still has its layers along the bar, so it is not Z. Sheets with values
+  without a direction (often molded bars) are not used.
+- A sheet with strength but no tensile modulus (many eSun, Elegoo and Sunlu
+  sheets) takes its stiffness from the generic type's medians and says so;
+  without a generic type it is not used.
+- A sheet without Z values (Prusament) gets them estimated: its XY value
+  times the generic type's Z/XY ratio, or, for a type without generic data
+  (PA11, PEI, PP-CF …), the lowest ratio of the generic types. ±30 %, and
+  the sources list says so. Without this, Safe would use the along-the-layers
+  value and be less safe than the generic type.
 - Bambu Lab nylons give dry values only; the card says moist nylon is weaker.
 - Bambu Lab PPA-CF and PPS-CF bars were not annealed; the sheets say a hotter
   chamber gives more, mostly in Z.

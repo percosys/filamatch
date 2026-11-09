@@ -1,0 +1,1681 @@
+{
+  "schema": 1,
+  "maker": "3DXTech",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "CarbonX PEKK-A+CF",
+      "aliases": [
+        "PEKK CF"
+      ],
+      "type": "PEKK-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-pekk-a-cf15-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF15_PEKK-A__TDS_v1.pdf?v=1723942767",
+      "datasheet_version": "Rev 1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 390,
+        "bed_c": 140,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.33, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 126, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 9125, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3.15, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 178, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8817, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 285, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Sheet title: 'CarbonX Carbon Fiber PEKK-A CF15 [AERO]'. Surface resistance >10^7 ohm/sq (ESD range)."
+    },
+    {
+      "product": "Triton3D ABS",
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/triton-abs",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Triton_ABS_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat', 'Infill Density: Solid'"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.05, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 30, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2205, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4.5, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 54, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1910, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 96, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Triton 3D sheet: bars printed on a Fortus 400mc, solid infill. Stratasys-compatible model material. Tensile strength is at break."
+    },
+    {
+      "product": "Triton3D ASA",
+      "type": "ASA",
+      "product_url": "https://www.3dxtech.com/products/triton-asa",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Triton_ASA_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat (infill given as Solid)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.07, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 31, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2050, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 54, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1800, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 98, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Triton 3D sheet 'Triton ASA Model Material', Stratasys-compatible material printed on a Fortus 400mc. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "Triton3D ABS+GF",
+      "type": "ABS-GF",
+      "product_url": "https://www.3dxtech.com/products/triton-abs-gf",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    },
+    {
+      "product": "Triton3D ABS+CF",
+      "type": "ABS-CF",
+      "product_url": "https://www.3dxtech.com/products/triton-abs-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/TriMax_CF_ABS_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat'; infill given as 'Solid'"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.11, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 44, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 4100, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 1.8, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 75, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5400, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 102, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Triton3D (3DXTech's Stratasys-compatible line); sheet title 'TriMax Carbon Fiber ABS Model Material'. Manifest name suffix '- Stratasys Compatible' dropped."
+    },
+    {
+      "product": "ThermaX PPS",
+      "aliases": [
+        "PPS"
+      ],
+      "type": "PPS",
+      "product_url": "https://www.3dxtech.com/products/thermax-pps",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PPS_TDS_v3.pdf?v=1723942766",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "335-345",
+        "bed_c": "110-130",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.28, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 50, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2650, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 18, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 52, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2540, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 90, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Tensile strength is at break. Base resin UL 94 V-0 @1.5mm."
+    },
+    {
+      "product": "ThermaX PES",
+      "aliases": [
+        "PES"
+      ],
+      "type": "PES",
+      "product_url": "https://www.3dxtech.com/products/thermax-pes-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PES_TDS_v1.0.pdf?v=1739974182",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "conditioning": "not stated on the sheet"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.37, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "yield_strength", "direction": "", "value": 86, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "", "value": 2640, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "", "value": 86, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "", "value": 2370, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_18", "direction": "", "value": 205, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "The sheet names no specimen conditions and no orientation: unclear whether the bars were printed or moulded. Tensile strength is given at yield (recorded as yield_strength); the sheet gives elongation at yield 6.9 % (not recorded, no break value). HDT is at 1.80 MPa (sheet prints 260psi)."
+    },
+    {
+      "product": "ThermaX PEI 9085",
+      "type": "PEI",
+      "product_url": "https://www.3dxtech.com/products/thermax-pei-9085",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PEI_9085_TDS_v4.pdf?v=1723942766",
+      "datasheet_version": "Rev 4.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "365-385",
+        "bed_c": "130-140",
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.34, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 54, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2050, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 90, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2170, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 158, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Made with ULTEM 9085 resin. Sheet gives 'Tensile Elongation' (not labelled at break) and 'Tensile Strength' (not labelled at break). Nozzle and bed are ranges on the sheet. UL 94 V-0 @1.5 mm for the base resin."
+    },
+    {
+      "product": "ThermaX PEI 1010",
+      "type": "PEI",
+      "product_url": "https://www.3dxtech.com/products/thermax-pei-1010",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PEI_1010_TDS_v4.pdf?v=1723942766",
+      "datasheet_version": "TDS Rev 4.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "380-400",
+        "bed_c": "130-140",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.27, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 56, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2500, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 110, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2510, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 208, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Made using ULTEM 1010. The sheet writes 'Tensile Strength' and 'Tensile Elongation' without break or yield; recorded as tensile strength and elongation at break. Base resin UL 94 V-0 @1.5mm."
+    },
+    {
+      "product": "Obsidian Nylon 6+GF",
+      "type": "PA-GF",
+      "product_url": "https://www.3dxtech.com/products/obsidian-gf-pa6-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Obsidian_GF15_Nylon_V1.pdf?v=1741199574",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Markforged Onyx One",
+        "layer_height_mm": 0.125,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.22, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 85, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 4.6, "unit": "GPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 5.8, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 128, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 4.7, "unit": "GPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 176, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Sheet title: Obsidian GF 15% Glass Fiber PA6. Flexural strength is labelled 'Flexural Strength, Yield'. Nylon: dry or conditioned not stated. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "iOn Nylon 6 Alloy",
+      "type": "PA",
+      "product_url": "https://www.3dxtech.com/products/ion-pa6-alloy-5",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/ion_tds_iOn_PA6_TDS_v2.0.pdf?v=1728334784",
+      "datasheet_version": "Rev 2.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 270,
+        "bed_c": 100,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Gearbox HT2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.06, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 62, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2110, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 9, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 78, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 97, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. PA6-based nylon alloy; the sheet does not say whether bars were tested dry or conditioned."
+    },
+    {
+      "product": "FibreX PEI+GF30",
+      "aliases": [
+        "PEI GF"
+      ],
+      "type": "PEI-GF",
+      "product_url": "https://www.3dxtech.com/products/pei-gf30",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FIBREX_GF30_ULTEM_PEI_v1.pdf?v=1723992647",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "380-410",
+        "bed_c": "130-140",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.51, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "yield_strength", "direction": "XY", "value": 145, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 8790, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 178, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8560, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 212, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. The sheet is titled 'ThermaX PEI GF30 [Made using ULTEM PEI]' (sold as FibreX PEI+GF30; 30 % glass fibre). Strength is printed as 'Tensile Strength, Yield' 145 MPa, recorded as yield strength; no break strength given. 'Tensile Elongation' 2 % is not labelled break or yield; recorded as elongation at break. Base resin UL 94 V-0 @ 0.25mm."
+    },
+    {
+      "product": "FibreX Nylon 6+GF30",
+      "type": "PA-GF",
+      "product_url": "https://www.3dxtech.com/products/fibrex-nylon-6-gf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/AMIDEX_Nylon_GF30_TDS_v1.pdf?v=1723942764",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Gearbox HT2",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 265,
+        "bed_c": 70,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.35, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 62.8, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 4261, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 72, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3600, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 186, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "The linked sheet is titled 'AmideX PA6-GF30 Glass Fiber Nylon', not FibreX; it is the sheet the FibreX Nylon 6+GF30 store page links. Nylon: dry or conditioned not stated. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "CarbonX PLA+CF",
+      "aliases": [
+        "PLA CF"
+      ],
+      "type": "PLA-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-pla-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_PLA_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "Rev 3.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 215,
+        "bed_c": 23,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.29, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 48, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 4950, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 89, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 6320, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 91, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. HDT 91 °C at 0.45 MPa is above the 60 °C Tg the sheet gives; copied as printed (may be for annealed bars, the sheet does not say)."
+    },
+    {
+      "product": "CarbonX Nylon 6+CF",
+      "type": "PA6-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-nylon-6-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_PA6_G3_TDS_v3.0.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 275,
+        "bed_c": 80,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.17, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 63, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 3800, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 84, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3750, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 147, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Sheet titled 'CarbonX Carbon Fiber Nylon (Gen3)'. Nylon: the sheet does not say dry or conditioned. Tensile strength is at break."
+    },
+    {
+      "product": "CarbonX ezPC+CF",
+      "type": "PC-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-ezpc-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_ezPC_TDSv1.pdf?v=1723942769",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 275,
+        "bed_c": 95,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.36, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 73, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 6980, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2.1, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 85, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 6540, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 119, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Sheet title: CarbonX Carbon Fiber ezPC Polycarbonate. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "CarbonX ASA+CF",
+      "aliases": [
+        "ASA CF"
+      ],
+      "type": "ASA-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-asa-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_ASA_TDS_v1.pdf?v=1723942767",
+      "datasheet_version": "Rev 1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 250,
+        "bed_c": 110,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.11, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 48, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 5355, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 78, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5210, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 97, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried."
+    },
+    {
+      "product": "CarbonX ABS+CF",
+      "type": "ABS-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-abs-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_ABS_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 230,
+        "bed_c": 110,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.11, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 46, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 5210, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 76, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5260, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 76, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Tensile strength is at break."
+    },
+    {
+      "product": "ABS",
+      "aliases": [
+        "3DXTECH ABS",
+        "3DXMAX ABS",
+        "ABS 3DXTech",
+        "ABS 3DXMax"
+      ],
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/3dxtech-r-abs",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/ABS-TDS-v03.pdf?v=1728334784",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 225,
+        "bed_c": 110,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.05, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 42, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1950, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 76, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1985, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 95, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "The linked sheet is titled '3DXMAX ABS 3D Printing Filament' (the store calls it 3DXTECH ABS). Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "3DXMAX ASA",
+      "aliases": [
+        "ASA 3DXMax"
+      ],
+      "type": "ASA",
+      "product_url": "https://www.3dxtech.com/products/3dxmax-r-asa",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXMAX_ASA_TDS_v3.pdf?v=1723942764",
+      "datasheet_version": "Rev 3.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 245,
+        "bed_c": 110,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.07, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 45, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2010, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 78, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2000, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 95, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried."
+    },
+    {
+      "product": "CarbonX Nylon 12+CF",
+      "type": "PA12-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-nylon-12-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonXCF_PA12_v1_TDS_1.pdf?v=1728334784",
+      "datasheet_version": "Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 285,
+        "bed_c": 110,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.16, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 72, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 8000, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2.1, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 90, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 7900, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 150, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Nylon: the sheet does not say dry or conditioned. Tensile strength is at break."
+    },
+    {
+      "product": "WearX Nylon 6",
+      "aliases": [
+        "Wearx Wear Resistant Nylon Filament PA6"
+      ],
+      "type": "PA",
+      "product_url": "https://www.3dxtech.com/products/wearx-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/wearx_tds_FW_PA6_Copolymer_v1.0.pdf?v=1728481558",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "conditioning": "not stated on the sheet"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.18, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "", "value": 62, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "", "value": 2458, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "", "value": 18, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "", "value": 70, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "", "value": 2215, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 143, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Sheet title: WearX Wear Resistant PA6 Copolymer. The sheet gives only general print recommendations, no test specimen conditions and no orientation: unclear whether the bars were printed or moulded. Nylon: dry or conditioned not stated. Wear rate and friction not recorded."
+    },
+    {
+      "product": "ThermaX PEKK-A",
+      "aliases": [
+        "PEKK"
+      ],
+      "type": "PEKK",
+      "product_url": "https://www.3dxtech.com/products/pekk-a",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/UN_PEKK_v3.1.pdf?v=1784724722",
+      "datasheet_version": "Rev 3.1",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 370,
+        "bed_c": 130,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "shells": 3,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Gearbox HT2"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.29, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 105, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 3200, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 134, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2900, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 182, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Sheet title is 'ThermaX PEKK 3D Printing Filament' (no '-A'); taken to be the PEKK-A product. Tensile strength/elongation not labelled 'at break'. 3 perimeter walls. UL 94 V-0 @0.8 mm for the base resin."
+    },
+    {
+      "product": "Firewire FR-ABS",
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/firewire-r-fr-abs",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FIREWIRE_FR_ABS_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 235,
+        "bed_c": 110,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.18, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 45, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1990, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 80, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2250, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 95, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Flame-retardant ABS, base resin UL 94 V-0 @1.5mm. Tensile strength is at break."
+    },
+    {
+      "product": "CarbonX PC+CF",
+      "aliases": [
+        "Carbonx CF PC"
+      ],
+      "type": "PC-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-pc-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_PC_TDSv3.pdf?v=1723942764",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 300,
+        "bed_c": 140,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.36, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 70, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 6200, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 90, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5890, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 135, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Sheet title: CarbonX Carbon Fiber Polycarbonate. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "Obsidian Nylon 6+CF V2",
+      "type": "PA6-CF",
+      "product_url": "https://www.3dxtech.com/products/obsidian-nylon-6-cf-v2",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXTECH_TDS_-_Obsidian_CF_v2_v1.0.pdf?v=1753452533",
+      "datasheet_version": "Rev 1.0",
+      "specimen": {
+        "printer": "Markforged X7",
+        "nozzle_c": 275,
+        "speed_mm_s": 30,
+        "layer_height_mm": 0.2,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet labels: 'Vertical' (recorded Z), 'Flat' (recorded XY), 'Edge' (tensile/flexural bar printed on edge; the sheet gives no XY/XZ label, recorded with direction ''). Izod bar flat, HDT bar on edge."
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "Z", "value": 23.4, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "Z", "value": 1351.4, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "XY", "value": 23.8, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 730.8, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "", "value": 31.0, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "", "value": 1510.0, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "flexural_strength", "direction": "", "value": 33.9, "unit": "MPa", "standard": "ASTM D790"},
+        {"property": "flexural_modulus", "direction": "", "value": 1048.0, "unit": "MPa", "standard": "ASTM D790"},
+        {"property": "impact_strength", "direction": "XY", "value": 854, "unit": "J/m", "standard": "ASTM D256"},
+        {"property": "heat_deflection_045", "direction": "", "value": 147, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, tested by an independent third-party lab side by side with Markforged Onyx (Onyx values not recorded). Directions: Vertical = Z, Flat = XY; 'Edge' bars (tensile 31.0 MPa / 1510.0 MPa, flexural 33.9 MPa / 1048.0 MPa) carry direction '' because the sheet does not say XY or XZ: they are on-edge bars, along the layers. Infill 'Solid'. Izod unnotched is an impact_strength in J/m. Sheet title 'Obsidian-CF v2'."
+    },
+    {
+      "product": "FluorX PVDF",
+      "aliases": [
+        "PVDF"
+      ],
+      "type": "PVDF",
+      "product_url": "https://www.3dxtech.com/products/fluorx-pvdf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FLUORX_PVDF_TDS_v3.pdf?v=1723942766",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "255-275",
+        "bed_c": "70-110",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.71, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 51, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2450, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 25, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 50, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1800, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 158, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Tensile strength is at break. Base resin UL 94 V-0 @1.5mm."
+    },
+    {
+      "product": "Triton3D PEI 9085",
+      "type": "PEI",
+      "product_url": "https://www.3dxtech.com/products/triton-pei-9085-stratasys-compatible",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Ultem_9095_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat (infill given as Solid)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.34, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 55, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2200, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 91, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2170, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 158, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Triton 3D sheet 'Ultem 9085 Model Material' (file name Ultem_9095, sheet says 9085), printed on a Fortus 400mc. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "Triton3D PEI 1010",
+      "type": "PEI",
+      "product_url": "https://www.3dxtech.com/products/triton™-pei-1010-stratasys®-compatible",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Ultem_1010_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat'; infill given as 'Solid'"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.27, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 56, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2500, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 111, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2500, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 208, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Triton3D sheet titled 'Ultem 1010 Model Material'. Manifest name suffix '- Stratasys Compatible' dropped."
+    },
+    {
+      "product": "Triton3D PC/ABS",
+      "type": "PC-ABS",
+      "product_url": "https://www.3dxtech.com/products/triton3d-pc-abs-stratasys-compatible",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Triton_PC-ABS_TDS_v1.pdf?v=1724507806",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat', 'Infill Density: Solid'"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.14, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 40, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1850, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 67, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1910, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 110, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Triton 3D sheet: bars printed on a Fortus 400mc, solid infill. Stratasys-compatible model material. Tensile strength is at break."
+    },
+    {
+      "product": "Triton3D PC",
+      "type": "PC",
+      "product_url": "https://www.3dxtech.com/products/triton-pc-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Trilan_PC_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat (infill given as Solid)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 49.5, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1950, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3.7, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 78, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1910, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 138, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Triton 3D sheet titled 'Trilan PC Model Material', printed on a Fortus 400mc. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "Triton3D Nylon 12+CF",
+      "type": "PA12-CF",
+      "product_url": "https://www.3dxtech.com/products/triton-nylon-12-cf-1",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    },
+    {
+      "product": "Triton3D FR-PC/ABS",
+      "type": "PC-ABS",
+      "product_url": "https://www.3dxtech.com/products/triton3d™-fr-pc-abs-stratasys®-compatible",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    },
+    {
+      "product": "Triton3D ESD-PEI 1010",
+      "type": "PEI",
+      "product_url": "https://www.3dxtech.com/products/triton-3d-esd-1010",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    },
+    {
+      "product": "Triton3D ESD-PC",
+      "type": "PC",
+      "product_url": "https://www.3dxtech.com/products/triton-esd-pc-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/TriStat_ESD_PC_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat'; infill given as 'Solid'"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.22, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 53, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2010, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 84, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2430, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 141, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. ESD grade (surface resistance 10^7 ohm/sq). Triton3D sheet titled 'TriStat ESD-PC Model Material'. Manifest name suffix '- Stratasys Compatible' dropped."
+    },
+    {
+      "product": "Triton3D ESD-ABS",
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/triton-esd-abs-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/TriStat_ESD_ABS_TDS_v1.pdf?v=1724507805",
+      "datasheet_version": "Version 1.00 (2017-06-01)",
+      "specimen": {
+        "printer": "Fortus 400mc",
+        "layer_height_mm": 0.33,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat', 'Infill Density: Solid'"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.07, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 36, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2275, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3.5, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 62, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2430, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 98, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Triton 3D sheet: bars printed on a Fortus 400mc, solid infill. Stratasys-compatible model material. Sheet titled 'TriStat ESD-ABS Model Material'. ESD: surface resistance 10^7 Ohm/sq. Tensile strength is at break."
+    },
+    {
+      "product": "ThermaX PSU",
+      "aliases": [
+        "Thermax Psu",
+        "PSU"
+      ],
+      "type": "PSU",
+      "product_url": "https://www.3dxtech.com/products/thermax-psu-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PSU_TDS_v3.pdf?v=1723942768",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "360-375",
+        "bed_c": "120-140",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.24, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 52, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2100, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 8, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 87, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2050, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 172, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Tensile strength and elongation are not labelled break or yield on the sheet ('Tensile Strength', 'Tensile Elongation'); recorded as tensile_strength and elongation_at_break. Specimen temperatures are given as ranges. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "ThermaX PPSU",
+      "aliases": [
+        "PPSU"
+      ],
+      "type": "PPSU",
+      "product_url": "https://www.3dxtech.com/products/thermax-ppsu-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PPSU_TDS_v3.pdf?v=1723942766",
+      "datasheet_version": "Rev 3.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "390-410",
+        "bed_c": "130-150",
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.28, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 55, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2310, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 110, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2215, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 190, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Tensile strength/elongation not labelled 'at break'. Nozzle and bed are ranges on the sheet. UL 94 V-0 @1.5 mm for the base resin."
+    },
+    {
+      "product": "ThermaX PPE/PS",
+      "aliases": [
+        "PPE"
+      ],
+      "type": "PPE-PS",
+      "product_url": "https://www.3dxtech.com/products/thermax-ppe-ps-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/THERMAX_PPE_PS_TDS_v1.pdf?v=1723942768",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 310,
+        "bed_c": 120,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.1, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 67, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2250, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 12, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 85, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2300, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_18", "direction": "", "value": 112, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Polyphenylene ether + polystyrene. Heat deflection given only at 1.8 MPa. Tensile strength is at break."
+    },
+    {
+      "product": "ThermaX PEEK",
+      "aliases": [
+        "PEEK"
+      ],
+      "type": "PEEK",
+      "product_url": "https://www.3dxtech.com/products/thermax-peek-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Themax_PEEK_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "380-400",
+        "bed_c": "130-140",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.3, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 100, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 3720, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 28, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 130, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2700, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 140, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Tensile strength and elongation are not labelled break or yield on the sheet; recorded as tensile_strength and elongation_at_break. Not stated whether the bars were annealed. UL94 V-0 @1.5mm (base resin). Specimen temperatures are given as ranges. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "Obsidian FR-Nylon",
+      "type": "PA",
+      "product_url": "https://www.3dxtech.com/products/obsidian-fr-nylon",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXTECH_TDS_-_Obsidian_FR-Nylon_v1.1.pdf?v=1781898843",
+      "datasheet_version": "Rev 1.1",
+      "specimen": {
+        "printer": "Bambu H2D",
+        "nozzle_c": 285,
+        "bed_c": 100,
+        "chamber_c": 65,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet labels: 'Vertical' (recorded Z), 'Flat' (recorded XY), 'Edge' (no XY/XZ label on the sheet, recorded with direction ''). Izod bar flat."
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "Z", "value": 19.0, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "Z", "value": 1495, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 7.3, "unit": "%", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "", "value": 32.9, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "", "value": 1880, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "elongation_at_break", "direction": "", "value": 12.3, "unit": "%", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "XY", "value": 30.4, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1480, "unit": "MPa", "standard": "ASTM D638"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 17.7, "unit": "%", "standard": "ASTM D638"},
+        {"property": "flexural_strength", "direction": "", "value": 48.4, "unit": "MPa", "standard": "ASTM D790"},
+        {"property": "flexural_modulus", "direction": "", "value": 1990, "unit": "MPa", "standard": "ASTM D790"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 60.9, "unit": "J/m", "standard": "ASTM D256-26"},
+        {"property": "heat_deflection_045", "direction": "", "value": 164, "unit": "°C", "standard": "ASTM D648"}
+      ],
+      "notes": "Printed test bars. Values are from the sheet's page 2 table (3DXTech's own set, printed on a Bambu H2D). Page 1 has a second set from a third-party lab on a Markforged X7 (275 °C, 30 mm/s, 0.20 mm, solid), side by side with Onyx-FR: Vertical 12.9 MPa / 1100 MPa / 3.4 %; Edge 36.7 MPa / 3350 MPa / 15.1 %; Flat 20.9 MPa / 885 MPa / 26.4 %; flexural (Edge) 51.9 MPa, tangent modulus (1%) 2100 MPa; not recorded as properties. Directions: Vertical = Z, Flat = XY; 'Edge' values carry direction '' (on-edge bars, along the layers; the sheet gives no XY/XZ label). Flexural modulus is the 'Tangent Modulus (1%)'. Impact standard printed as 'ASTM D256-26'. HDT at 66 psi. UL94 V-0 at 3.0 mm. Fibre content not stated on the sheet (the text says it leverages Obsidian+CF v2), so type kept as PA."
+    },
+    {
+      "product": "Firewire FR-PC/ABS",
+      "type": "PC-ABS",
+      "product_url": "https://www.3dxtech.com/products/firewire-r-fr-pc-abs",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FIREWIRE_FR_PCABS_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 275,
+        "bed_c": 120,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.24, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 60, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2250, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 85, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2300, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 125, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Flame-retardant PC/ABS, base resin UL 94 V-0 @1.5mm. Tensile strength is at break."
+    },
+    {
+      "product": "FibreX PEEK+GF20",
+      "aliases": [
+        "PEEK GF"
+      ],
+      "type": "PEEK-GF",
+      "product_url": "https://www.3dxtech.com/products/fibrex-peek-gf20-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FIBREX_GF20_PEEK_v2.pdf?v=1723992647",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source 3D Printer",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 400,
+        "bed_c": 160,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.44, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 105, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 7250, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2.5, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 130, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 7625, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 300, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "The linked sheet is titled 'ThermaX PEEK GF20' and shows TDS Rev 1.0 (file name says v2). Not stated whether the bars were annealed. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "FibreX Nylon 12+GF30",
+      "aliases": [
+        "PA12 GF"
+      ],
+      "type": "PA12-GF",
+      "product_url": "https://www.3dxtech.com/products/fibrex-nylon-12-gf30-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FIBREX_PA12_GF30_TDS_v1.0.pdf?v=1723942768",
+      "datasheet_version": "Rev 1.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 285,
+        "bed_c": 110,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.23, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 82, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 7800, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4.5, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 94, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 7550, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 150, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. 30% glass fibre PA12. The sheet does not say whether bars were tested dry or conditioned."
+    },
+    {
+      "product": "FibreX ABS+GF",
+      "type": "ABS-GF",
+      "product_url": "https://www.3dxtech.com/products/fibrex-abs-gf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/FIBREX_GF_ABS__TDS_v1.pdf?v=1723942769",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 245,
+        "bed_c": 110,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.15, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 68, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 4210, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 70, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 4420, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 98, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Sheet titled 'FibreX ABS+GF10 Glass Fiber ABS' (10 % glass fibre). Tensile strength is at break."
+    },
+    {
+      "product": "ezPC Polycarbonate",
+      "type": "PC",
+      "product_url": "https://www.3dxtech.com/products/ezpc-polycarbonate-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/ezpc_tds_UN_ezPC_v01.pdf?v=1728334785",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 265,
+        "bed_c": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 58, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2180, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 14, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 91, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2150, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 112, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "CarbonX PP+CF",
+      "aliases": [
+        "PP CF"
+      ],
+      "type": "PP-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-pp-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/PP_CF_TDS_v1.0.pdf?v=1787159967",
+      "datasheet_version": "Rev 1.0",
+      "specimen": {
+        "nozzle_c": 240,
+        "bed_c": 50,
+        "speed_mm_s": 50,
+        "layer_height_mm": 0.2,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet column 'Test Condition: Flat' for all mechanical values (recorded XY)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.0, "unit": "g/cm3", "standard": "ISO 1183-1"},
+        {"property": "tensile_strength", "direction": "XY", "value": 92, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 9500, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2.5, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 90, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 7000, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength", "direction": "XY", "value": 42, "unit": "kJ/m2", "standard": "ISO 179 1eU"},
+        {"property": "vicat_softening", "direction": "", "value": 80, "unit": "°C", "standard": "ISO 306, VST A"}
+      ],
+      "notes": "Printed test bars, flat only (no Z values). 20% carbon fibre. Sheet calls the data preliminary. Impact row is labelled 'IZOD Impact Strength' but the standard is ISO 179 1eU (Charpy, unnotched); recorded as unnotched impact_strength with the standard as printed. Moisture absorption is '<0.3 %' (ISO 62), not a number, so left out. Sheet title 'PP+CF' (no CarbonX on the sheet)."
+    },
+    {
+      "product": "CarbonX PETG+CF",
+      "aliases": [
+        "PETG CF"
+      ],
+      "type": "PETG-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-petg-cf-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_PETG_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 245,
+        "bed_c": 60,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.34, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 56, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 5230, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 80, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5740, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 77, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Tensile strength is at break."
+    },
+    {
+      "product": "CarbonX PEI 9085+CF",
+      "aliases": [
+        "PEI CF"
+      ],
+      "type": "PEI-CF",
+      "product_url": "https://www.3dxtech.com/products/pei-cf15",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/carbonx_tds_CF_Ultem_9085_1.pdf?v=1728334784",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 390,
+        "bed_c": 140,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.39, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 93, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 8600, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 2, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 120, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8450, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 165, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Sheet title: CarbonX Carbon Fiber Ultem 9085. Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "CarbonX PEEK+CF10",
+      "aliases": [
+        "PEEK CF"
+      ],
+      "type": "PEEK-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-peek-cf10-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CarbonX_CF_PEEK_TDS_v3.pdf?v=1723942765",
+      "datasheet_version": "Rev 3.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 400,
+        "bed_c": 140,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.39, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 105, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 8100, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 3, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 136, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8300, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 265, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Sheet title 'CarbonX Carbon Fiber PEEK 3D Printing Filament' (fibre content not on the sheet; manifest product is PEEK+CF10)."
+    },
+    {
+      "product": "CarbonX HTN+CF",
+      "type": "PA-CF",
+      "product_url": "https://www.3dxtech.com/products/carbonx-htn-cf",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/CARBONX_HTN-CF_TDS_v1.0.pdf?v=1754422662",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Bambu X1C",
+        "nozzle_c": 295,
+        "bed_c": 100,
+        "chamber_c": "N/A",
+        "layer_height_mm": 0.24,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet's Orientation column: 'Flat' (recorded XY), 'Vertical' (recorded Z), 'Edge' (no XY/XZ label on the sheet, recorded with direction ''). Page 2 drawing: tensile bars flat and on edge, flexural bar on edge, Izod bar flat, HDT bar on edge."
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.25, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "Z", "value": 4500, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "Z", "value": 553, "unit": "ksi", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "XY", "value": 15500, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 977, "unit": "ksi", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "", "value": 13700, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "", "value": 1300, "unit": "ksi", "standard": "ASTM D638"},
+        {"property": "flexural_strength", "direction": "", "value": 26900, "unit": "psi", "standard": "ASTM D790"},
+        {"property": "flexural_modulus", "direction": "", "value": 1380, "unit": "ksi", "standard": "ASTM D790"},
+        {"property": "impact_strength", "direction": "XY", "value": 4.68, "unit": "ft-lb/in", "standard": "ASTM D256"},
+        {"property": "heat_deflection_18", "direction": "", "value": 200, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, tested by an independent third-party lab per the sheet. Mechanical values are given only in imperial units (psi, ksi, ft-lb/in) and copied as printed. Directions: 'Flat' = XY, 'Vertical' = Z; 'Edge' bars (printed standing on edge) are recorded with direction '' because the sheet gives no XY/XZ label for them. The direction-'' tensile and flexural values are the on-edge bars. Impact is Izod unnotched (flat bar). HDT bar printed on edge per the drawing; the sheet writes the 1.80 MPa load as '261 psi'. HTN = high-temperature nylon; the sheet does not name the polyamide, so typed PA-CF. Nylon: dry or conditioned not stated. Continuous service temperature 150 °C (IEC 60216, 20,000 h) not recorded."
+    },
+    {
+      "product": "AmideX Nylon 12",
+      "type": "PA",
+      "product_url": "https://www.3dxtech.com/products/amidex™-nylon-12",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    },
+    {
+      "product": "3DXSTAT ESD-PC",
+      "aliases": [
+        "PC 3DXStat ESD"
+      ],
+      "type": "PC",
+      "product_url": "https://www.3dxtech.com/products/3dxstat-esd-pc-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXSTAT_ESD_PC_v3_TDS.pdf?v=1723942765",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 295,
+        "bed_c": 130,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.24, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 68, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2300, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 95, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2310, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 135, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "ESD grade (surface resistance 10^7-10^9 ohm/sq). Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "3DXSTAT ESD-ABS",
+      "aliases": [
+        "ABS 3DXStat ESD"
+      ],
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/3dxstat-esd-abs-1",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXSTAT_ESD_ABS_TDS_v3.pdf?v=1723942764",
+      "datasheet_version": "Rev 3.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 230,
+        "bed_c": 110,
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.09, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 58, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2130, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 80, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2275, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 97, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. ESD grade (surface resistance 10^7 - 10^9 ohm/sq)."
+    },
+    {
+      "product": "3DXSTAT ESD-PEI 1010",
+      "aliases": [
+        "PEI 3DXStat ESD"
+      ],
+      "type": "PEI",
+      "product_url": "https://www.3dxtech.com/products/3dxstat-esd-pei-ultem-1010",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXSTAT_ESD_Ultem1010_TDS_v3.1.pdf?v=1723942767",
+      "datasheet_version": "TDS Rev 3.1",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 395,
+        "bed_c": 150,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.34, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 62, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2710, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 115, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2690, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 205, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. Sheet titled '3DXSTAT ESD-Ultem 1010'. ESD: surface resistance >10^7 - 10^9 Ohm/sq. Tensile strength is at break."
+    },
+    {
+      "product": "3DXMAX PC/ABS",
+      "type": "PC-ABS",
+      "product_url": "https://www.3dxtech.com/products/3dxmaxa-r-pc-abs",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXMAX_PCABS_TDS_v3.pdf?v=1723942764",
+      "datasheet_version": "TDS Rev 3.0",
+      "specimen": {
+        "printer": "Open Source FDM/FFF",
+        "nozzle_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 275,
+        "bed_c": 110,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Specimen Orientation: XY Flat"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.14, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 59, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2200, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 75, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 86, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2370, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 126, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Flat printed bars (XY Flat) only; no Z values. Values are typical values. Density is a material value without direction. HDT has no direction."
+    },
+    {
+      "product": "3DXMAX PC",
+      "aliases": [
+        "PC 3DXMax"
+      ],
+      "type": "PC",
+      "product_url": "https://www.3dxtech.com/products/3dxmax-r-pc",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXMAX_PC_TDS_v3.pdf?v=1723942764",
+      "datasheet_version": "Rev 3.0",
+      "specimen": {
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": "275-295",
+        "bed_c": "110-120",
+        "layer_height_mm": 0.25,
+        "nozzle_diameter_mm": 0.4,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat in the XY plane)",
+        "printer": "Open Source FDM/FFF"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 62, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2410, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 7, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 78, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 135, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat only; no Z values on the sheet. Not stated whether annealed or dried. Nozzle and bed are ranges on the sheet."
+    },
+    {
+      "product": "3DXLABS PVDF+GF",
+      "type": "PVDF-GF",
+      "product_url": "https://www.3dxtech.com/products/3dxlabs™-pvdf-gf",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    },
+    {
+      "product": "3DXLABS PET+CF",
+      "type": "PET-CF",
+      "product_url": "https://www.3dxtech.com/products/3dxlabs-pet-cf",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXLABS_TDS_-_PET_CF_v0.2.pdf?v=1788453541",
+      "datasheet_version": "TDS Rev 0.2",
+      "specimen": {
+        "printer": "Bambu H2D",
+        "nozzle_diameter_mm": 0.6,
+        "nozzle_c": 300,
+        "speed_mm_s": 20,
+        "layer_height_mm": 0.2,
+        "infill_percent": 100,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet's Test Condition column: 'Flat' (recorded XY), 'Vertical' (recorded Z), 'Edge' (no XY/XZ label on the sheet, recorded with direction '')."
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.42, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 82.5, "unit": "MPa", "standard": "ISO 527-2"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 9100, "unit": "MPa", "standard": "ISO 527-2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 1.5, "unit": "%", "standard": "ISO 527-2"},
+        {"property": "tensile_strength", "direction": "", "value": 60, "unit": "MPa", "standard": "ISO 527-2"},
+        {"property": "tensile_modulus", "direction": "", "value": 4550, "unit": "MPa", "standard": "ISO 527-2"},
+        {"property": "elongation_at_break", "direction": "", "value": 2.0, "unit": "%", "standard": "ISO 527-2"},
+        {"property": "tensile_strength", "direction": "Z", "value": 30, "unit": "MPa", "standard": "ISO 527-2"},
+        {"property": "tensile_modulus", "direction": "Z", "value": 2250, "unit": "MPa", "standard": "ISO 527-2"},
+        {"property": "elongation_at_break", "direction": "Z", "value": 1.5, "unit": "%", "standard": "ISO 527-2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 125, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 9100, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_strength", "direction": "Z", "value": 50, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 200, "unit": "°C", "standard": "ISO 75-1"},
+        {"property": "heat_deflection_18", "direction": "", "value": 150, "unit": "°C", "standard": "ISO 75-2"}
+      ],
+      "notes": "Printed test bars; the sheet calls the data preliminary (3DXLABS grade, 15 % carbon fibre). Directions: 'Flat' = XY, 'Vertical' = Z; 'Edge' bars (printed standing on edge) are recorded with direction '' because the sheet gives no XY/XZ label for them. The direction-'' tensile values are the on-edge bars. Tensile strength is at break. Moisture absorption printed as '<0.3 %' (ISO 62), a bound, so not recorded."
+    },
+    {
+      "product": "3DXLABS FR-PC",
+      "type": "PC",
+      "product_url": "https://www.3dxtech.com/products/3dxlabs™-fr-pc",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXLABS_FR-PC_TDS_v0.1.pdf?v=1763685951",
+      "datasheet_version": "TDS Rev 0.1",
+      "specimen": {
+        "conditioning": "not stated on the sheet"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "", "value": 62, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "", "value": 2.4, "unit": "GPa", "standard": "ISO 527"},
+        {"property": "impact_strength_notched", "direction": "", "value": 45, "unit": "kJ/m2", "standard": "ISO 180/A"},
+        {"property": "vicat_softening", "direction": "", "value": 118, "unit": "°C", "standard": "ISO 306"},
+        {"property": "heat_deflection_18", "direction": "", "value": 101, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "The sheet names no orientation and does not say whether the bars were printed or moulded. Page 2 has a print-settings table (Bambu H2D, nozzle 280 °C, bed 120 °C, 200 mm/s, 0.20 mm, solid infill) not labelled as specimen conditions, so it is not used as specimen data. Tensile test at 5 mm/min. Notched Izod 45 kJ/m2 is at 23 °C; the sheet also gives 19 kJ/m2 at -30 °C (not recorded). Vicat at 50 N, 50 °C/h. UL94 V-0 at 1.5 mm."
+    },
+    {
+      "product": "3DXLABS EMI-ABS",
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/3dxlabs-emi-abs",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/3DXTECH_TDS_-_EMI-ABS_v0.2.pdf?v=1757353959",
+      "datasheet_version": "Rev 0.2",
+      "specimen": {
+        "nozzle_diameter_mm": 0.4,
+        "nozzle_c": 285,
+        "bed_c": 100,
+        "layer_height_mm": 0.2,
+        "infill_percent": 100,
+        "speed_mm_s": 98,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet labels: 'Vertical' (recorded Z), 'Flat' (recorded XY), 'Edge' (tensile/flexural bars on edge; no XY/XZ label on the sheet, recorded with direction ''). Izod bar flat, HDT bar on edge."
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.4, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "Z", "value": 1380, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "Z", "value": 247000, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "XY", "value": 6580, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 477000, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_strength", "direction": "", "value": 4420, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "tensile_modulus", "direction": "", "value": 375000, "unit": "psi", "standard": "ASTM D638"},
+        {"property": "flexural_strength", "direction": "", "value": 8110, "unit": "psi", "standard": "ASTM D790"},
+        {"property": "flexural_modulus", "direction": "", "value": 314000, "unit": "psi", "standard": "ASTM D790"},
+        {"property": "impact_strength", "direction": "XY", "value": 2.1, "unit": "ft-lb/in", "standard": "ASTM D256"},
+        {"property": "heat_deflection_045", "direction": "", "value": 100, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, tested by an independent third-party lab. PRELIMINARY DATA watermark, subject to change. The sheet gives mechanical values only in imperial units (psi, ft-lb/in), copied as printed. Directions: Vertical = Z, Flat = XY; 'Edge' values (tensile 4,420 psi / 375,000 psi, flexural 8,110 psi / 314,000 psi) carry direction '' because the sheet gives no XY/XZ label. Izod is unnotched. EMI-shielding ABS (sheet text calls it 3DXSTAT EMI-ABS); filler not named, so type kept as ABS."
+    },
+    {
+      "product": "AmideX Nylon 6-66",
+      "type": "PA",
+      "product_url": "https://www.3dxtech.com/products/amidex-nylon-6-67",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0625/4185/6821/files/Amidex_UN_PA6_Copolymer_v1.0.pdf?v=1728334784",
+      "datasheet_version": "TDS Rev 1.0",
+      "specimen": {
+        "printer": "Gearbox HT2",
+        "nozzle_diameter_mm": 0.4,
+        "layer_height_mm": 0.25,
+        "infill_percent": 100,
+        "raster_angle": "+/- 45°",
+        "nozzle_c": 270,
+        "bed_c": 80,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Sheet: 'Specimen Orientation: XY Flat' (bars printed flat)"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.12, "unit": "g/cm3", "standard": "ISO 1183"},
+        {"property": "tensile_strength", "direction": "XY", "value": 55, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1980, "unit": "MPa", "standard": "ISO 527"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 100, "unit": "%", "standard": "ISO 527"},
+        {"property": "flexural_strength", "direction": "XY", "value": 76, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2050, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "", "value": 140, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars, XY flat per the sheet; no Z values. The sheet is titled 'AmideX PA6 Copolymer' (the store calls it Nylon 6-66). Nylon: the sheet does not say dry or conditioned. Tensile strength is at break."
+    },
+    {
+      "product": "Economy ABS",
+      "type": "ABS",
+      "product_url": "https://www.3dxtech.com/products/economy-abs",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "No technical data sheet found: the product page links none (only an SDS or handling notes), and the TDS/SDS download pages list none for this product."
+    }
+  ]
+}

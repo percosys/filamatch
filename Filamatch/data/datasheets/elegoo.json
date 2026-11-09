@@ -1,0 +1,282 @@
+{
+  "schema": 1,
+  "maker": "ELEGOO",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "ABS",
+      "type": "ABS",
+      "product_url": "https://us.elegoo.com/products/abs-filament-1-75mm-colored-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/abs-filament-1-75mm-colored-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.05, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 1.5, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 29, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 7.2, "plus_minus": 0.2, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 6.9, "plus_minus": 0.3, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 68, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 53, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2484, "plus_minus": 115, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2133, "plus_minus": 105, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 86, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 85, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 54.9 ± 3.2 kJ/m²; Impact Strength (Z): 9.6 ± 1.1 kJ/m²)."
+    },
+    {
+      "product": "ASA",
+      "type": "ASA",
+      "product_url": "https://us.elegoo.com/products/asa-filament-1-75mm-colored-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/asa-filament-1-75mm-colored-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.09, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 30, "plus_minus": 1, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10.6, "plus_minus": 0.9, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 9.4, "plus_minus": 2.3, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 65, "plus_minus": 4, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 54, "plus_minus": 1, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2349, "plus_minus": 102, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2219, "plus_minus": 96, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 102, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 99, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 65.5 ± 3.7 kJ/m²; Impact Strength (Z): 11.3 ± 3 kJ/m²). The www.elegoo.com page for ASA still shows an older, shorter table (tensile X-Y ≥ 44 MPa, bending 75 MPa / 3200 MPa); the newer us.elegoo.com table is used."
+    },
+    {
+      "product": "ASA-CF",
+      "type": "ASA-CF",
+      "product_url": "https://us.elegoo.com/products/asa-cf",
+      "datasheet_url": "https://us.elegoo.com/products/asa-cf",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.13, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 25, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 5.4, "plus_minus": 0.7, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 4.3, "plus_minus": 0.5, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 70, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 27, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3820, "plus_minus": 107, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 1970, "plus_minus": 103, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 106, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 108, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 22.4 ± 2.1 kJ/m²; Impact Strength (Z): 5.2 ± 1.1 kJ/m²)."
+    },
+    {
+      "product": "PAHT-CF",
+      "type": "PA-CF",
+      "product_url": "https://us.elegoo.com/products/paht-cf-filament-1-75mm-colored-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/paht-cf-filament-1-75mm-colored-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.08, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 87, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 41, "plus_minus": 1, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 14.2, "plus_minus": 1.1, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 5.2, "plus_minus": 1.3, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 138, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 63, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5089, "plus_minus": 54, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2048, "plus_minus": 105, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 225, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 194, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 70.4 ± 3.4 kJ/m²; Impact Strength (Z): 19.4 ± 3.1 kJ/m²). High-temperature nylon with carbon fibre; dry or conditioned not stated."
+    },
+    {
+      "product": "PC",
+      "type": "PC",
+      "product_url": "https://us.elegoo.com/products/pc-filament-1-75mm-colored-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/pc-filament-1-75mm-colored-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.2, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 56, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 34, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 8.8, "plus_minus": 1.9, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 6.1, "plus_minus": 1.1, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 114, "plus_minus": 5, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 67, "plus_minus": 4, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2728, "plus_minus": 113, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2530, "plus_minus": 109, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 119, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 109, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 79.7 ± 3.2 kJ/m²; Impact Strength (Z): 6.4 ± 1.6 kJ/m²)."
+    },
+    {
+      "product": "PC-FR",
+      "type": "PC",
+      "product_url": "https://us.elegoo.com/products/pc-fr",
+      "datasheet_url": "https://us.elegoo.com/products/pc-fr",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.18, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 55, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 26, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 7.9, "plus_minus": 0.6, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 6.2, "plus_minus": 0.7, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 103, "plus_minus": 5, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 47, "plus_minus": 5, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2707, "plus_minus": 67, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2569, "plus_minus": 109, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 115, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 112, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 70.9 ± 4.2 kJ/m²; Impact Strength (Z): 12.2 ± 1.2 kJ/m²). Flame-retardant PC."
+    },
+    {
+      "product": "PET-CF",
+      "type": "PET-CF",
+      "product_url": "https://us.elegoo.com/products/pet-cf",
+      "datasheet_url": "https://us.elegoo.com/products/pet-cf",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.32, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 84, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 40, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6.3, "plus_minus": 1.2, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 4.1, "plus_minus": 0.7, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 136, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 52, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5589, "plus_minus": 154, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2448, "plus_minus": 105, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 112, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 194, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 40.2 ± 2.5 kJ/m²; Impact Strength (Z): 5.8 ± 2 kJ/m²). Vicat and heat deflection are after annealing at 100 °C for 8 h."
+    },
+    {
+      "product": "PETG-CF",
+      "type": "PETG-CF",
+      "product_url": "https://us.elegoo.com/products/petg-cf-filament-1-75mm-colored-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/petg-cf-filament-1-75mm-colored-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.29, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 51, "plus_minus": 8, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 38, "plus_minus": 5, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 9.6, "plus_minus": 1, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 7.5, "plus_minus": 1, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 75, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 53, "plus_minus": 4, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3040, "plus_minus": 21, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2222, "plus_minus": 33, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 83, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 74, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 70.7 ± 6.2 kJ/m²; Impact Strength (Z): 14.6 ± 2.1 kJ/m²)."
+    },
+    {
+      "product": "PETG-GF",
+      "type": "PETG-GF",
+      "product_url": "https://us.elegoo.com/products/petg-gf-filament-1-75mm-colored-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/petg-gf-filament-1-75mm-colored-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.3, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 50, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 42, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 7.9, "plus_minus": 1, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 8.5, "plus_minus": 1, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 83, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 55, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3345, "plus_minus": 88, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2242, "plus_minus": 70, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 83, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 74, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 51.9 ± 5.2 kJ/m²; Impact Strength (Z): 11.3 ± 1.2 kJ/m²)."
+    },
+    {
+      "product": "PLA-CF",
+      "type": "PLA-CF",
+      "product_url": "https://us.elegoo.com/products/pla-cf-filament-1-75mm-black-1kg",
+      "datasheet_url": "https://us.elegoo.com/products/pla-cf-filament-1-75mm-black-1kg",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.24, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 39, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 23, "plus_minus": 4, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 7.5, "plus_minus": 1.3, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 6.9, "plus_minus": 1.4, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 78, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 50, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3341, "plus_minus": 172, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2474, "plus_minus": 179, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 64, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 56, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 24.7 ± 1.5 kJ/m²; Impact Strength (Z): 7.9 ± 1.6 kJ/m²)."
+    },
+    {
+      "product": "PPS-CF",
+      "type": "PPS-CF",
+      "product_url": "https://us.elegoo.com/products/pps-cf",
+      "datasheet_url": "https://us.elegoo.com/products/pps-cf",
+      "datasheet_version": "product page table, accessed 2026-11-08",
+      "specimen": {
+        "conditioning": "not stated on the page",
+        "orientation_note": "X-Y and Z as the page labels them; no drawing or print settings for the test bars"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.31, "unit": "g/cm3", "standard": ""},
+        {"property": "tensile_strength", "direction": "XY", "value": 69, "plus_minus": 1, "unit": "MPa", "standard": ""},
+        {"property": "tensile_strength", "direction": "Z", "value": 25, "plus_minus": 1, "unit": "MPa", "standard": ""},
+        {"property": "elongation_at_break", "direction": "XY", "value": 8.1, "plus_minus": 0.6, "unit": "%", "standard": ""},
+        {"property": "elongation_at_break", "direction": "Z", "value": 5.2, "plus_minus": 0.1, "unit": "%", "standard": ""},
+        {"property": "flexural_strength", "direction": "XY", "value": 148, "plus_minus": 2, "unit": "MPa", "standard": ""},
+        {"property": "flexural_strength", "direction": "Z", "value": 41, "plus_minus": 3, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8538, "plus_minus": 51, "unit": "MPa", "standard": ""},
+        {"property": "flexural_modulus", "direction": "Z", "value": 2956, "plus_minus": 6, "unit": "MPa", "standard": ""},
+        {"property": "vicat_softening", "direction": "", "value": 269, "unit": "°C", "standard": ""},
+        {"property": "heat_deflection_045", "direction": "", "value": 263, "unit": "°C", "standard": ""}
+      ],
+      "notes": "Values from the \"Specifications\" table on the maker's product page (no PDF data sheet; the page gives no version, no test standards and no specimen print settings). Values labelled X-Y and Z, so printed bars. No tensile modulus given; stiffness is the \"Bending Modulus\" (flexural). Impact values are not recorded because the page does not say notched or unnotched, Izod or Charpy (Impact Strength (X-Y): 28.2 ± 1.2 kJ/m²; Impact Strength (Z): 3.7 ± 0.6 kJ/m²)."
+    }
+  ]
+}

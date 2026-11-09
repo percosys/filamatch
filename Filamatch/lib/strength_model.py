@@ -28,8 +28,8 @@ scaled by ``k(r) / k(2)`` with ``k(r) = 1 − 0.82 · r^−1.5`` and ``r`` = noz
 
 Fusion Simulation uses one value for every direction, so a case is chosen:
 
-- **safe** (the default): the low end of the Z values (across the layers,
-  where printed parts break first);
+- **safe** (the default): the lowest value, across the layers (where
+  printed parts break first) or along them when a sheet says that is lower;
 - **typical**: the average of the XY and Z medians.
 
 These are rough estimates (±25–40 %), never design values; the palette says
@@ -60,7 +60,7 @@ DEFAULT_POISSON = 0.36
 #: Data-sheet types left out: their test bars are not what a print is (ASA Aero foams; its bars did not).
 DATASHEET_EXCLUDED_TYPES = ("ASA-AERO",)
 #: Data-sheet units, as factors to MPa.
-DATASHEET_UNITS = {"MPa": 1.0, "GPa": 1000.0}
+DATASHEET_UNITS = {"MPa": 1.0, "GPa": 1000.0, "psi": 0.00689475729, "ksi": 6.89475729}
 
 CASES = ("safe", "typical")
 DEFAULT_CASE = "safe"
@@ -328,8 +328,33 @@ def _product_keys(maker: str, product: str, aliases: Tuple[str, ...] = ()) -> Tu
     return tuple(sorted({_key(m + n) for m in makers for n in names if _key(n)}))
 
 
+#: Tier 2 without across-the-layers values: one more step of uncertainty.
+DATASHEET_NO_Z_UNCERTAINTY_PERCENT = 30
+
+
+def _z_ratios(types: StrengthData, kind: str) -> Tuple[Dict[str, float], str]:
+    """Z/XY ratios of stiffness and strength for a type without Z values, and where they come from.
+
+    The generic type's own medians when tier 1 has the type; else the lowest
+    ratio of all generic types (the cautious choice).
+    """
+    pairs = (("e_z_mpa", "e_xy_mpa"), ("uts_z_mpa", "uts_xy_mpa"))
+    generic = types.types.get(types.match(kind) or "")
+    if generic is not None and all(z in generic.values for z, _xy in pairs):
+        return ({z: generic.values[z].median / generic.values[xy].median for z, xy in pairs},
+                "the generic {} ratio".format(generic.name))
+    found = {z: min(data.values[z].median / data.values[xy].median for data in types.types.values()
+                    if z in data.values) for z, xy in pairs}
+    return found, "the lowest ratio of the generic types"
+
+
 def parse_datasheets(raws: List[Mapping[str, Any]], types: StrengthData) -> Tuple[Tuple[Tuple[str, ...], TypeData], ...]:
-    """Tier 2: each data-sheet product with tensile values, as base values (see data/datasheets/README.md)."""
+    """Tier 2: each data-sheet product with tensile values, as base values (see data/datasheets/README.md).
+
+    Only "XY" and "Z" are read: an on-edge "XZ" bar still has its layers along
+    the bar, so it is not Z. A sheet without Z values gets them estimated
+    from a Z/XY ratio (:func:`_z_ratios`), and says so.
+    """
     products = []
     for raw in raws:
         if raw.get("schema") != 1:
@@ -355,10 +380,24 @@ def parse_datasheets(raws: List[Mapping[str, Any]], types: StrengthData) -> Tupl
                 slot[key] = max(slot.get(key, 0.0), value)  # strength: the highest stress (yield or break)
                 standard = standard or str(prop.get("standard") or "")
             dry = dict(found[""], **found["dry"])
-            if "e_xy_mpa" not in dry or "uts_xy_mpa" not in dry:
-                continue
             generic = types.types.get(types.match(kind) or "")
             notes = []
+            if "uts_xy_mpa" in dry and "e_xy_mpa" not in dry and generic is not None:
+                # Strength from the sheet; stiffness from the type (the sheet gives no tensile modulus).
+                for prop in ("e_xy_mpa", "e_z_mpa"):
+                    if prop in generic.values:
+                        dry[prop] = generic.values[prop].median
+                notes.append("The sheet gives no tensile modulus: stiffness from the generic {} data.".format(generic.name))
+            if "e_xy_mpa" not in dry or "uts_xy_mpa" not in dry:
+                continue
+            uncertainty = DATASHEET_UNCERTAINTY_PERCENT
+            missing = [z for z in ("e_z_mpa", "uts_z_mpa") if z not in dry]
+            if missing and types.types:
+                ratios, where = _z_ratios(types, kind)
+                for z in missing:
+                    dry[z] = dry[z.replace("_z_", "_xy_")] * ratios[z]
+                notes.append("The sheet gives no across-the-layers values: estimated from {}.".format(where))
+                uncertainty = DATASHEET_NO_Z_UNCERTAINTY_PERCENT
             if found["conditioned"]:
                 notes.append("Safe uses the sheet's moist (conditioned) values; typical the dry ones.")
             elif kind.startswith(("PA", "PPA")):
@@ -369,7 +408,7 @@ def parse_datasheets(raws: List[Mapping[str, Any]], types: StrengthData) -> Tupl
             data = TypeData(
                 name=kind, values={k: Range(v, v, v, 1) for k, v in dry.items()},
                 poisson=generic.poisson if generic is not None else DEFAULT_POISSON,
-                uncertainty_percent=DATASHEET_UNCERTAINTY_PERCENT,
+                uncertainty_percent=uncertainty,
                 sources=("{} {}{}".format(named, version + " " if version else "", "({})".format(standard) if standard else "").strip(),),
                 label=label, kind="datasheet",
                 conditioned={k: Range(v, v, v, 1) for k, v in found["conditioned"].items()},
@@ -445,7 +484,8 @@ def base_values(data: TypeData, case: str, bond: float = 1.0) -> Tuple[float, fl
         z_factor = 1.0 if z.startswith("e_") else bond
         if case == "typical":
             return (values[xy].median + values[z].median * z_factor) / 2.0 if z in values else values[xy].median
-        return values[z].low * z_factor if z in values else values[xy].low
+        # Safe: the weakest bar, across the layers (usually) or along them.
+        return min(values[z].low * z_factor, values[xy].low) if z in values else values[xy].low
 
     if case == "safe" and "uts_z_mpa" not in values:
         notes.append("No layer-bond (Z) data for {}: across the layers it can be much weaker.".format(data.name))
@@ -527,7 +567,7 @@ def _fixture() -> Dict[str, Any]:
              "poisson": {"value": 0.36, "source": "test"},
              "sources": [_source("A", e_xy_mpa=2700, e_z_mpa=2500, uts_xy_mpa=50, uts_z_mpa=30),
                          _source("B", e_xy_mpa=3000, e_z_mpa=2700, uts_xy_mpa=46, uts_z_mpa=26),
-                         _source("C", e_xy_mpa=2400, uts_xy_mpa=40)]},
+                         _source("C", e_xy_mpa=2600, uts_xy_mpa=40)]},
             {"type": "PLA-CF", "match": ["^PLA.*CF"], "uncertainty_percent": 40,
              "poisson": {"value": 0.35, "source": "test"},
              "sources": [_source("A", e_xy_mpa=4000, uts_xy_mpa=40, yield_xy_mpa=38)]},
@@ -538,7 +578,7 @@ def _fixture() -> Dict[str, Any]:
 def _self_test() -> int:
     data = parse(_fixture())
     pla = data.types["PLA"]
-    _check(pla.values["e_xy_mpa"] == Range(2700.0, 2400.0, 3000.0, 3) and pla.values["uts_z_mpa"].low == 26.0
+    _check(pla.values["e_xy_mpa"] == Range(2700.0, 2600.0, 3000.0, 3) and pla.values["uts_z_mpa"].low == 26.0
            and pla.values["e_z_mpa"].count == 2 and len(pla.sources) == 3,
            "a type's value is the median of its data sheets, with their range")
     _check(data.match("PLA") == "PLA" and data.match("pla basic") == "PLA" and data.match("PLA-CF") == "PLA-CF"
@@ -617,13 +657,22 @@ def _self_test() -> int:
          "datasheet_version": "V6.0 (2025-12-02)",
          "properties": [prop("tensile_modulus", "XY", 2379), prop("tensile_strength", "XY", 43.8),
                         prop("yield_strength", "XY", 45.0)]},
+        {"product": "PLA Edge", "type": "PLA", "datasheet_url": "https://example.com/d.pdf",
+         "properties": [prop("tensile_modulus", "XY", 3000), prop("yield_strength", "XY", 50),
+                        prop("tensile_modulus", "XZ", 3100), prop("yield_strength", "XZ", 59)]},
+        {"product": "PEI 1010", "type": "PEI", "datasheet_url": "https://example.com/e.pdf",
+         "properties": [prop("tensile_modulus", "XY", 2300), prop("tensile_strength", "XY", 95)]},
+        {"product": "PLA Page", "type": "PLA", "datasheet_url": "https://example.com/f.html",
+         "properties": [prop("tensile_strength", "XY", 6.5, "ksi"), prop("tensile_strength", "Z", 4000, "psi")]},
+        {"product": "PEEK Page", "type": "PEEK", "datasheet_url": "https://example.com/g.html",
+         "properties": [prop("tensile_strength", "XY", 100)]},
         {"product": "ASA Aero", "type": "ASA-AERO", "datasheet_url": "https://example.com/c.pdf",
          "properties": [prop("tensile_modulus", "XY", 2010), prop("tensile_strength", "XY", 32)]},
         {"product": "No sheet", "type": "PLA", "datasheet_url": "", "properties": []},
     ]}]
     with_sheets = dataclasses.replace(data, products=parse_datasheets(sheets, data))
     nylon = with_sheets.product_for(["Polymaker Fiberon PA6-CF20", "something else"])
-    _check(len(with_sheets.products) == 2 and nylon is not None and nylon.values["e_xy_mpa"].median == 8600.0
+    _check(len(with_sheets.products) == 5 and nylon is not None and nylon.values["e_xy_mpa"].median == 8600.0
            and nylon.conditioned["uts_z_mpa"].median == 25.5 and nylon.kind == "datasheet"
            and nylon.uncertainty_percent == DATASHEET_UNCERTAINTY_PERCENT and nylon.poisson == DEFAULT_POISSON
            and with_sheets.product_for(["Polymaker PA6-CF20"]) is nylon and with_sheets.product_for(["Fiberon PA6-CF20"]) is nylon
@@ -635,9 +684,33 @@ def _self_test() -> int:
            and asa.values["uts_xy_mpa"].median == 45.0 and with_sheets.product_for(["Polymaker ASA"]) is asa
            and with_sheets.product_for(["Polymaker ASA-CF08"]) is None and with_sheets.basis(asa.label) is asa,
            "a product is found by any of its names, only exactly; strength is the highest stress (yield here)")
+    edge = with_sheets.product_for(["Polymaker PLA Edge"])
+    pla_ratio = data.types["PLA"].values["uts_z_mpa"].median / data.types["PLA"].values["uts_xy_mpa"].median
+    _check(edge is not None and abs(edge.values["uts_z_mpa"].median - 50 * pla_ratio) < 1e-9
+           and edge.values["e_xy_mpa"].median == 3000.0 and edge.uncertainty_percent == DATASHEET_NO_Z_UNCERTAINTY_PERCENT
+           and any("generic PLA ratio" in note for note in edge.notes),
+           "an on-edge XZ bar is not Z; missing Z values come from the generic type's ratio, and say so")
+    pei = with_sheets.product_for(["Polymaker PEI 1010"])
+    lowest = min(t.values["uts_z_mpa"].median / t.values["uts_xy_mpa"].median for t in data.types.values()
+                 if "uts_z_mpa" in t.values)
+    _check(pei is not None and abs(pei.values["uts_z_mpa"].median - 95 * lowest) < 1e-9
+           and any("lowest ratio" in note for note in pei.notes),
+           "a type without generic data gets the lowest ratio of the generic types (cautious)")
+    page = with_sheets.product_for(["Polymaker PLA Page"])
+    _check(page is not None and abs(page.values["uts_xy_mpa"].median - 6.5 * 6.89475729) < 1e-9
+           and abs(page.values["uts_z_mpa"].median - 4000 * 0.00689475729) < 1e-9
+           and page.values["e_xy_mpa"].median == data.types["PLA"].values["e_xy_mpa"].median
+           and any("no tensile modulus" in note for note in page.notes)
+           and with_sheets.product_for(["Polymaker PEEK Page"]) is None,
+           "psi and ksi are read; a sheet without a modulus takes its type's stiffness (none without a type)")
+    odd = TypeData(name="PA-CF", values={"e_xy_mpa": Range(730.8, 730.8, 730.8, 1), "e_z_mpa": Range(1351.4, 1351.4, 1351.4, 1),
+                                          "uts_xy_mpa": Range(24.0, 24.0, 24.0, 1), "uts_z_mpa": Range(23.0, 23.0, 23.0, 1)},
+                   poisson=0.36, uncertainty_percent=25, sources=("odd",))
+    _check(base_values(odd, "safe")[0] == 730.8 and base_values(odd, "safe")[2] == 23.0,
+           "safe takes the weakest bar, along or across the layers")
     e, _yield, tensile, notes = base_values(nylon, "safe")
     e_typ, _yield, tensile_typ, _notes = base_values(nylon, "typical")
-    _check(e == 3760.0 and tensile == 25.5 and e_typ == (8600.0 + 3760.0) / 2 and tensile_typ == (109.0 + 54.0) / 2
+    _check(e == 2508.0 and tensile == 25.5 and e_typ == (8600.0 + 3760.0) / 2 and tensile_typ == (109.0 + 54.0) / 2
            and any("moist" in note for note in notes),
            "safe uses a nylon's moist values where the sheet gives them; typical the dry ones")
     _check(estimate(with_sheets, nylon, "safe", 10.0, 10.0, 15.0, "gyroid").basis == nylon.label

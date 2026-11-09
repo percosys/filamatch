@@ -37,7 +37,7 @@ LIB_DIR = REPO_ROOT / "Filamatch" / "lib"
 SELF_TEST_MODULES = (
     "catalog", "importer", "exporter", "diagnostics", "materials_workflow", "favorites",
     "slicer_profiles", "openfilament", "custom_library", "printer_model", "secret_store",
-    "mqtt_lite", "bambuddy", "bambu_lan", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project", "printer_catalog", "printer_report", "filament_presets", "prusa_profiles", "design_check", "body_settings",
+    "mqtt_lite", "bambuddy", "bambu_lan", "manual_printer", "printer_sources", "inventory_sync", "slot_mapping", "palette_bridge", "fusion_helpers", "prusa_project", "printer_catalog", "printer_report", "filament_presets", "prusa_profiles", "design_check", "body_settings",
     # The As printed tab (moved from Printegrity).
     "mass_model", "strength_model", "body_geometry", "material_copy", "slicer_check", "as_printed_bridge",
 )

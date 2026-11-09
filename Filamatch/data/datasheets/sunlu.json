@@ -1,0 +1,491 @@
+{
+  "schema": 1,
+  "maker": "SUNLU",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "PP 2.0",
+      "type": "PP",
+      "product_url": "https://www.sunlu.com/products/PP2.0",
+      "datasheet_url": "https://media.sunlu.com/prod/20260916/25182761789529093884.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-136 A/0",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 250,
+        "speed_mm_s": 150,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 15, "plus_minus": 3, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 900, "plus_minus": 300, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 18, "plus_minus": 3, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 500, "plus_minus": 100, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 23, "plus_minus": 5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 65, "plus_minus": 10, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.01, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 150 mm/s, 250 °C). Sheet is Chinese-only; product name on the sheet 'PP2.0'. Only the sunlu.com copy exists. Young's (tensile) modulus is '/' (not given). Unnotched Izod (Z-X) is '/'. Shore hardness 60 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'. Typical values, for reference only."
+    },
+    {
+      "product": "ABS",
+      "type": "ABS",
+      "product_url": "https://www.sunlu.com/products/abs-3d-printing-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260327/499dacc6-a1e4-4f81-b1ae-8bf1b8e424ec.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-068 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "speed_mm_s": "50-200",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 5, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "plus_minus": 5, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 60, "plus_minus": 10, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2000, "plus_minus": 500, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 15, "plus_minus": 5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 6, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 95, "plus_minus": 5, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 86, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.02, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 50-200 mm/s, 270 °C). Chose the sunlu.com copy (SL-TE-WI-068 Version A/1, new controlled-document format, uploaded 2026-03) over the store copy TDS_ABS_A0.pdf, which is an older-format sheet headed 'Version1.0 2024-6' (stamped 2024.08.13) with different values (e.g. tensile 42 MPa, Young's modulus 2270 MPa, flexural modulus 1829 MPa, no spreads, test bars at 45 mm/s 250 °C). The two use different numbering, so 'newer' is judged from the format and dates. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 85 is given with unit 'HA/HD' (scale not stated), so it is left out."
+    },
+    {
+      "product": "ABS-FR",
+      "type": "ABS",
+      "product_url": "https://www.sunlu.com/products/abs-flame-retardant-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/48f9a499-b97a-4844-be4b-35ca349b5b64.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-110 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "speed_mm_s": 45,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 31.4, "plus_minus": 4, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 11.6, "plus_minus": 2, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 55, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1750, "plus_minus": 200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 13.7, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 3.9, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 90.5, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.15, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 45 mm/s, 270 °C). Flame retardant: UL94 V-0 (1.5 mm in the table; features say UL94@1.6mm V-0). Chose the sunlu.com copy (SL-TE-WI-110 A/1, Chinese/English) over the store copy TDS_ABS-FR_A0.pdf (older format 'Version1.0 2024-12', stamped 2024.12.04) which has different values (e.g. tensile 33, flexural modulus 2154 MPa, no spreads, bars at 184 mm/s 240 °C). Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 79 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'."
+    },
+    {
+      "product": "ABS-GF",
+      "type": "ABS-GF",
+      "product_url": "https://www.sunlu.com/products/abs-gf-3d-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260414/b74bf860-1989-443e-b917-58f7a97096a0.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-132 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "speed_mm_s": "100-200",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 55, "plus_minus": 5, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "plus_minus": 2, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 85, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3300, "plus_minus": 500, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 6, "plus_minus": 2, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 5, "plus_minus": 2, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "shore_hardness_d", "direction": "", "value": 80, "unit": "Shore D", "standard": "ISO 868"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 100, "plus_minus": 5, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 95, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.016, "plus_minus": 0.01, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 100-200 mm/s, 270 °C). Chose the sunlu.com copy (SL-TE-WI-132 A/1) over the store copy SL-TE-WI-132_ISO_ABS-GF_A0.pdf (older format 'Version1.0 2025-7') which has different values (e.g. tensile 54, Young's modulus 2095 MPa, flexural modulus 3490 MPa, no spreads, bars at 45 mm/s). Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness printed as '80D' (unit column HA/HD)."
+    },
+    {
+      "product": "ASA",
+      "type": "ASA",
+      "product_url": "https://www.sunlu.com/products/asa-uv-resistant-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/7d61617c-7540-4ae2-88d3-a0d206e5d801.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-059 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "speed_mm_s": 45,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 39, "plus_minus": 4, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 11, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 68, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2300, "plus_minus": 300, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 7, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 3.3, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 101, "plus_minus": 2, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 105, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.04, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 45 mm/s, 270 °C). sunlu.com copy (English) and store copy TDS_ASA_A1.pdf (Chinese/English) are the same revision SL-TE-WI-059 A/1 with the same values; used the sunlu.com one. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 81.5 is given with unit 'HA/HD' (scale not stated), so it is left out."
+    },
+    {
+      "product": "PETG-CF",
+      "aliases": [
+        "PETG Carbon Fiber"
+      ],
+      "type": "PETG-CF",
+      "product_url": "https://www.sunlu.com/products/carbon-fiber-petg-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/433432a8-dfcb-485e-bd8e-a7be94dda4ce.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-061 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 255,
+        "speed_mm_s": 45,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 32, "plus_minus": 4, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 14, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 55.5, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1960, "plus_minus": 200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 7, "plus_minus": 2, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 5.5, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 71, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.23, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Sheet names it 'PETG Carbon Fiber'. Printed test bars (100% infill, 90° raster, 45 mm/s, 255 °C). Chose the sunlu.com copy (SL-TE-WI-061 A/1) over the store copy TDS_SUNLU_PETG-cf_filament.pdf (older format 'Version1.0 2024-6', stamped 2024.08.14) which has different values (e.g. tensile 35, elongation 30%, flexural modulus 2700 MPa, density 1.26, bars at 45 mm/s 245 °C). Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 71 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'. Note the sunlu.com PEEK sheet carries the same document number SL-TE-WI-061."
+    },
+    {
+      "product": "PLA-CF",
+      "aliases": [
+        "PLA Carbon Fiber",
+        "PLA CF"
+      ],
+      "type": "PLA-CF",
+      "product_url": "https://www.sunlu.com/products/carbon-fiber-pla-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/75a39c51-7d4c-40c4-839d-58f88cbbbf94.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-082 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 230,
+        "speed_mm_s": 45,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 44, "plus_minus": 5, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10.4, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 79, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3221, "plus_minus": 200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 3.5, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 5.5, "plus_minus": 2, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 55.5, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 54, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.23, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Sheet names it 'PLA Carbon Fiber'. Printed test bars (100% infill, 90° raster, 45 mm/s, 230 °C). Chose the sunlu.com copy (SL-TE-WI-082 A/1) over the store copy TDS_SUNLU_PLA_Carbon_Fibre_filament.pdf (older format 'Version1.0 2024-6', stamped 2024.08.13) which has different values (e.g. tensile 44.8, Young's modulus 3530 MPa, flexural modulus 2432 MPa, density 1.2). Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 84 is given with unit 'HA/HD' (scale not stated), so it is left out."
+    },
+    {
+      "product": "Easy PA",
+      "aliases": [
+        "PA6 Easy PA"
+      ],
+      "type": "PA",
+      "product_url": "https://www.sunlu.com/products/easy-pa-nylon-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/a5909dda-0573-4f11-a34a-00d495b1ea09.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-060 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 280,
+        "speed_mm_s": "70-160",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 61, "plus_minus": 6, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 15, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 91, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2314, "plus_minus": 250, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 11, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 5.1, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 119, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 135, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.1, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 70-160 mm/s, 280 °C). Nylon: dry or conditioned state not stated. sunlu.com copy and store copy SL-TE-WI-060_ISO_Easy_PA_A1.pdf are the same revision A/1 with the same values; used the sunlu.com one. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 78.5 is given with unit 'HA/HD' (scale not stated), so it is left out."
+    },
+    {
+      "product": "High Speed ABS",
+      "type": "ABS",
+      "product_url": "https://www.sunlu.com/products/high-speed-abs-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260416/ef443c43-b15b-4242-8884-dcce385e8f02.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-114 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "speed_mm_s": "100-200",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 5, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 55, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2000, "plus_minus": 200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 10, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 18, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "shore_hardness_d", "direction": "", "value": 80, "unit": "Shore D", "standard": "ISO 868"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 93, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 80, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.046, "plus_minus": 0.01, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 100-200 mm/s, 270 °C). Only the sunlu.com copy exists. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness printed as '80D'."
+    },
+    {
+      "product": "PA12-CF",
+      "type": "PA12-CF",
+      "product_url": "https://www.sunlu.com/products/pa12-carbon-fiber-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/93d827f4-50e9-45b4-8b24-bf5ddaf8273f.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-108 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 290,
+        "speed_mm_s": 45,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 86, "plus_minus": 6, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 13.7, "plus_minus": 2.5, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 160, "plus_minus": 30, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 5800, "plus_minus": 300, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 11.3, "plus_minus": 2.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 4.8, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 175, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.08, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 45 mm/s, 290 °C). Nylon: dry or conditioned state not stated. sunlu.com copy and store copy TDS_PA12-CF_A1.pdf are the same revision A/1 with the same table values; used the sunlu.com one. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 82 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'."
+    },
+    {
+      "product": "PA6-CF",
+      "type": "PA6-CF",
+      "product_url": "https://www.sunlu.com/products/pa6-carbon-fiber-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/68c0ccf4-9059-4b50-ad40-95ba3634f0ae.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-072 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 280,
+        "speed_mm_s": 50,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 112, "plus_minus": 10, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 12, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 192, "plus_minus": 20, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 8600, "plus_minus": 400, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 6.5, "plus_minus": 2, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 3.6, "plus_minus": 1.2, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 203, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.12, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 50 mm/s, 280 °C). Nylon: dry or conditioned state not stated. sunlu.com copy and store copy TDS_PA6-CF_A1.pdf are the same revision A/1 with the same table values; used the sunlu.com one. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 80 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'."
+    },
+    {
+      "product": "PA6-GF",
+      "type": "PA6-GF",
+      "product_url": "https://www.sunlu.com/products/pa6-glass-fiber-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/e5f16b43-cef6-4f3e-ad93-3cc86f93f7e4.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-122 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 265,
+        "speed_mm_s": 60,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 89, "plus_minus": 8, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 12.5, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 176, "plus_minus": 8, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 6130, "plus_minus": 300, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 10.5, "plus_minus": 2.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 2.9, "plus_minus": 1, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 205.2, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.269, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 60 mm/s, 265 °C). Nylon: dry or conditioned state not stated. sunlu.com copy and store copy TDS_PA6-GF_A1.pdf are the same revision A/1 with the same table values; used the sunlu.com one. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 82.5 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'."
+    },
+    {
+      "product": "PC-ABS",
+      "type": "PC-ABS",
+      "product_url": "https://www.sunlu.com/products/pc-abs-filament",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0152/6507/1190/files/TDS_SUNLU_PC-ABS_filament.pdf",
+      "datasheet_version": "SL-TE-WI-106 A/2",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "speed_mm_s": "200-250",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 38, "plus_minus": 3, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 8, "plus_minus": 2, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 70, "plus_minus": 3, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2300, "plus_minus": 200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 15, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "shore_hardness_d", "direction": "", "value": 80, "unit": "Shore D", "standard": "ISO 868"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 102, "plus_minus": 2, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.081, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Sheet names it 'PC/ABS'. Printed test bars (100% infill, 90° raster, 200-250 mm/s, 260 °C). Chose the store copy TDS_SUNLU_PC-ABS_filament.pdf (SL-TE-WI-106 A/2, Chinese/English) because it is a newer revision than the sunlu.com copy (SL-TE-WI-106 A/1); the table values and test-bar settings are the same on both. Young's (tensile) modulus is '/' (not given). Unnotched Izod (Z-X) is '/'. Shore hardness printed as '80D'. Vicat '/'."
+    },
+    {
+      "product": "PEEK",
+      "type": "PEEK",
+      "product_url": "https://www.sunlu.com/products/peek-high-performance-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260413/ddb6b06d-707f-4226-9c00-cc16ef778873.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-061 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 390,
+        "speed_mm_s": 30,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 77, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 21, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 122, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3163, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 147, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.1965, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 30 mm/s, 390 °C); annealing not stated. No spreads given. UL94 V0 (flame retardant per features). Only the sunlu.com copy exists; its document number SL-TE-WI-061 is the same as the PETG-CF sheet. The notched Izod (X-Y) row prints 138 kJ/m2, which is not plausible for a notched PEEK bar (likely an unnotched value or a typo), so it is left out. Young's (tensile) modulus is '/' (not given). Unnotched Izod (Z-X) '/'. Shore hardness 83 is given with unit 'HA/HD' (scale not stated), so it is left out. Vicat '/'."
+    },
+    {
+      "product": "PC",
+      "type": "PC",
+      "product_url": "https://www.sunlu.com/products/polycarbonate-pc-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260330/46dca9d5-d877-4a9d-b416-3ad38450204a.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-126 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "speed_mm_s": 150,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 50, "plus_minus": 3, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 25, "plus_minus": 3, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 75, "plus_minus": 3, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2050, "plus_minus": 200, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 35, "plus_minus": 5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 70, "plus_minus": 5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "shore_hardness_d", "direction": "", "value": 80, "unit": "Shore D", "standard": "ISO 868"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 101, "plus_minus": 2, "unit": "°C", "standard": "ISO 75"},
+        {"property": "density", "direction": "", "value": 1.15, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 150 mm/s, 260 °C). sunlu.com copy and store copy TDS_PC_A1.pdf (Chinese name 'high-toughness PC') are the same revision A/1 with the same values; used the sunlu.com one. Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness printed as '80D'. Vicat '/'."
+    },
+    {
+      "product": "PP",
+      "type": "PP",
+      "product_url": "https://www.sunlu.com/products/pp-filament-3d",
+      "datasheet_url": "https://media.sunlu.com/prod/20260413/fbfe6e74-b29f-4f0f-a9b3-84aaa6b2fc85.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-112 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 230,
+        "speed_mm_s": 45,
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 19, "plus_minus": 3, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 850, "plus_minus": 150, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 19, "plus_minus": 3, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 5.3, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 16.1, "plus_minus": 2.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 58.5, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"}
+      ],
+      "notes": "Printed test bars (100% infill, 90° raster, 45 mm/s, 230 °C). Chose the sunlu.com copy (SL-TE-WI-112 A/1) over the store copy TDS_PP.pdf, an older Chinese-only sheet with no version or date, with different values (e.g. tensile 22.7, elongation 900%, notched Izod 40 kJ/m2, Shore HD 67, density 0.9, bars at 45 mm/s 210 °C). Young's (tensile) modulus is '/' (not given). Flexural modulus '/' and density '/' on the chosen sheet. The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 54.5 is given with unit 'HA/HD' (scale not stated), so it is left out."
+    },
+    {
+      "product": "ABS Transparent",
+      "type": "ABS",
+      "product_url": "https://www.sunlu.com/products/transparent-abs-filament",
+      "datasheet_url": "https://media.sunlu.com/prod/20260327/6e9ca36f-6d84-43b8-9486-e59ff3ccb34d.pdf?filename=TDS",
+      "datasheet_version": "SL-TE-WI-068 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "speed_mm_s": "50-200",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 5, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 10, "plus_minus": 5, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 60, "plus_minus": 10, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2000, "plus_minus": 500, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 15, "plus_minus": 5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 6, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 95, "plus_minus": 5, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 86, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.02, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "The product page links a file byte-identical to the ABS page's sheet: this is the ABS sheet (Product Name: ABS, SL-TE-WI-068 A/1), not a sheet for the transparent grade. Values are the ABS sheet's. Printed test bars (100% infill, 90° raster, 50-200 mm/s, 270 °C). Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 85 is given with unit 'HA/HD' (scale not stated), so it is left out."
+    },
+    {
+      "product": "Easy ABS",
+      "type": "ABS",
+      "product_url": "https://store.sunlu.com/products/1-75mm-sunlu-easy-abs-3d-printer-filament-1kg-roll",
+      "datasheet_url": "https://cdn.shopify.com/s/files/1/0851/3159/1999/files/SL-TE-WI-071_ISO_EASY_ABS_A1.pdf",
+      "datasheet_version": "SL-TE-WI-071 A/1",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 255,
+        "speed_mm_s": "170-185",
+        "raster_angle": 90,
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "All bars printed flat (drawings show the Z axis through the bar thickness); the sheet labels rows (X-Y), and the unnotched Izod row (Z-X)"
+      },
+      "properties": [
+        {"property": "tensile_strength", "direction": "XY", "value": 35, "plus_minus": 4, "unit": "MPa", "standard": "ISO 527/2"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 13, "plus_minus": 2.5, "unit": "%", "standard": "ISO 527/2"},
+        {"property": "flexural_strength", "direction": "XY", "value": 57.5, "plus_minus": 5, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2016, "plus_minus": 250, "unit": "MPa", "standard": "ISO 178"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 15, "plus_minus": 3, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "impact_strength", "direction": "", "value": 7.5, "plus_minus": 2.5, "unit": "kJ/m2", "standard": "ISO 180"},
+        {"property": "heat_deflection_045", "direction": "XY", "value": 59.6, "plus_minus": 3, "unit": "°C", "standard": "ISO 75"},
+        {"property": "vicat_softening", "direction": "", "value": 64, "unit": "°C", "standard": "ISO 306"},
+        {"property": "density", "direction": "", "value": 1.06, "unit": "g/cm3", "standard": "ISO 1183"}
+      ],
+      "notes": "Store-only product (sold as 'E ABS'); sheet names it 'Easy ABS' (no-crack low-warp ABS). Sheet is Chinese/English, SL-TE-WI-071 A/1. Printed test bars (100% infill, 90° raster, 170-185 mm/s, 255 °C). Young's (tensile) modulus is '/' (not given). The unnotched Izod row is labelled (Z-X) while the impact drawing shows only a flat-printed bar, so its direction is left blank. Shore hardness 82 is given with unit 'HA/HD' (scale not stated), so it is left out. HDT at 0.45 MPa is printed as 59.6±3 °C, low for ABS but copied as printed."
+    }
+  ]
+}

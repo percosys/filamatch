@@ -21,6 +21,13 @@
 
 ![A part with two filaments in Fusion, and the Filamatch palette matching each filament to an AMS slot with a Send to Orca button](docs/images/overview.png)
 
+> **New in 0.10:** **any printer**: a manual printer takes your printer's
+> nozzle and which filament is in each slot, so Prusa, Creality, Klipper
+> and other printers get the same slot matching and slicer presets as a
+> Bambu Lab printer. The printed stiffness and strength now know 206
+> filaments from 11 makers' data sheets, and your own slicer presets are
+> found when Bambu Studio or OrcaSlicer is signed out.
+>
 > **New in 0.9.1:** every Filamatch filament gets its real stiffness and
 > strength in Fusion (from its data sheet or generic values for its type),
 > instead of the values of the stock material it was copied from. Checked
@@ -132,6 +139,9 @@ by hand, every time. Filamatch keeps that information in the design:
   Studio or OrcaSlicer.
 
 **Printer and slicer**
+- **Any printer:** set up a manual printer (nozzle and which filament is in
+  each slot), for printers Filamatch cannot read, such as Prusa, Creality
+  or Klipper printers.
 - Reads the filaments loaded in your Bambu Lab printers: every AMS, AMS 2
   Pro and AMS HT slot and the external spool, with the left and right nozzle
   on an H2D. Several printers at once. Two ways to connect:

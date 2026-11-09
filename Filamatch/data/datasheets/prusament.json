@@ -1,0 +1,1629 @@
+{
+  "schema": 1,
+  "maker": "Prusament",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "Prusament ASA",
+      "type": "ASA",
+      "product_url": "https://prusament.com/materials/prusament-asa/",
+      "datasheet_url": "https://storage.googleapis.com/prusa3d-content-prod-14e8-wordpress-prusament-prod/2024/05/bc8551ef-tds_prusament-asa_2024_en.pdf",
+      "datasheet_version": "1.1 (2024-05-20)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 265,
+        "bed_c": 110,
+        "speed_mm_s": 200,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "printer": "Original Prusa i3 MK3S",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.07,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 93,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 86,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 78,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.17,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (24 °C; humidity 22 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 42,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 45,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1.6,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 1.7,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 64,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 69,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.0,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 1.9,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 25,
+          "plus_minus": 3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 38,
+          "plus_minus": 11,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 12,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 15,
+          "plus_minus": 3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Sheet also gives: elongation at yield 3.4 ± 0.2 % (horizontal) / 3.8 ± 0.2 % (vertical xz); tensile yield strength of the filament 40 ± 1 MPa (ISO 527); interlayer adhesion 11 ± 1 MPa (Prusa Polymers method, not a standard bar test); moisture absorption 0.16 % in 24 h. Shore D is the maker's own method."
+    },
+    {
+      "product": "Prusament PA11",
+      "type": "PA11",
+      "product_url": "https://prusament.com/materials/prusament-pa11/",
+      "datasheet_url": "https://storage.googleapis.com/prusa3d-content-prod-14e8-wordpress-prusament-prod/2026/08/2d2145fc-pa11_tds_eng.pdf",
+      "datasheet_version": "1.0 (2026-07-22)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 275,
+        "bed_c": 100,
+        "chamber_c": 55,
+        "max_volumetric_speed_mm3_s": 10,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.0,
+        "printer": "Prusa CORE One+, 0.4 mm High-Flow CHT nozzle",
+        "conditioning": "not stated on the sheet (dry or conditioned not said)",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.02,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 58.7,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 49.9,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 70,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.46,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (25 °C; humidity 30 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 38.3,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 39.5,
+          "plus_minus": 0.5,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1.2,
+          "plus_minus": 0.0,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 1.2,
+          "plus_minus": 0.0,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 41.4,
+          "plus_minus": 0.8,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 47.2,
+          "plus_minus": 0.7,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 1.1,
+          "plus_minus": 0.0,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 1.0,
+          "plus_minus": 0.0,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 12.9,
+          "plus_minus": 2.1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 11.7,
+          "plus_minus": 1.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Nylon: the sheet does not say whether bars were tested dry or conditioned. Unnotched Charpy is N/A on the sheet. Sheet also gives: elongation at yield 5.6 ± 0.1 % (both); filament tensile yield strength 44.8 ± 0.5 MPa; interlayer adhesion 32 ± 1 MPa (Prusa Polymers method); tensile strength anisotropy coefficient (Z/XY) 0.84; moisture absorption 0.26 % in 24 h. Page 3 draws a 'Vertical Z-axis' bar but the table has no Z column."
+    },
+    {
+      "product": "Prusament PA11 Carbon Fiber",
+      "aliases": [
+        "PA11-CF"
+      ],
+      "type": "PA-CF",
+      "product_url": "https://prusament.com/materials/prusament-pa11-nylon-carbon-fiber/",
+      "datasheet_url": "https://prusament.com/wp-content/uploads/2022/08/TDS_PA11CFB.pdf",
+      "datasheet_version": "1.0 (2022-06-29)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 285,
+        "bed_c": 110,
+        "speed_mm_s": 100,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "printer": "Original Prusa i3 MK3S/S+",
+        "conditioning": "not stated on the sheet (dry or conditioned not said)",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.11,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 192,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 152,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 77,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.5,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (24 °C; humidity 22 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 42,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 49,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.5,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 3.3,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 63,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 103,
+          "plus_minus": 3,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3.0,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 6.2,
+          "plus_minus": 0.3,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 30,
+          "plus_minus": 4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 51,
+          "plus_minus": 4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 12,
+          "plus_minus": 2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 17,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polyamide 11 with carbon fibres. Nylon: the sheet does not say dry or conditioned. Sheet also gives: elongation at yield 3.3 ± 0.2 % / 2.6 ± 0.3 %; filament tensile yield strength 61 ± 3 MPa; interlayer adhesion 20 ± 5 MPa (Prusa Polymers method); moisture absorption 0.20 % in 24 h."
+    },
+    {
+      "product": "Prusament PC Blend",
+      "type": "PC",
+      "product_url": "https://prusament.com/materials/prusament-pc-blend/",
+      "datasheet_url": "https://prusament.com/wp-content/uploads/2022/10/PCBlend_Prusament_TDS_2022_16_EN.pdf",
+      "datasheet_version": "1.1 (2022-02-16)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 275,
+        "bed_c": 115,
+        "speed_mm_s": 200,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.034,
+        "cooling_fan": "off",
+        "printer": "Original Prusa i3 MK3S",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.22,
+          "unit": "g/cm3",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 113,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 93,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 79,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.15,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (24 °C; humidity 22 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 63,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 63,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1.9,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 2.0,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 88,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 94,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 2.2,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 12,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 12,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polycarbonate blend. Unnotched Charpy: 'no break' in both directions (no number). Sheet also gives: elongation at yield 5.8 ± 0.3 % / 5.8 ± 0.2 %; filament tensile yield strength 58 ± 1 MPa; interlayer adhesion 21 ± 2 MPa (Prusa Polymers method); moisture absorption 0.13 % in 24 h. The file name says 2022_16 but the sheet's header says version 1.1, last update 16-02-2022."
+    },
+    {
+      "product": "Prusament PC Blend Carbon Fiber",
+      "aliases": [
+        "PC-CF"
+      ],
+      "type": "PC-CF",
+      "product_url": "https://prusament.com/materials/prusament-pc-blend-carbon-fiber/",
+      "datasheet_url": "https://prusament.com/wp-content/uploads/2023/04/TDS_Prusament-PCCF_2023_EN.pdf",
+      "datasheet_version": "2.0-OY (2023-04-19)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 285,
+        "bed_c": 115,
+        "speed_mm_s": 200,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.07,
+        "cooling_fan": "off",
+        "printer": "Original Prusa i3 MK3S",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.22,
+          "unit": "g/cm3",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 114,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 106,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 83,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.11,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (24 °C; humidity 22 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 64,
+          "plus_minus": 3,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 70,
+          "plus_minus": 3,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.6,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 3.2,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 94,
+          "plus_minus": 3,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 130,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3.5,
+          "plus_minus": 0.2,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 4.2,
+          "plus_minus": 0.3,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 32,
+          "plus_minus": 5,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 35,
+          "plus_minus": 4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 12,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 17,
+          "plus_minus": 2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polycarbonate blend with carbon fibres. Sheet also gives: elongation at yield 4.6 ± 0.4 % / 3.7 ± 0.5 %; filament tensile yield strength 76 ± 3 MPa; interlayer adhesion 23 ± 2 MPa (Prusa Polymers method); moisture absorption 0.09 % in 24 h."
+    },
+    {
+      "product": "Prusament PC Space Grade Black",
+      "type": "PC",
+      "product_url": "https://prusament.com/materials/prusament-pc-space-grade/",
+      "datasheet_url": "https://storage.googleapis.com/prusa3d-content-prod-14e8-wordpress-prusament-prod/2025/09/e032493a-tds_pc_space_grade_en.pdf",
+      "datasheet_version": "1.0 (2025-09-24)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 290,
+        "bed_c": 120,
+        "speed_mm_s": 100,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.04,
+        "infill_perimeter_overlap_percent": 45,
+        "cooling_fan": "off",
+        "printer": "Prusa CORE One",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.21,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 137.6,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 128.8,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 83,
+          "plus_minus": 1,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 72,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 75,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 3.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 3.7,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 89,
+          "plus_minus": 2.1,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 104,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 3.7,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 4.9,
+          "plus_minus": 0.5,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 22,
+          "plus_minus": 2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 27,
+          "plus_minus": 2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polycarbonate filled with carbon-based additives (the sheet does not call it carbon fibre), electrically dissipative, low outgassing. Notched Charpy N/A on the sheet. Sheet also gives: elongation at yield 3.8 ± 0.2 % / 3.0 ± 0.3 %; interlayer adhesion 18 ± 1 MPa (Prusa Polymers method); moisture absorption 0.18 % in 24 h (24 °C, humidity 42 %) and 0.20 % in 7 days (that row's footnote mark points at the specimen note, so its conditions are unclear; left out); outgassing TML 0.25 %, RML 0.12 %, CVCM 0.00 % (ECSS-Q-70-02); volume and surface resistivity. Page 3 draws a 'Vertical Z-axis' bar but the table has no Z column."
+    },
+    {
+      "product": "Prusament PEI 1010",
+      "aliases": [
+        "PEI"
+      ],
+      "type": "PEI",
+      "product_url": "https://prusament.com/materials/prusament-pei-1010/",
+      "datasheet_url": "https://storage.googleapis.com/prusa3d-content-prod-14e8-wordpress-prusament-prod/2024/09/53ee8f5e-tds_prusament_pei-1010_en.pdf",
+      "datasheet_version": "1.0 (2024-09-18)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 410,
+        "bed_c": 150,
+        "chamber_c": 90,
+        "speed_mm_s": 40,
+        "nozzle_mm": 0.6,
+        "layer_height_mm": 0.3,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.0,
+        "cooling_fan": "off",
+        "printer": "Prusa Pro HT90",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.27,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 207,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 194,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 83.5,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.7,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (24 °C; humidity 22 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 95,
+          "plus_minus": 3.5,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 72,
+          "plus_minus": 5,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.3,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 2.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 98,
+          "plus_minus": 6.5,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 138,
+          "plus_minus": 5.3,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.3,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 2.7,
+          "plus_minus": 0.3,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 19.7,
+          "plus_minus": 4.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 39,
+          "plus_minus": 10,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 3.4,
+          "plus_minus": 0.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 3.6,
+          "plus_minus": 0.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polyetherimide. Notched Charpy row has no footnote on the blow direction. Sheet also gives: elongation at yield 6.6 ± 0.7 % / 4.8 ± 0.6 %; filament tensile yield strength 111.5 ± 1.4 MPa; interlayer adhesion 13.97 ± 1.47 MPa (Prusa Polymers method); moisture absorption 0.4 % in 24 h."
+    },
+    {
+      "product": "Prusament PETG V0",
+      "type": "PETG",
+      "product_url": "https://prusament.com/materials/prusament-petg-v0/",
+      "datasheet_url": "https://prusament.com/wp-content/uploads/2023/07/PETG_V0_ENG.pdf",
+      "datasheet_version": "1.0 (2023-08-01)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 230,
+        "bed_c": 80,
+        "speed_mm_s": 200,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "printer": "Original Prusa i3 MK3S+",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.27,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 79,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.19,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (25 °C; humidity 23 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 39,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 42,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1.7,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 1.8,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 60,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 64,
+          "plus_minus": 1,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 1.0,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 1.0,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 23,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 33,
+          "plus_minus": 2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Flame-retardant PETG (UL 94 V-0 grade). Heat deflection: the sheet prints 68 °C at 0.45 MPa and 74 °C at 1.80 MPa; a higher HDT at the higher load is not possible, so both are left out as a likely sheet error. Notched Charpy 'not applicable'. Sheet also gives: elongation at yield 3.5 ± 0.2 % / 3.7 ± 0.1 %; filament tensile yield strength 39.4 ± 0.1 MPa; interlayer adhesion 16.4 ± 1.3 MPa (Prusa Polymers method); moisture absorption 0.13 % in 24 h."
+    },
+    {
+      "product": "Prusament PETG Carbon Fiber",
+      "aliases": [
+        "PETG CF",
+        "PETG Carbon Fiber Black"
+      ],
+      "type": "PETG-CF",
+      "product_url": "https://prusament.com/materials/prusament-petg-carbon-fiber/",
+      "datasheet_url": "https://prusament.com/wp-content/uploads/2023/02/TDS_Prusament-PETG-CF-Black.zip",
+      "datasheet_version": "1.0 (2022-12-20)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 265,
+        "bed_c": 80,
+        "speed_mm_s": 200,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "printer": "Original Prusa i3 MK3",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.27,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 96,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 80,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 77,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.1,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (24 °C; humidity 22 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 47,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 52,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 1.7,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 1.8,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 68,
+          "plus_minus": 3,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 80,
+          "plus_minus": 2,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.3,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 3.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 29,
+          "plus_minus": 6,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 43,
+          "plus_minus": 8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). The maker's link is a ZIP of the sheet in seven languages; values from the English PDF ('Prusament PETG Carbon Fiber Black'). The specimen note on the sheet names 'Prusament PETG filament' (likely copied from the PETG sheet). No notched Charpy. Sheet also gives: elongation at yield 4.3 ± 0.1 % / 4.5 ± 0.2 %; filament tensile yield strength 52 ± 1 MPa; interlayer adhesion 18 ± 3 MPa (Prusa Polymers method); moisture absorption 0.07 % in 24 h."
+    },
+    {
+      "product": "Prusament PP Carbon Fiber",
+      "aliases": [
+        "PP-CF"
+      ],
+      "type": "PP-CF",
+      "product_url": "https://prusament.com/materials/prusament-pp/",
+      "datasheet_url": "https://storage.googleapis.com/prusa3d-content-prod-14e8-wordpress-prusament-prod/2025/01/b4ef2bf6-technical-data-sheet-1.pdf",
+      "datasheet_version": "1.0 (2024-11-15)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 270,
+        "bed_c": 85,
+        "speed_mm_s": 40,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.09,
+        "infill_perimeter_overlap_percent": 40,
+        "cooling_fan": "off",
+        "printer": "Original Prusa MK4",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 0.91,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 158,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 115,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 62,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.04,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (25 °C; humidity 30 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 27.3,
+          "plus_minus": 0.7,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 30.7,
+          "plus_minus": 0.3,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 2.5,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 27.5,
+          "plus_minus": 0.7,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 41.7,
+          "plus_minus": 1.5,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 1.8,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 3.4,
+          "plus_minus": 0.3,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 19,
+          "plus_minus": 1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 17.2,
+          "plus_minus": 1.7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 14.5,
+          "plus_minus": 0.3,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 10.5,
+          "plus_minus": 0.8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polypropylene with carbon fibres. The product page URL is .../prusament-pp/ but the page and sheet are 'Prusament PP Carbon Fiber'. Density 0.91 g/cm3 is as printed (low for a fibre-filled PP; not checked). Sheet also gives: elongation at yield 3.4 ± 0.1 % / 3.2 ± 0.1 %; filament tensile yield strength 21 ± 0.4 MPa; interlayer adhesion 13 ± 1 MPa (Prusa Polymers method); moisture absorption 0.03 % in 24 h."
+    },
+    {
+      "product": "Prusament PP Glass Fiber",
+      "aliases": [
+        "PP-GF"
+      ],
+      "type": "PP-GF",
+      "product_url": "https://prusament.com/materials/prusament-pp-glass-fiber/",
+      "datasheet_url": "https://storage.googleapis.com/prusa3d-content-prod-14e8-wordpress-prusament-prod/2025/07/512923fd-tds_pp_glass_fiber_en.pdf",
+      "datasheet_version": "1.0 (2024-11-15)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 245,
+        "bed_c": 95,
+        "speed_mm_s": 50,
+        "layer_height_mm": 0.2,
+        "shells": 2,
+        "top_bottom_layers": 0,
+        "extrusion_multiplier": 1.03,
+        "infill_perimeter_overlap_percent": 15,
+        "cooling_fan": "off",
+        "printer": "Original Prusa MK4S",
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "Horizontal: bars printed flat (XY); Vertical xz: bars printed standing on their edge in the X-Z plane, length along X, so the layers still run along the bar (XZ), per the sheet's drawing. The sheet gives no values for bars printed upright across the layers (Z)."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.12,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 138.3,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 112.6,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 68.5,
+          "plus_minus": 0.6,
+          "unit": "Shore D",
+          "standard": "Prusa Polymers"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.11,
+          "unit": "%",
+          "standard": "Prusa Polymers, 7 days (25 °C; humidity 30 %)"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XY",
+          "value": 40.3,
+          "plus_minus": 2.9,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "XZ",
+          "value": 48.8,
+          "plus_minus": 2.8,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XY",
+          "value": 2.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "XZ",
+          "value": 2.5,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XY",
+          "value": 50.2,
+          "plus_minus": 3.3,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "XZ",
+          "value": 70.4,
+          "plus_minus": 5.3,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XY",
+          "value": 2.1,
+          "plus_minus": 0.1,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "XZ",
+          "value": 2.7,
+          "plus_minus": 0.5,
+          "unit": "GPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XY",
+          "value": 17.6,
+          "plus_minus": 2.6,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "XZ",
+          "value": 26.9,
+          "plus_minus": 2.1,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XY",
+          "value": 7.9,
+          "plus_minus": 0.4,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "XZ",
+          "value": 9.9,
+          "plus_minus": 0.8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1"
+        }
+      ],
+      "notes": "Printed test bars. Directions per the sheet: 'Horizontal' = XY, 'Vertical xz' = XZ (on edge, not across the layers); no Z values. Tensile values are tensile yield strength (ISO 527-1). Elongation is given only at yield, so it is left out. Impact: Charpy, edgewise blow (ISO 179-1). Polypropylene with glass fibres. Sheet also gives: elongation at yield 4.5 ± 0.1 % / 4.1 ± 0.2 %; filament tensile yield strength 46.6 ± 1.3 MPa; interlayer adhesion 18 ± 1 MPa (Prusa Polymers method); moisture absorption 0.11 % in 24 h."
+    }
+  ]
+}

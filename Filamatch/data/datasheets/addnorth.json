@@ -1,0 +1,483 @@
+{
+  "schema": 1,
+  "maker": "addnorth",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "Adura X",
+      "aliases": [
+        "Adura™ X",
+        "AduraX"
+      ],
+      "type": "PA-CF",
+      "product_url": "https://www.addnorth.com/product/Adura%E2%84%A2%20X/Adura%E2%84%A2%20X%20-%201.75mm%20-%201000g%20-%20Black",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/AduraX_TDS_mZ8KLl.pdf",
+      "datasheet_version": "Revision 1.1 (2019-08-11)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.2,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 58,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1460,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 25,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 81,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 3650,
+          "unit": "MPa",
+          "standard": "ISO178"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 145,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). Carbon-fibre-reinforced nylon (co-polyamide base, per the shop page). Tg 51 °C (DSC). Flexural modulus 3650 MPa is much higher than the tensile modulus 1460 MPa; both as printed. Nylon: dry or conditioned not stated."
+    },
+    {
+      "product": "Adura",
+      "aliases": [
+        "Adura™"
+      ],
+      "type": "PA",
+      "product_url": "https://www.addnorth.com/product/Adura%E2%84%A2/Adura%E2%84%A2%20-%201.75mm%20-%201000g%20-%20Traffic%20Blue",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/Adura_TDS_KRM71m.pdf",
+      "datasheet_version": "Revision 1.1 (2019-08-11)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.1,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 50,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1720,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 46,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 52,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1425,
+          "unit": "MPa",
+          "standard": "ISO178"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 105,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). Co-polyamide nylon. Tg 51 °C (DSC). Nylon: dry or conditioned not stated."
+    },
+    {
+      "product": "Adura FDA",
+      "aliases": [
+        "Adura™ FDA"
+      ],
+      "type": "PA",
+      "product_url": "https://www.addnorth.com/product/Adura%E2%84%A2%20FDA/Adura%E2%84%A2%20FDA%20-%201.75mm%20-%201000g%20-%20Clear",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/adura_fda_tds_krynwK.pdf",
+      "datasheet_version": "Revision 2.1 (2020-04-11)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.1,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 50,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1720,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 46,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 52,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1425,
+          "unit": "MPa",
+          "standard": "ISO178"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 105,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). Co-polyamide nylon from an FDA 21 CFR 177.1500 raw material. Same numbers as the Adura sheet. Tg 51 °C (DSC). Nylon: dry or conditioned not stated."
+    },
+    {
+      "product": "Rigid X",
+      "aliases": [
+        "RigidX"
+      ],
+      "type": "PETG-CF",
+      "product_url": "https://www.addnorth.com/product/Rigid%20X/Rigid%20X%20-%201.75mm%20-%201000g%20-%20Charcoal%20Blue",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/TDS_rigidX_10waLr.pdf",
+      "datasheet_version": "Revision 1.0 (2019-11-28)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.32,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 52,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 5120,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 8,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 89,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 4930,
+          "unit": "MPa",
+          "standard": "ISO178"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 82,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). Carbon-fibre-reinforced PETG. Tg 80 °C (DSC)."
+    },
+    {
+      "product": "PC Blend HT LCF",
+      "type": "PC-CF",
+      "product_url": "https://www.addnorth.com/product/PC%20Blend%20HT%20LCF/PC%20Blend%20HT%20LCF%20-%201.75mm%20-%201000g%20-%20Black",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/TDS_pcblendhtlcf_utXzD2.pdf",
+      "datasheet_version": "Revision 1.1 (2023-10-11)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.3,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 125,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 9800,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 2.9,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 185,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). PC blend with carbon fibres ('LCF'; the sheet names no fibre type or blend partner, the shop lists it under PC). Flexural strength and modulus are '-' on the sheet. Tg 158 °C (DSC). Tensile strength 125 MPa and modulus 9800 MPa are very high for a printed part; they may be moulded or filament values, the sheet does not say."
+    },
+    {
+      "product": "PETG Flame Retardant V0",
+      "aliases": [
+        "PETG FR V0"
+      ],
+      "type": "PETG",
+      "product_url": "https://www.addnorth.com/product/PETG%20Flame%20Retardant%20V0/PETG%20Flame%20Retardant%20V0%20-%201.75mm%20-%201000g%20-%20White",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/TDS_PETGv0_oY3Rem.pdf",
+      "datasheet_version": "Revision 1.1 (2023-08-11)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.25,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 34,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2600,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 5,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 79,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 2354,
+          "unit": "MPa",
+          "standard": "ISO178"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 80,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). Halogen-free flame-retardant PETG. Tg 70 °C (DSC). Flammability: UL94 V-0 at 3.00 mm and 1.50 mm (3D printed); GWFI 960 @ 1 mm (IEC 60695-2-12); GWIT 775 @ 1 mm (IEC 60695-2-13). The sheet title prints 'Flame retadant'."
+    },
+    {
+      "product": "ESD PETG",
+      "type": "PETG",
+      "product_url": "https://www.addnorth.com/product/ESD%20PETG/ESD%20PETG%20-%201.75mm%20-%201000g%20-%20Black",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/TDS_ESD_PETG_3mpUZx.pdf",
+      "datasheet_version": "Revision 1.0 (2019-11-28)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.29,
+          "unit": "g/cm3",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 52,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1850,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 14,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 73,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1697,
+          "unit": "MPa",
+          "standard": "ISO178"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 75,
+          "unit": "°C",
+          "standard": "ISO 75"
+        }
+      ],
+      "notes": "One-page add:north sheet: typical values with no print direction, no print settings and no word on whether the bars were printed or moulded, so every direction is \"\". Tensile strength is 'Tensile Strength, Break'. The sheet names ISO 527 for density (as printed; density is normally ISO 1183). Static-dissipative PETG. Tg 80 °C (DSC). Surface resistance 10^7-10^9 Ohm/sq."
+    },
+    {
+      "product": "Addbor N25",
+      "type": "PA",
+      "product_url": "https://www.addnorth.com/product/Addbor%20N25/Addbor%20N25%20-%201.75mm%20-%201000g%20-%20Anthracite",
+      "datasheet_url": "https://storage.googleapis.com/addnorth-com.appspot.com/imgix/assets/production/AddborN25_TDS_8H-Ujd.pdf",
+      "datasheet_version": "Revision 1.0 (2020-01-26)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings."
+      },
+      "properties": [],
+      "notes": "Polyamide filled with 25 % boron carbide (w/w) for neutron shielding, made with Additive Composite. The sheet gives only ranges (tensile strength at break 50-58 MPa, tensile modulus 1460-1720 MPa, elongation 25-46 %, flexural strength 52-81 MPa, flexural modulus 1425-3650 MPa, density 1.3 g/cc, continuous working temperature 100-110 °C), the same spans as the Adura and Adura X sheets, so no single values are recorded."
+    },
+    {
+      "product": "rABS",
+      "type": "ABS",
+      "product_url": "https://www.addnorth.com/product/rABS/rABS%20-%201.75mm%20-%201000g%20-%20Black",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "Recycled ABS. The product page links only safety data sheets (EN/SE, Oct 2025); no technical data sheet found on addnorth.com."
+    },
+    {
+      "product": "Addlantis",
+      "type": "PA6",
+      "product_url": "https://www.addnorth.com/product/Addlantis/Addlantis%20-%201.75mm%20-%201000g%20-%20Pastel%20Green",
+      "datasheet_url": "",
+      "datasheet_version": "",
+      "specimen": {},
+      "properties": [],
+      "notes": "Recycled PA6 from fishing nets (the page compares it with virgin PA6). The product page has only slicer presets; no technical data sheet found on addnorth.com. The page itself lists density 1.18 and working temperature 140 °C (not a data sheet)."
+    }
+  ]
+}

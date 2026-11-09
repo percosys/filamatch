@@ -1888,3 +1888,52 @@ h1[tabindex="-1"]:focus {
 .text-input--short {
   max-width: 5em;
 }
+
+/* Manual printer (Settings > Printer > Manual). */
+.manual-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.button-row--start {
+  margin-top: 4px;
+}
+
+.manual-form .manual-remove {
+  margin-right: auto;
+}
+
+.manual-slots {
+  display: flex;
+  flex-direction: column;
+}
+
+.manual-slot {
+  display: grid;
+  grid-template-columns: 52px 12px minmax(0, 1fr) 58px auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.manual-slot + .manual-slot {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.manual-slot .text-input,
+.manual-slot .select-input {
+  padding: 4px 6px;
+}
+
+.manual-slot__grams {
+  text-align: right;
+}

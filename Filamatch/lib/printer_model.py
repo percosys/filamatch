@@ -157,10 +157,17 @@ class SpoolInfo:
     subtype: str = ""
     location: str = ""
     archived: bool = False
+    #: A Filamatch catalog filament the spool is (the manual source): its id,
+    #: product line and density, so it is imported as that filament.
+    catalog_id: str = ""
+    product_line: str = ""
+    density_g_cm3: Optional[float] = None
 
     @property
     def material_label(self) -> str:
-        """Human readable material (``PLA Matte``)."""
+        """Human readable material (``PLA Matte``), or the catalog product line."""
+        if self.product_line:
+            return self.product_line
         return " ".join(part for part in (self.material, self.subtype) if part).strip()
 
     @property

@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "maker": "Overture",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "ABS",
+      "type": "ABS",
+      "product_url": "https://overture3d.com/products/overture-abs-filament-1-75mm",
+      "datasheet_url": "https://overture3d.com/cdn/shop/files/OVERTURE_ABS_TDS_EN_V5.1_9d827267-f215-4734-9c0b-c04232b8df92.pdf",
+      "datasheet_version": "V5.1 (August 2024)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 205,
+        "bed_c": 40,
+        "speed_mm_s": 60,
+        "conditioning": "conditioned at room temperature for 24 h",
+        "orientation_note": "X-Y and Z as the sheet labels them; printed specimens, no drawing"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.15, "unit": "g/cm3", "standard": "ISO 1183, GB/T 1033"},
+        {"property": "vicat_softening", "direction": "", "value": 103.4, "unit": "°C", "standard": "ISO 306 GB/T 1633"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1685, "plus_minus": 81, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "XY", "value": 25.1, "plus_minus": 0.5, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 21.3, "plus_minus": 0.6, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 8.2, "plus_minus": 0.4, "unit": "%", "standard": "ISO 527, GB/T 1040"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1965, "plus_minus": 72, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "flexural_strength", "direction": "XY", "value": 52.1, "plus_minus": 2.5, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 2.6, "plus_minus": 0.4, "unit": "kJ/m2", "standard": "ISO 179, GB/T 1043"}
+      ],
+      "notes": "Printed test bars, 100% infill. The sheet gives the specimen print settings as 205 °C nozzle and 40 °C bed, far below its own recommended ABS range (245-265 °C, 80-100 °C bed); copied as printed, possibly a template error on the sheet. Density 1.15 g/cm3 at 21.4 °C as printed. Header says July 2024, footer Version 5.1 August 2024."
+    },
+    {
+      "product": "ASA",
+      "type": "ASA",
+      "product_url": "https://overture3d.com/products/overture-asa-filament-1-75mm",
+      "datasheet_url": "https://overture3d.com/cdn/shop/files/OVERTURE_ASA_TDS_EN_V5.1_60023de4-0977-4f96-9c55-0d94bacc7d0f.pdf",
+      "datasheet_version": "V5.1 (August 2024)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 80,
+        "speed_mm_s": 50,
+        "conditioning": "conditioned at room temperature for 24 h",
+        "orientation_note": "X-Y and Z as the sheet labels them; printed specimens, no drawing"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.14, "unit": "g/cm3", "standard": "ISO 1183, GB/T 1033"},
+        {"property": "vicat_softening", "direction": "", "value": 106.2, "unit": "°C", "standard": "ISO 306 GB/T 1633"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2372, "plus_minus": 145, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "XY", "value": 45.1, "plus_minus": 0.6, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 33.1, "plus_minus": 1.1, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 4.2, "plus_minus": 0.8, "unit": "%", "standard": "ISO 527, GB/T 1040"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 3221, "plus_minus": 109, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "flexural_strength", "direction": "XY", "value": 74.9, "plus_minus": 2.1, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 13.1, "plus_minus": 1.5, "unit": "kJ/m2", "standard": "ISO 179, GB/T 1043"}
+      ],
+      "notes": "Printed test bars, 100% infill. Table titled \"Mechanical Properties (Dry State)\"."
+    },
+    {
+      "product": "Easy Nylon",
+      "type": "PA",
+      "product_url": "https://overture3d.com/products/easy-nylon-filament",
+      "datasheet_url": "https://overture3d.com/cdn/shop/files/OVERTURE_EASY_NYLON_TDS_EN_V5.1_b6ce0042-6686-42dd-a5ab-696d2cc734b8.pdf",
+      "datasheet_version": "V5.1 (August 2024)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 265,
+        "bed_c": 50,
+        "speed_mm_s": 45,
+        "conditioning": "dry set: annealed at 80 °C for 7 h and dried for 48 h; conditioned (wet) set: annealed at 80 °C for 30 min and conditioned at 50% RH and ambient temperature for 15 days",
+        "orientation_note": "X-Y and Z as the sheet labels them; printed specimens, no drawing"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.12, "unit": "g/cm3", "standard": "ISO 1183, GB/T 1033"},
+        {"property": "vicat_softening", "direction": "", "value": 181.2, "unit": "°C", "standard": "ISO 306 GB/T 1633"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2349, "plus_minus": 182, "unit": "MPa", "standard": "ISO 527, GB/T 1040", "condition": "dry"},
+        {"property": "tensile_strength", "direction": "XY", "value": 71.3, "plus_minus": 2.1, "unit": "MPa", "standard": "ISO 527, GB/T 1040", "condition": "dry"},
+        {"property": "tensile_strength", "direction": "Z", "value": 50.3, "plus_minus": 1.4, "unit": "MPa", "standard": "ISO 527, GB/T 1040", "condition": "dry"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 8.4, "plus_minus": 0.9, "unit": "%", "standard": "ISO 527, GB/T 1040", "condition": "dry"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 1598, "plus_minus": 201, "unit": "MPa", "standard": "ISO 178, GB/T 9341", "condition": "dry"},
+        {"property": "flexural_strength", "direction": "XY", "value": 85.0, "plus_minus": 2.7, "unit": "MPa", "standard": "ISO 178, GB/T 9341", "condition": "dry"},
+        {"property": "impact_strength", "direction": "XY", "value": 7.9, "plus_minus": 2.6, "unit": "kJ/m2", "standard": "ISO 179, GB/T 1043", "condition": "dry"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 1162, "plus_minus": 274, "unit": "MPa", "standard": "ISO 527, GB/T 1040", "condition": "conditioned"},
+        {"property": "tensile_strength", "direction": "XY", "value": 26.3, "plus_minus": 2.1, "unit": "MPa", "standard": "ISO 527, GB/T 1040", "condition": "conditioned"},
+        {"property": "tensile_strength", "direction": "Z", "value": 14.4, "plus_minus": 1.8, "unit": "MPa", "standard": "ISO 527, GB/T 1040", "condition": "conditioned"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 245.3, "plus_minus": 22.5, "unit": "%", "standard": "ISO 527, GB/T 1040", "condition": "conditioned"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 769, "plus_minus": 88, "unit": "MPa", "standard": "ISO 178, GB/T 9341", "condition": "conditioned"},
+        {"property": "flexural_strength", "direction": "XY", "value": 37.6, "plus_minus": 8.1, "unit": "MPa", "standard": "ISO 178, GB/T 9341", "condition": "conditioned"},
+        {"property": "impact_strength", "direction": "XY", "value": 21.1, "plus_minus": 2.7, "unit": "kJ/m2", "standard": "ISO 179, GB/T 1043", "condition": "conditioned"}
+      ],
+      "notes": "Copolymer of nylon 6 and nylon 6,6. Printed test bars, 100% infill. Two sets: \"Dry State\" (dry) and \"Wet Status\" (conditioned at 50% RH for 15 days); the two sets were annealed differently (7 h vs 30 min at 80 °C). Impact is \"Charpy impact strength\" without the word notched (the other Overture sheets say \"Notched Charpy\"), recorded as unnotched."
+    },
+    {
+      "product": "PC Professional",
+      "aliases": [
+        "PC"
+      ],
+      "type": "PC",
+      "product_url": "https://overture3d.com/products/overture-pc-professional-filament",
+      "datasheet_url": "https://overture3d.com/cdn/shop/files/OVERTURE_PC_PROFESSIONAL_TDS_EN_V5.1_b609023a-6c21-4c78-b6f7-5c84407e4938.pdf",
+      "datasheet_version": "V5.1 (August 2024)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 95,
+        "speed_mm_s": 45,
+        "conditioning": "conditioned at room temperature for 24 h",
+        "orientation_note": "X-Y and Z as the sheet labels them; printed specimens, no drawing"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.21, "unit": "g/cm3", "standard": "ISO 1183, GB/T 1033"},
+        {"property": "vicat_softening", "direction": "", "value": 110.3, "unit": "°C", "standard": "ISO 306 GB/T 1633"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2138, "plus_minus": 134, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "XY", "value": 49.8, "plus_minus": 2.1, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 37.6, "plus_minus": 1.3, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6.2, "plus_minus": 1.2, "unit": "%", "standard": "ISO 527, GB/T 1040"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2293, "plus_minus": 99, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "flexural_strength", "direction": "XY", "value": 79.8, "plus_minus": 3.4, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 20.5, "plus_minus": 0.9, "unit": "kJ/m2", "standard": "ISO 179, GB/T 1043"}
+      ],
+      "notes": "Values of the sheet's \"Other filament\" columns (the coloured, non-transparent PC Professional; page 2 for mechanical values). Printed test bars, 100% infill. The transparent colour has its own record."
+    },
+    {
+      "product": "PC Professional (Transparent)",
+      "type": "PC",
+      "product_url": "https://overture3d.com/products/overture-pc-professional-filament",
+      "datasheet_url": "https://overture3d.com/cdn/shop/files/OVERTURE_PC_PROFESSIONAL_TDS_EN_V5.1_b609023a-6c21-4c78-b6f7-5c84407e4938.pdf",
+      "datasheet_version": "V5.1 (August 2024)",
+      "specimen": {
+        "infill_percent": 100,
+        "nozzle_c": 260,
+        "bed_c": 95,
+        "speed_mm_s": 45,
+        "conditioning": "conditioned at room temperature for 24 h",
+        "orientation_note": "X-Y and Z as the sheet labels them; printed specimens, no drawing"
+      },
+      "properties": [
+        {"property": "density", "direction": "", "value": 1.21, "unit": "g/cm3", "standard": "ISO 1183, GB/T 1033"},
+        {"property": "vicat_softening", "direction": "", "value": 115.3, "unit": "°C", "standard": "ISO 306 GB/T 1633"},
+        {"property": "tensile_modulus", "direction": "XY", "value": 2253, "plus_minus": 59, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "XY", "value": 70.2, "plus_minus": 1.8, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "tensile_strength", "direction": "Z", "value": 44.5, "plus_minus": 0.9, "unit": "MPa", "standard": "ISO 527, GB/T 1040"},
+        {"property": "elongation_at_break", "direction": "XY", "value": 6.7, "plus_minus": 0.6, "unit": "%", "standard": "ISO 527, GB/T 1040"},
+        {"property": "flexural_modulus", "direction": "XY", "value": 2588, "plus_minus": 56, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "flexural_strength", "direction": "XY", "value": 93.4, "plus_minus": 2.1, "unit": "MPa", "standard": "ISO 178, GB/T 9341"},
+        {"property": "impact_strength_notched", "direction": "XY", "value": 5.7, "plus_minus": 1.4, "unit": "kJ/m2", "standard": "ISO 179, GB/T 1043"}
+      ],
+      "notes": "Values of the sheet's \"Transparent\" columns (page 1). Printed test bars, 100% infill."
+    }
+  ]
+}

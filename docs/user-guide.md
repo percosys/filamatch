@@ -23,9 +23,32 @@ When nothing is set up yet, Filamatch shows a short welcome:
    Filamatch then reads your printers and every loaded slot. A slot with a
    Bambuddy inventory spool linked also shows that spool (grams left,
    preset).
-3. **Or skip.** You can still add filaments from the catalog. Without a printer
+3. **Any other printer: set it up by hand.** See
+   [A manual printer](#a-manual-printer).
+4. **Or skip.** You can still add filaments from the catalog. Without a printer
    connection, an export puts the filaments in slots 1, 2, 3… in the order
    they appear in the design. Connect later in Settings.
+
+### A manual printer
+
+For a printer Filamatch cannot read (Prusa, Creality, Voron, a single-nozzle
+printer...), you say which filament is in which slot. No network is needed.
+
+1. Open **Settings > Printer**, choose **Manual** and click **Set up**.
+2. Give the printer a name, and pick its nozzle size and nozzle material.
+   The design check uses the material: carbon and glass fibre filaments need
+   a hardened nozzle.
+3. Add one slot per tool or spool position (**Add slot**). For each slot,
+   pick the filament from the filaments you added to Filamatch, and give it
+   a name if you like ("T1", "Left"). **Fill from design** puts the open
+   design's filaments into the slots in one click; change the order to match
+   your printer. Grams left are optional, for the spool check.
+4. Click **Save**.
+
+Home then matches the design's filaments to these slots like a Bambu
+printer's, and the slicer project gets each slot's filament and its slicer
+preset. When you change a spool, open **Settings > Printer > Edit** and pick
+the new filament.
 
 ### Add a Bambu printer
 
@@ -299,6 +322,9 @@ Select filaments and click **Add to Fusion**. You return to Home.
   - **Bambuddy:** address and API key. **Edit** changes them; **Remove key**
     deletes the saved key. Turn off **Verify the HTTPS certificate** only for
     a Bambuddy on your own network with a self-signed certificate.
+  - **Manual:** a printer you describe by hand: name, nozzle, and which
+    filament is in each slot (see [A manual printer](#a-manual-printer)).
+    **Edit** changes it; **Remove printer** forgets it.
 - **Slicer:** **Change > Send to** lists the slicers installed on your
   computer; **Other app…** picks any other slicer. The send button shows the
   name of the slicer you pick.

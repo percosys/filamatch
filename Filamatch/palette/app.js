@@ -195,7 +195,9 @@
     set_printer_source: 'settingsSaved',
     bambu_lan_test: 'bambuLanTestResult',
     bambu_lan_save: 'bambuLanPrinters',
-    bambu_lan_remove: 'bambuLanPrinters'
+    bambu_lan_remove: 'bambuLanPrinters',
+    manual_printer_save: 'manualPrinters',
+    manual_printer_remove: 'manualPrinters'
   };
 
   /** Human-readable action names used in timeout/error messages. */
@@ -223,7 +225,9 @@
     set_printer_source: 'switch the printer source',
     bambu_lan_test: 'test the Bambu printer',
     bambu_lan_save: 'save the Bambu printer',
-    bambu_lan_remove: 'remove the Bambu printer'
+    bambu_lan_remove: 'remove the Bambu printer',
+    manual_printer_save: 'save the manual printer',
+    manual_printer_remove: 'remove the manual printer'
   };
 
   /** Milliseconds before an unanswered request is reported as a timeout. */
@@ -266,7 +270,8 @@
   /** Printer sources offered when initData does not list them. */
   var DEFAULT_PRINTER_SOURCES = [
     { id: 'bambuddy', label: 'Bambuddy' },
-    { id: 'bambu_lan', label: 'Bambu printer on your network' }
+    { id: 'bambu_lan', label: 'Bambu printer on your network' },
+    { id: 'manual', label: 'Manual' }
   ];
 
   /** Quiet period before a design change refreshes the Bambuddy slot mapping. */
@@ -692,6 +697,8 @@
       /** initData.printer_configured, or null when Fusion did not report it. */
       configured: null,
       sources: DEFAULT_PRINTER_SOURCES.slice(),
+      /** The manual printer: saved printers and the form's working copy. */
+      manual: { printers: [], draft: null },
       lan: {
         printers: [],
         /** {fingerprint, action, ip} offered by a needs_trust reply. */
@@ -923,8 +930,17 @@
         ? settings.bambuddy_slot_map : {},
       bambuddy_api_key_set: settings.bambuddy_api_key_set === true,
       bambuddy_verify_tls: settings.bambuddy_verify_tls !== false,
-      printer_source: asString(settings.printer_source) === 'bambu_lan' ? 'bambu_lan' : 'bambuddy'
+      printer_source: normalizeSource(settings.printer_source)
     };
+  }
+
+  /**
+   * @param {*} value
+   * @returns {string} a known printer source id ("bambuddy" when unknown)
+   */
+  function normalizeSource(value) {
+    var source = asString(value);
+    return source === 'bambu_lan' || source === 'manual' ? source : 'bambuddy';
   }
 
   /**
@@ -1765,6 +1781,9 @@
         case 'bambuLanPrinters':
           handleBambuLanPrinters(payload, entry);
           break;
+        case 'manualPrinters':
+          handleManualPrinters(payload, entry);
+          break;
         case 'response':
           /* Fusion echoes every sendInfoToHTML return value back as a
              "response" event. Ignore it silently: replying would create an
@@ -2347,7 +2366,7 @@
     renderBambuddySettings();
     renderBambuddySlots();
     if (state.bambuddy.configured &&
-        (state.printer.source === 'bambu_lan' || state.bambuddy.keySet || state.demoMode)) {
+        (state.printer.source !== 'bambuddy' || state.bambuddy.keySet || state.demoMode)) {
       window.setTimeout(function () {
         requestBambuddyContext({ silent: true });
       }, 80);
@@ -2526,9 +2545,11 @@
     }
     var status = byId('bambuddy-status');
     if (state.bambuddy.loaded && groups.length === 0) {
-      setStatus(status, state.printer.source === 'bambu_lan'
-        ? 'No filament is loaded on this printer.'
-        : 'No spools are assigned to slots on this printer in Bambuddy.', 'warning');
+      setStatus(status, state.printer.source === 'manual'
+        ? 'No slot has a filament yet. Set them in Settings.'
+        : state.printer.source === 'bambu_lan'
+          ? 'No filament is loaded on this printer.'
+          : 'No spools are assigned to slots on this printer in Bambuddy.', 'warning');
     } else if (groups.length > 0 && groups.every(function (group) { return group.inFusion; })) {
       setStatus(status, 'Everything loaded on this printer is already in Fusion.', 'success');
     } else if (state.bambuddy.loaded && !state.bambuddy.error) {
@@ -2623,7 +2644,7 @@
     state.bambuddy.mappedMaterialsKey = materialIdsKey();
     request('bambuddy_context', payload, {
       statusEl: opts.silent ? null : statusEl,
-      pendingText: opts.silent ? '' : (state.printer.source === 'bambu_lan'
+      pendingText: opts.silent ? '' : (state.printer.source !== 'bambuddy'
         ? 'Reading the printer...' : 'Reading the printer from Bambuddy...'),
       button: opts.button || (context.explicit ? byId('bambuddy-connect-btn') : null),
       timeoutMs: BAMBUDDY_TIMEOUT_MS,
@@ -2640,8 +2661,9 @@
    */
   function handleBambuddyContextData(payload, entry) {
     var context = (entry && entry.context) || {};
-    var lan = state.printer.source === 'bambu_lan';
-    var cardStatus = byId(lan ? 'bambu-lan-list-status' : 'setup-bambuddy-status');
+    var lan = state.printer.source !== 'bambuddy';
+    var cardStatus = byId(state.printer.source === 'manual' ? 'manual-list-status'
+      : lan ? 'bambu-lan-list-status' : 'setup-bambuddy-status');
     var statusLines = [byId('bambuddy-status'), cardStatus, byId('welcome-status'), byId('printer-source-status')];
     if (payload.ok === false) {
       state.bambuddy.error = replyError(payload);
@@ -2679,7 +2701,10 @@
     }
     renderBambuddySettings();
     renderBambuddySlots();
-    var connected = 'Connected · ' + pluralize(state.bambuddy.slots.length, 'loaded slot') + '.';
+    var connected = state.printer.source === 'manual'
+      ? 'Ready · ' + pluralize(state.bambuddy.slots.filter(function (slot) { return slot && slot.loaded !== false; }).length,
+        'slot') + ' with a filament.'
+      : 'Connected · ' + pluralize(state.bambuddy.slots.length, 'loaded slot') + '.';
     setStatus(cardStatus, connected, 'success');
     setStatus(byId('welcome-status'), connected, 'success');
     setStatus(byId('printer-source-status'), '', 'muted');
@@ -2769,7 +2794,7 @@
         return asString(sources[i].label);
       }
     }
-    return source === 'bambu_lan' ? 'Bambu printer on your network' : 'Bambuddy';
+    return source === 'bambu_lan' ? 'Bambu printer on your network' : source === 'manual' ? 'Manual' : 'Bambuddy';
   }
 
   /**
@@ -2802,17 +2827,19 @@
    */
   function applyPrinterSourceState(payload) {
     var sources = Array.isArray(payload.sources) ? payload.sources.filter(function (source) {
-      return source && (source.id === 'bambuddy' || source.id === 'bambu_lan');
+      return source && (source.id === 'bambuddy' || source.id === 'bambu_lan' || source.id === 'manual');
     }) : [];
     state.printer.sources = sources.length ? sources : DEFAULT_PRINTER_SOURCES.slice();
     var source = asString(payload.printer_source) || state.settings.printer_source;
-    state.printer.source = source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+    state.printer.source = normalizeSource(source);
     state.settings.printer_source = state.printer.source;
     state.printer.pendingSource = '';
     state.printer.configured = typeof payload.printer_configured === 'boolean'
       ? payload.printer_configured : null;
     var lan = (payload.bambu_lan && typeof payload.bambu_lan === 'object') ? payload.bambu_lan : {};
     state.printer.lan.printers = normalizeLanPrinters(lan.printers);
+    var manual = (payload.manual && typeof payload.manual === 'object') ? payload.manual : {};
+    state.printer.manual.printers = normalizeManualPrinters(manual.printers);
     renderPrinterSource();
   }
 
@@ -2845,7 +2872,12 @@
     if (lanCard) {
       lanCard.hidden = shown !== 'bambu_lan';
     }
+    var manualCard = byId('manual-card');
+    if (manualCard) {
+      manualCard.hidden = shown !== 'manual';
+    }
     renderLanPrinters();
+    renderManualPrinter();
   }
 
   /**
@@ -2882,9 +2914,12 @@
     if (target.value === state.printer.source && !state.printer.pendingSource) {
       return;
     }
-    setPrinterSource(target.value === 'bambu_lan' ? 'bambu_lan' : 'bambuddy');
+    setPrinterSource(normalizeSource(target.value));
     if (target.value === 'bambu_lan' && state.printer.lan.printers.length === 0) {
       openLanForm(true);
+    }
+    if (target.value === 'manual' && state.printer.manual.printers.length === 0) {
+      openManualForm(true);
     }
   }
 
@@ -2906,8 +2941,7 @@
       return;
     }
     var rawSettings = (payload.settings && typeof payload.settings === 'object') ? payload.settings : null;
-    var source = asString(rawSettings && rawSettings.printer_source) || context.source;
-    source = source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+    var source = normalizeSource(asString(rawSettings && rawSettings.printer_source) || context.source);
     if (rawSettings) {
       state.settings = normalizeSettings(rawSettings);
       state.bambuddy.keySet = state.settings.bambuddy_api_key_set;
@@ -2933,9 +2967,11 @@
     if (state.printer.configured) {
       requestBambuddyContext({ silent: false, statusEl: byId('printer-source-status') });
     } else {
-      setStatus(status, demoSuffix(source === 'bambu_lan'
-        ? 'Add a printer below to read its AMS slots.'
-        : 'Connect Bambuddy below to read your printers.'), 'info');
+      setStatus(status, demoSuffix(source === 'manual'
+        ? 'Set up the printer below: its slots and their filaments.'
+        : source === 'bambu_lan'
+          ? 'Add a printer below to read its AMS slots.'
+          : 'Connect Bambuddy below to read your printers.'), 'info');
     }
   }
 
@@ -3386,8 +3422,8 @@
       state.settings = normalizeSettings(rawSettings);
       state.bambuddy.keySet = state.settings.bambuddy_api_key_set;
     }
-    var source = asString(rawSettings && rawSettings.printer_source) || (saving ? 'bambu_lan' : state.printer.source);
-    source = source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+    var source = normalizeSource(asString(rawSettings && rawSettings.printer_source) ||
+      (saving ? 'bambu_lan' : state.printer.source));
     state.settings.printer_source = source;
     var sourceChanged = source !== state.printer.source;
     state.printer.source = source;
@@ -3428,6 +3464,474 @@
     renderHome();
     if (state.bambuddy.configured && state.printer.source === 'bambu_lan') {
       requestBambuddyContext({ silent: false, statusEl: byId('bambu-lan-list-status') });
+    }
+  }
+
+  /* =======================================================================
+   * Manual printer (Settings > Printer > Manual)
+   * ======================================================================= */
+
+  /** Slots a manual printer can have (manual_printer.MAX_SLOTS). */
+  var MANUAL_MAX_SLOTS = 32;
+
+  /**
+   * Normalise saved manual printers from initData.manual / manualPrinters.
+   * @param {*} raw
+   * @returns {object[]}
+   */
+  function normalizeManualPrinters(raw) {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter(function (printer) {
+      return printer && typeof printer === 'object';
+    }).map(function (printer) {
+      return {
+        id: Number(printer.id) || 0,
+        name: asString(printer.name),
+        nozzle_diameter: Number(printer.nozzle_diameter) || 0.4,
+        nozzle_material: asString(printer.nozzle_material),
+        slots: (Array.isArray(printer.slots) ? printer.slots : []).map(function (slot, index) {
+          slot = slot || {};
+          return {
+            label: asString(slot.label) || 'Slot ' + (index + 1),
+            catalog_id: asString(slot.catalog_id),
+            display_name: asString(slot.display_name),
+            color_hex: asString(slot.color_hex),
+            remaining_g: typeof slot.remaining_g === 'number' ? slot.remaining_g : null
+          };
+        })
+      };
+    });
+  }
+
+  /** @returns {object|null} the saved manual printer */
+  function manualSavedPrinter() {
+    return state.printer.manual.printers[0] || null;
+  }
+
+  /** Card header (name, nozzle, slots), its button and the form's buttons. */
+  function renderManualPrinter() {
+    var dot = byId('manual-dot');
+    var summary = byId('manual-summary');
+    if (!dot || !summary) {
+      return;
+    }
+    var printer = manualSavedPrinter();
+    var form = byId('manual-form');
+    var open = !!(form && !form.hidden);
+    var filled = printer ? printer.slots.filter(function (slot) { return slot.catalog_id; }).length : 0;
+    var kind = 'off';
+    var text = 'Not set up';
+    if (printer) {
+      text = printer.nozzle_diameter + ' mm nozzle · ' + pluralize(printer.slots.length, 'slot') +
+        (filled < printer.slots.length ? ' (' + filled + ' with a filament)' : '');
+      kind = !filled ? 'warn' : (state.printer.source === 'manual' ? 'ok' : 'off');
+    }
+    var title = byId('manual-title');
+    if (title) {
+      title.textContent = printer ? printer.name : 'Manual printer';
+    }
+    summary.textContent = text;
+    dot.className = 'dot' + (kind === 'ok' ? '' : ' dot--' + kind);
+    var toggle = byId('manual-edit-toggle');
+    if (toggle) {
+      toggle.textContent = printer ? 'Edit' : 'Set up';
+      toggle.hidden = open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    var intro = byId('manual-intro');
+    if (intro) {
+      intro.hidden = !!printer && !open;
+    }
+    var busy = isActionPending('manual_printer_save') || isActionPending('manual_printer_remove');
+    ['manual-save-btn', 'manual-fill-btn', 'manual-cancel-btn', 'manual-remove-btn'].forEach(function (id) {
+      var button = byId(id);
+      if (button) {
+        button.disabled = busy;
+      }
+    });
+    var remove = byId('manual-remove-btn');
+    if (remove) {
+      remove.hidden = !printer;
+    }
+    var draft = state.printer.manual.draft;
+    var add = byId('manual-add-slot-btn');
+    if (add) {
+      add.disabled = busy || !!(draft && draft.slots.length >= MANUAL_MAX_SLOTS);
+    }
+  }
+
+  /**
+   * The form's working copy of a printer (a new one has one empty slot).
+   * @param {object|null} printer
+   * @returns {object}
+   */
+  function manualDraft(printer) {
+    if (!printer) {
+      return { name: '', nozzle_diameter: 0.4, nozzle_material: '', slots: [{ label: '', catalog_id: '', remaining_g: null }] };
+    }
+    return {
+      name: printer.name,
+      nozzle_diameter: printer.nozzle_diameter,
+      nozzle_material: printer.nozzle_material,
+      slots: printer.slots.map(function (slot, index) {
+        return {
+          label: slot.label === 'Slot ' + (index + 1) ? '' : slot.label,
+          catalog_id: slot.catalog_id,
+          display_name: slot.display_name,
+          color_hex: slot.color_hex,
+          remaining_g: slot.remaining_g
+        };
+      })
+    };
+  }
+
+  /**
+   * Show or hide the manual printer form; opening starts from the saved printer.
+   * @param {boolean} [open] force a state; toggles when omitted
+   */
+  function openManualForm(open) {
+    var form = byId('manual-form');
+    if (!form) {
+      return;
+    }
+    var show = open === undefined ? form.hidden : open;
+    if (show && form.hidden) {
+      state.printer.manual.draft = manualDraft(manualSavedPrinter());
+      fillManualForm();
+    }
+    if (!show) {
+      state.printer.manual.draft = null;
+      setStatus(byId('manual-status'), '', 'muted');
+    }
+    form.hidden = !show;
+    renderManualPrinter();
+    if (show) {
+      var name = byId('manual-name');
+      if (name && !name.value) {
+        name.focus();
+      }
+    }
+  }
+
+  /** Put the draft into the form fields. */
+  function fillManualForm() {
+    var draft = state.printer.manual.draft;
+    if (!draft) {
+      return;
+    }
+    var name = byId('manual-name');
+    if (name) {
+      name.value = draft.name;
+    }
+    var size = byId('manual-nozzle-size');
+    if (size) {
+      var wanted = String(Number(draft.nozzle_diameter) || 0.4);
+      var found = Array.prototype.some.call(size.options, function (option) { return option.value === wanted; });
+      if (!found) {
+        var option = document.createElement('option');
+        option.value = wanted;
+        option.textContent = wanted + ' mm';
+        size.appendChild(option);
+      }
+      size.value = wanted;
+    }
+    var material = byId('manual-nozzle-material');
+    if (material) {
+      material.value = draft.nozzle_material || '';
+    }
+    renderManualSlots();
+  }
+
+  /** @returns {{id: string, label: string, color_hex: string}[]} Filamatch's filaments, by name */
+  function manualFilamentOptions() {
+    return (state.catalog || []).filter(function (entry) {
+      return entry && asString(entry.id);
+    }).map(function (entry) {
+      return { id: asString(entry.id), label: asString(entry.display_name) || asString(entry.id), color_hex: asString(entry.color_hex) };
+    }).sort(function (a, b) {
+      return a.label.toLowerCase() < b.label.toLowerCase() ? -1 : a.label.toLowerCase() > b.label.toLowerCase() ? 1 : 0;
+    });
+  }
+
+  /** One row per slot in the draft. */
+  function renderManualSlots() {
+    var list = byId('manual-slots');
+    var draft = state.printer.manual.draft;
+    if (!list || !draft) {
+      return;
+    }
+    list.textContent = '';
+    var options = manualFilamentOptions();
+    draft.slots.forEach(function (slot, index) {
+      list.appendChild(createManualSlotRow(slot, index, options));
+    });
+    renderManualPrinter();
+  }
+
+  /**
+   * A slot row: name, colour, filament, grams left and Remove.
+   * @param {object} slot the draft slot (changed in place)
+   * @param {number} index
+   * @param {object[]} options from manualFilamentOptions()
+   * @returns {HTMLElement}
+   */
+  function createManualSlotRow(slot, index, options) {
+    var draft = state.printer.manual.draft;
+    var number = index + 1;
+    var row = document.createElement('div');
+    row.className = 'manual-slot';
+    row.setAttribute('role', 'listitem');
+
+    var label = document.createElement('input');
+    label.type = 'text';
+    label.className = 'text-input';
+    label.placeholder = 'Slot ' + number;
+    label.value = slot.label || '';
+    label.maxLength = 40;
+    label.setAttribute('aria-label', 'Name of slot ' + number);
+    label.addEventListener('input', function () { slot.label = label.value; });
+    row.appendChild(label);
+
+    var swatchHolder = document.createElement('span');
+    var showSwatch = function () {
+      var picked = null;
+      for (var i = 0; i < options.length; i += 1) {
+        if (options[i].id === slot.catalog_id) {
+          picked = options[i];
+        }
+      }
+      swatchHolder.textContent = '';
+      swatchHolder.appendChild(createSwatch(picked ? picked.color_hex : (slot.catalog_id ? slot.color_hex : ''),
+        picked ? picked.label : (slot.display_name || 'Empty')));
+    };
+    row.appendChild(swatchHolder);
+
+    var select = document.createElement('select');
+    select.className = 'select-input';
+    select.setAttribute('aria-label', 'Filament in slot ' + number);
+    var empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'Empty';
+    select.appendChild(empty);
+    var known = false;
+    options.forEach(function (item) {
+      var option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = item.label;
+      known = known || item.id === slot.catalog_id;
+      select.appendChild(option);
+    });
+    if (slot.catalog_id && !known) {
+      /* A filament that left Filamatch's list keeps its saved name. */
+      var kept = document.createElement('option');
+      kept.value = slot.catalog_id;
+      kept.textContent = (slot.display_name || slot.catalog_id) + ' (no longer in the list)';
+      select.appendChild(kept);
+    }
+    select.value = slot.catalog_id || '';
+    select.addEventListener('change', function () {
+      slot.catalog_id = select.value;
+      showSwatch();
+    });
+    row.appendChild(select);
+    showSwatch();
+
+    var grams = document.createElement('input');
+    grams.type = 'text';
+    grams.inputMode = 'decimal';
+    grams.className = 'text-input manual-slot__grams';
+    grams.placeholder = 'g left';
+    grams.value = slot.remaining_g === null || slot.remaining_g === undefined ? '' : String(slot.remaining_g);
+    grams.setAttribute('aria-label', 'Grams left in slot ' + number + ' (optional)');
+    grams.addEventListener('input', function () { slot.remaining_g = grams.value.trim(); });
+    row.appendChild(grams);
+
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'link link--small';
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', 'Remove slot ' + number);
+    remove.hidden = draft.slots.length <= 1;
+    remove.addEventListener('click', function () {
+      draft.slots.splice(index, 1);
+      renderManualSlots();
+    });
+    row.appendChild(remove);
+    return row;
+  }
+
+  /** Add an empty slot and put the cursor on its filament. */
+  function onManualAddSlot() {
+    var draft = state.printer.manual.draft;
+    if (!draft || draft.slots.length >= MANUAL_MAX_SLOTS) {
+      return;
+    }
+    draft.slots.push({ label: '', catalog_id: '', remaining_g: null });
+    renderManualSlots();
+    var selects = document.querySelectorAll('#manual-slots select');
+    if (selects.length) {
+      selects[selects.length - 1].focus();
+    }
+  }
+
+  /** Put the open design's filaments into the slots: empty slots first, then new ones. */
+  function onManualFill() {
+    var draft = state.printer.manual.draft;
+    var status = byId('manual-status');
+    if (!draft) {
+      return;
+    }
+    var byName = {};
+    (state.catalog || []).forEach(function (entry) {
+      if (entry && asString(entry.display_name)) {
+        byName[asString(entry.display_name).toLowerCase()] = asString(entry.id);
+      }
+    });
+    var have = {};
+    draft.slots.forEach(function (slot) {
+      if (slot.catalog_id) {
+        have[slot.catalog_id] = true;
+      }
+    });
+    var wanted = [];
+    (state.materials || []).forEach(function (material) {
+      var id = byName[asString(material && material.display_name).toLowerCase()];
+      if (id && !have[id]) {
+        have[id] = true;
+        wanted.push(id);
+      }
+    });
+    if (!wanted.length) {
+      setStatus(status, (state.materials || []).length
+        ? 'Every filament of the open design is already in a slot, or not in Filamatch\'s list.'
+        : 'Open a design with filaments first.', 'warning');
+      return;
+    }
+    var added = 0;
+    wanted.forEach(function (id) {
+      var empty = draft.slots.filter(function (slot) { return !slot.catalog_id; })[0];
+      if (empty) {
+        empty.catalog_id = id;
+        added += 1;
+      } else if (draft.slots.length < MANUAL_MAX_SLOTS) {
+        draft.slots.push({ label: '', catalog_id: id, remaining_g: null });
+        added += 1;
+      }
+    });
+    renderManualSlots();
+    setStatus(status, 'Put ' + pluralize(added, 'filament') + ' of the design in the slots. Check the order, then save.', 'success');
+  }
+
+  /** Save the form (manual_printer_save); Python checks the filaments. */
+  function onManualSave() {
+    var draft = state.printer.manual.draft;
+    if (!draft || isActionPending('manual_printer_save')) {
+      return;
+    }
+    var name = byId('manual-name');
+    var size = byId('manual-nozzle-size');
+    var material = byId('manual-nozzle-material');
+    var printer = {
+      name: name ? name.value.trim() : draft.name,
+      nozzle_diameter: size ? Number(size.value) : draft.nozzle_diameter,
+      nozzle_material: material ? material.value : draft.nozzle_material,
+      slots: draft.slots.map(function (slot) {
+        return {
+          label: asString(slot.label).trim(),
+          catalog_id: asString(slot.catalog_id),
+          remaining_g: slot.remaining_g === null || slot.remaining_g === undefined || slot.remaining_g === ''
+            ? null : slot.remaining_g
+        };
+      })
+    };
+    var bad = printer.slots.filter(function (slot) {
+      return slot.remaining_g !== null && !(Number(slot.remaining_g) >= 0);
+    })[0];
+    if (bad) {
+      setStatus(byId('manual-status'), 'Grams left must be a number, or empty.', 'warning');
+      return;
+    }
+    request('manual_printer_save', { printer: printer }, {
+      statusEl: byId('manual-status'),
+      pendingText: 'Saving...',
+      button: byId('manual-save-btn'),
+      context: { kind: 'save', name: printer.name || 'My printer' }
+    });
+    renderManualPrinter();
+  }
+
+  /** Remove the manual printer: the first click asks, the second removes. */
+  function onManualRemoveClick() {
+    var remove = byId('manual-remove-btn');
+    if (!remove || isActionPending('manual_printer_remove')) {
+      return;
+    }
+    if (remove.getAttribute('data-confirm') !== '1') {
+      remove.setAttribute('data-confirm', '1');
+      remove.textContent = 'Remove printer?';
+      window.setTimeout(function () {
+        remove.removeAttribute('data-confirm');
+        remove.textContent = 'Remove printer';
+      }, 4000);
+      return;
+    }
+    remove.removeAttribute('data-confirm');
+    remove.textContent = 'Remove printer';
+    request('manual_printer_remove', {}, {
+      statusEl: byId('manual-status'),
+      pendingText: 'Removing...',
+      context: { kind: 'remove' }
+    });
+    renderManualPrinter();
+  }
+
+  /**
+   * `manualPrinters`: the saved manual printer after a save or remove; read it
+   * again when it is the chosen source.
+   * @param {object} payload
+   * @param {object} entry
+   */
+  function handleManualPrinters(payload, entry) {
+    var context = (entry && entry.context) || {};
+    var removing = context.kind === 'remove';
+    if (payload.ok === false) {
+      var failure = replyError(payload);
+      setStatus(byId('manual-status'), demoSuffix(failure), 'error');
+      appendLog('Manual printer: ' + failure, 'error');
+      renderManualPrinter();
+      return;
+    }
+    if (Array.isArray(payload.printers)) {
+      state.printer.manual.printers = normalizeManualPrinters(payload.printers);
+    }
+    var rawSettings = (payload.settings && typeof payload.settings === 'object') ? payload.settings : null;
+    if (rawSettings) {
+      state.settings = normalizeSettings(rawSettings);
+      state.bambuddy.keySet = state.settings.bambuddy_api_key_set;
+      state.bambuddy.slotMap = state.settings.bambuddy_slot_map || {};
+    }
+    state.printer.source = normalizeSource(asString(rawSettings && rawSettings.printer_source) || state.printer.source);
+    state.settings.printer_source = state.printer.source;
+    if (typeof payload.printer_configured === 'boolean') {
+      state.printer.configured = payload.printer_configured;
+      state.bambuddy.configured = payload.printer_configured;
+    }
+    resetPrinterData();
+    openManualForm(false);
+    var saved = removing ? 'Removed the manual printer.' : 'Saved ' + (context.name || 'the printer') + '.';
+    setStatus(byId('manual-list-status'), demoSuffix(saved), 'success');
+    appendLog(saved, 'info');
+    if (!removing) {
+      dismissWelcome();
+    }
+    renderPrinterSource();
+    renderBambuddySettings();
+    renderBambuddySlots();
+    renderHome();
+    if (state.bambuddy.configured && state.printer.source === 'manual') {
+      requestBambuddyContext({ silent: false, statusEl: byId('manual-list-status') });
     }
   }
 
@@ -5326,7 +5830,8 @@
    * Demo slot matching: same type, nearest colour; user choices win.
    * @returns {object[]}
    */
-  function demoMapping() {
+  function demoMapping(demoSlots) {
+    var slots = demoSlots || DEMO_BAMBUDDY.slots;
     return state.materials.map(function (material) {
       var id = asString(material.material_id);
       var row = {
@@ -5344,13 +5849,13 @@
       var pick = null;
       var confidence = 'unmapped';
       if (override && override !== 'none') {
-        pick = DEMO_BAMBUDDY.slots.filter(function (slot) { return slot.key === override; })[0] || null;
+        pick = slots.filter(function (slot) { return slot.key === override; })[0] || null;
         confidence = 'manual';
       } else if (override !== 'none') {
         var best = null;
         var bestDistance = Infinity;
-        DEMO_BAMBUDDY.slots.forEach(function (slot) {
-          if (slot.filament_type !== asString(material.filament_type).toUpperCase()) {
+        slots.forEach(function (slot) {
+          if (slot.loaded === false || asString(slot.filament_type).toUpperCase() !== asString(material.filament_type).toUpperCase()) {
             return;
           }
           var distance = demoColorDistance(slot.color_hex, material.color_hex);
@@ -5765,6 +6270,9 @@
       if (state.demoPrinterSource === 'bambu_lan') {
         return demoLanContext(payload);
       }
+      if (state.demoPrinterSource === 'manual') {
+        return demoManualContext();
+      }
       /* The second demo printer has nothing loaded. */
       var printerId = Number(payload.bambuddy_printer_id) === 2 ? 2 : 1;
       return {
@@ -5853,7 +6361,7 @@
     },
 
     set_printer_source: function (payload) {
-      state.demoPrinterSource = payload.source === 'bambu_lan' ? 'bambu_lan' : 'bambuddy';
+      state.demoPrinterSource = normalizeSource(payload.source);
       state.demoLog.push('Printer source set to ' + state.demoPrinterSource + ' (demo).');
       return {
         ok: true,
@@ -5901,6 +6409,50 @@
       };
     },
 
+    manual_printer_save: function (payload) {
+      var printer = payload.printer || {};
+      var slots = Array.isArray(printer.slots) ? printer.slots : [];
+      if (!slots.length) {
+        return { ok: false, error: 'Add at least one slot.', log: state.demoLog.slice() };
+      }
+      state.demoManualPrinter = {
+        id: 3000000001,
+        name: asString(printer.name).trim() || 'My printer',
+        nozzle_diameter: Number(printer.nozzle_diameter) || 0.4,
+        nozzle_material: asString(printer.nozzle_material),
+        slots: slots.map(function (slot, index) {
+          var entry = findCatalogEntry(asString(slot.catalog_id));
+          return {
+            label: asString(slot.label).trim() || 'Slot ' + (index + 1),
+            catalog_id: entry ? entry.id : '',
+            display_name: entry ? asString(entry.display_name) : '',
+            color_hex: entry ? asString(entry.color_hex) : '',
+            remaining_g: slot.remaining_g === '' || slot.remaining_g === null ? null : Number(slot.remaining_g)
+          };
+        })
+      };
+      state.demoPrinterSource = 'manual';
+      state.demoLog.push('Saved the manual printer ' + state.demoManualPrinter.name + ' (demo).');
+      return {
+        ok: true,
+        printers: [state.demoManualPrinter],
+        settings: demoSettingsPayload(),
+        printer_configured: demoPrinterConfigured(),
+        log: state.demoLog.slice()
+      };
+    },
+
+    manual_printer_remove: function () {
+      state.demoManualPrinter = null;
+      return {
+        ok: true,
+        printers: [],
+        settings: demoSettingsPayload(),
+        printer_configured: false,
+        log: state.demoLog.slice()
+      };
+    },
+
     bambu_lan_remove: function (payload) {
       var id = asString(payload.id);
       state.demoLanPrinters = state.demoLanPrinters.filter(function (printer) {
@@ -5917,8 +6469,50 @@
     }
   };
 
+  /** @returns {object} demo `bambuddyContextData` for the manual printer. */
+  function demoManualContext() {
+    var printer = state.demoManualPrinter;
+    if (!printer) {
+      return { ok: false, configured: false, source: 'manual', error: 'No manual printer is set up.' };
+    }
+    var slots = printer.slots.map(function (slot, index) {
+      var entry = findCatalogEntry(slot.catalog_id);
+      return {
+        key: printer.id + ':0:' + index,
+        printer_id: printer.id,
+        printer_name: printer.name,
+        ams_id: 0,
+        tray_id: index,
+        label: slot.label,
+        loaded: !!entry,
+        filament_type: entry ? asString(entry.slicer_filament_type) : '',
+        color_hex: entry ? asString(entry.color_hex) : '',
+        display_name: entry ? asString(entry.display_name) : '',
+        spool_display_name: entry ? asString(entry.display_name) : '',
+        spool_id: entry ? 2000000001 + index : 0,
+        spool_preset: '',
+        remaining_g: slot.remaining_g,
+        traits: entry ? demoTraits(asString(entry.slicer_filament_type)) : null
+      };
+    });
+    return {
+      ok: true,
+      configured: true,
+      source: 'manual',
+      selected_printer_id: printer.id,
+      printers: [{ id: printer.id, name: printer.name, model: 'Manual', label: printer.name + ' - Manual',
+        nozzles: [{ side: '', diameter: printer.nozzle_diameter, flow: '', material: printer.nozzle_material }] }],
+      slots: slots,
+      mapping: demoMapping(slots),
+      log: state.demoLog.slice()
+    };
+  }
+
   /** @returns {boolean} demo: the selected printer source is set up. */
   function demoPrinterConfigured() {
+    if (state.demoPrinterSource === 'manual') {
+      return !!(state.demoManualPrinter && state.demoManualPrinter.slots.some(function (slot) { return slot.catalog_id; }));
+    }
     return state.demoPrinterSource === 'bambu_lan' ? state.demoLanPrinters.length > 0 : true;
   }
 
@@ -6210,6 +6804,11 @@
 
   /** Open Settings on the card of the selected printer source. */
   function openPrinterSetup() {
+    if ((state.printer.pendingSource || state.printer.source) === 'manual') {
+      showScreen('settings');
+      openManualForm(true);
+      return;
+    }
     if ((state.printer.pendingSource || state.printer.source) === 'bambu_lan') {
       showScreen('settings');
       if (state.printer.lan.printers.length === 0) {
@@ -6218,6 +6817,15 @@
       return;
     }
     openBambuddySetup();
+  }
+
+  /** Select the manual source and open Settings on its form. */
+  function openManualSetup() {
+    if ((state.printer.pendingSource || state.printer.source) !== 'manual') {
+      setPrinterSource('manual');
+    }
+    showScreen('settings');
+    openManualForm(true);
   }
 
   /** Select the LAN source and open Settings on its Add-printer form. */
@@ -7175,7 +7783,7 @@
       var option = document.createElement('option');
       option.value = asString(slots[i].key);
       option.textContent = shortSlotLabel(slots[i].label) + ' — ' +
-        (asString(slots[i].display_name) || 'Filament');
+        (slots[i].loaded === false ? 'Empty' : (asString(slots[i].display_name) || 'Filament'));
       select.appendChild(option);
     }
     select.value = row && row.slot_key ? asString(row.slot_key) : 'none';
@@ -7548,7 +8156,8 @@
     }
     if (state.bambuddy.error) {
       fixes.push({
-        text: state.printer.source === 'bambu_lan' ? 'The printer did not answer.' : 'Bambuddy did not answer.',
+        text: state.printer.source === 'manual' ? 'The manual printer could not be read.'
+          : state.printer.source === 'bambu_lan' ? 'The printer did not answer.' : 'Bambuddy did not answer.',
         action: 'Retry',
         run: function () { requestBambuddyContext({ silent: false }); }
       });
@@ -7991,6 +8600,7 @@
       'slicer-edit-toggle': function () { toggleCardBody('slicer-edit-toggle'); },
       'welcome-connect-btn': onWelcomeConnect,
       'welcome-lan-btn': openLanSetup,
+      'welcome-manual-btn': openManualSetup,
       'welcome-bambuddy-btn': function () {
         var toggle = byId('welcome-bambuddy-btn');
         var form = byId('welcome-bambuddy-form');
@@ -8008,6 +8618,12 @@
       'bambu-lan-test-btn': function () { onLanTestClick(); },
       'bambu-lan-save-btn': function () { onLanSaveClick(); },
       'bambu-lan-trust-btn': onLanTrustClick,
+      'manual-edit-toggle': function () { openManualForm(); },
+      'manual-add-slot-btn': onManualAddSlot,
+      'manual-fill-btn': onManualFill,
+      'manual-cancel-btn': function () { openManualForm(false); },
+      'manual-save-btn': onManualSave,
+      'manual-remove-btn': onManualRemoveClick,
       'welcome-skip-btn': function () {
         dismissWelcome();
         showScreen('home');

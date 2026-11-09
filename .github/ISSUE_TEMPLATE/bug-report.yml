@@ -15,7 +15,7 @@ body:
     attributes:
       label: Filamatch version
       description: Shown at the top of the diagnostics report.
-      placeholder: "0.9.1"
+      placeholder: "0.10.0"
     validations:
       required: true
   - type: input

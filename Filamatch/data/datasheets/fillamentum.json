@@ -1,0 +1,934 @@
+{
+  "schema": 1,
+  "maker": "Fillamentum",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "ABS Extrafill",
+      "aliases": [
+        "ABS"
+      ],
+      "type": "ABS",
+      "product_url": "https://fillamentum.com/collections/abs-extrafill-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_ABS-Extrafill_03012019-1.pdf",
+      "datasheet_version": "2019-01-03 (date in file name; no version on the sheet)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.04,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 39,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 32,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 20,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 60,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1900,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 25,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 81,
+          "unit": "°C",
+          "standard": "ISO 75-A"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 96,
+          "unit": "°C",
+          "standard": "ISO 306 (50 °C/h, 5 kg)"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Tensile strength 39 MPa at yield and 32 MPa at break (50 mm/min). No tensile modulus on the sheet. Charpy notched 25 kJ/m2 at 23 °C (11 at -30 °C); Izod notched (ISO 180-1A) 24 kJ/m2 at 23 °C, 10 at -30 °C. Vicat 103 °C at 1 kg (96 °C at 5 kg is recorded). Recommended print 220-240 °C, bed 80-105 °C."
+    },
+    {
+      "product": "ABS Extrafill Transparent",
+      "type": "ABS",
+      "product_url": "https://fillamentum.com/collections/abs-extrafill-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_ABS-Extrafill-transparent_03012019-1.pdf",
+      "datasheet_version": "2019-01-03 (date in file name; no version on the sheet)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.08,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 42,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 33,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 40,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 57,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1900,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 14,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 77,
+          "unit": "°C",
+          "standard": "ISO 75-A"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 96,
+          "unit": "°C",
+          "standard": "ISO 306 (50 °C/h, 5 kg)"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Separate sheet for the 'transparent' ABS Extrafill colour (different melt index, 3.0 cm3/10 min at 200 °C/5 kg). Tensile 42 MPa at yield, 33 MPa at break. No tensile modulus. Charpy notched 14 kJ/m2 at 23 °C (7 at -30 °C); Izod notched 14 / 7 kJ/m2. Vicat 104 °C at 1 kg, 96 °C at 5 kg."
+    },
+    {
+      "product": "ASA Extrafill",
+      "type": "ASA",
+      "product_url": "https://fillamentum.com/collections/asa-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_ASA-Extrafill_03012019.pdf",
+      "datasheet_version": "2019-01-03 (date in file name; no version on the sheet)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.07,
+          "unit": "g/cm3",
+          "standard": "ASTM D792"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 40,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1726,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 35,
+          "unit": "%",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 62,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1814,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 86,
+          "unit": "°C",
+          "standard": "ASTM D648"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 96,
+          "unit": "°C",
+          "standard": "ASTM D648"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 94,
+          "unit": "°C",
+          "standard": "ASTM D1525 (50 °C/h, 5 kg)"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Tensile strength not marked yield or break. Flexural strength at yield. Izod 441 J/m (ASTM D256, 23 °C, 1/8\"; notch not stated); Rockwell hardness 92 (R scale, ASTM D785). Recommended print 240-255 °C, bed 90-105 °C."
+    },
+    {
+      "product": "ASA CF10 Carbon",
+      "type": "ASA-CF",
+      "product_url": "https://shop.fillamentum.com/products/asa_cf10",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2025/01/TDS_ASA-CF10-Carbon_EN_13012025.pdf",
+      "datasheet_version": "updated 1/2025 (2025-01-13)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.04,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 45,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 38,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 10,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2800,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 74,
+          "unit": "Shore D",
+          "standard": "ISO 7619"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 23,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 90,
+          "unit": "°C",
+          "standard": "ISO 306"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". ASA with carbon fibres. Flexural strength and modulus '-' on the sheet. Tg 65 °C, melting temperature 135 °C (ISO 11357); temperature resistance 90 °C. Density 1.04 g/cm3 as printed (lower than plain ASA Extrafill's 1.07; not checked)."
+    },
+    {
+      "product": "PETG HFFR",
+      "type": "PETG",
+      "product_url": "https://shop.fillamentum.com/products/petg-hffr",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2024/11/TDS_PETG-HFFR_EN_01112024_FI.pdf",
+      "datasheet_version": "2024-11-01 (date in file name)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.26,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 40,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 25,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 40,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2350,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 75,
+          "unit": "Shore D",
+          "standard": "ISO 7619"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 70,
+          "unit": "°C",
+          "standard": "ISO 306"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Halogen-free flame-retardant PETG, UL 94 V-0. Elongation at yield 3 %. Flexural values '-'. Charpy unnotched 'not break' (no number). Tg 58 °C, melting 188 °C (ISO 11357); temperature resistance 70 °C."
+    },
+    {
+      "product": "PC/ABS",
+      "aliases": [
+        "PC-ABS"
+      ],
+      "type": "PC-ABS",
+      "product_url": "https://fillamentum.com/collections/pc-abs-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical_Data_Sheet_PC-ABS.pdf",
+      "datasheet_version": "no version or date on the sheet (uploaded 2020-10)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.07,
+          "unit": "g/cm3",
+          "standard": "ISO 1183-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 42,
+          "unit": "MPa",
+          "standard": "ISO 527-1,2"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 7,
+          "unit": "%",
+          "standard": "ISO 527-1,2"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2000,
+          "unit": "MPa",
+          "standard": "ISO 527-1,2"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 68,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 2000,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 53,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 113,
+          "unit": "°C",
+          "standard": "ISO 306 B50"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". PC/ABS blend. Tensile strength is at yield. Izod notched (ISO 180-1A) 55 kJ/m2 at 23 °C, 41 at -30 °C. Vicat 115 °C at B120. Ball indentation hardness 92 N/mm2. Recommended print 260-280 °C, bed 90-105 °C, 30-55 mm/s. Not in the current Fillamentum shop listing (2026-11-08), but its page and sheet are still on fillamentum.com."
+    },
+    {
+      "product": "Nylon FX256",
+      "type": "PA",
+      "product_url": "https://fillamentum.com/collections/nylon-fx256-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_Nylon-FX256.pdf",
+      "datasheet_version": "no version or date on the sheet (uploaded 2020-10)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.01,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 45.0,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1400,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 7,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1eA"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 50,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 110,
+          "unit": "°C",
+          "standard": "ISO 75"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 140,
+          "unit": "°C",
+          "standard": "ISO 306 (50 °C/h, 5 kg)"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Nylon (the sheet names no PA grade); dry or conditioned not stated. Tensile strength at yield. Elongation at break '> 50 %' (not a number, left out). Charpy unnotched (ISO 179-1eU) no break at 23 °C and -40 °C; notched 7 kJ/m2 at 23 °C and -40 °C. Moisture adsorption <= 0.5 %."
+    },
+    {
+      "product": "Nylon CF15 Carbon",
+      "type": "PA-CF",
+      "product_url": "https://fillamentum.com/collections/nylon-cf15-carbon-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_Nylon-CF15-Carbon_03012019.pdf",
+      "datasheet_version": "2019-01-03 (date in file name; no version on the sheet)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.08,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 54.5,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 103,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 500,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 86.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 75,
+          "unit": "Shore D",
+          "standard": "ISO 7619"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Nylon with milled carbon fibres (100 um); the sheet names no PA grade; dry or conditioned not stated. Tensile strength not marked yield or break. Tensile modulus 500 MPa and elongation 103 % are as printed (very low stiffness for a carbon-filled nylon; not checked). Density 1.08 g/cm3 at 20 °C (0.96 at 235 °C). Melting temperature 160 °C."
+    },
+    {
+      "product": "Nylon AF80 Aramid",
+      "type": "PA12-AF",
+      "product_url": "https://fillamentum.com/collections/nylon-af80-aramid-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_Nylon-AF80-Aramid.pdf",
+      "datasheet_version": "no version or date on the sheet (uploaded 2020-10)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 0.99,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 50.4,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 5.8,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 510,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 53.2,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Polyamide 12 with aramid fibres (type is the exact name: aramid is neither carbon nor glass fibre). Dry or conditioned not stated. Tensile strength at break. Tensile modulus 510 MPa as printed (low; not checked). Charpy unnotched 53.2 kJ/m2 at 20 °C, 58.8 at -20 °C. Density 0.99 g/cm3 at 20 °C (0.92 at 235 °C)."
+    },
+    {
+      "product": "CPE CF112 Carbon",
+      "type": "CPE-CF",
+      "product_url": "https://fillamentum.com/collections/cpe-cf112-carbon-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/TDS_CPE-CF112-Carbon.pdf",
+      "datasheet_version": "no version or date on the sheet (uploaded 2020-10)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.16,
+          "unit": "g/cm3",
+          "standard": ""
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 52.4,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 37.7,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 8.0,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2200,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 105.9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 77,
+          "unit": "Shore D",
+          "standard": "ISO 7619"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Co-polyester (CPE HG100 base) with milled carbon fibres (100 um); type is the exact name, not PETG-CF. Density has no test method on the sheet. Tensile modulus at 0.15 mm/min. Charpy unnotched at 25 °C."
+    },
+    {
+      "product": "PP 2320",
+      "aliases": [
+        "Polypropylene PP 2320"
+      ],
+      "type": "PP",
+      "product_url": "https://fillamentum.com/collections/pp-2320-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2020/10/Technical-Data-Sheet_PP-2320.pdf",
+      "datasheet_version": "2019-12-03 (date in the newer copy's file name, TDS_PP-2320_03122019.pdf, identical file)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 0.96,
+          "unit": "g/cm3",
+          "standard": "ISO 1183 A"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 23.0,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 20,
+          "unit": "%",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1400,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 184,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1/1eU"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Polypropylene. Tensile strength not marked yield or break. Charpy unnotched at 25 °C."
+    },
+    {
+      "product": "OrCA",
+      "aliases": [
+        "0rCA",
+        "Fishy Filaments OrCA",
+        "OrCA PA6 CF10"
+      ],
+      "type": "PA6-CF",
+      "product_url": "https://fillamentum.com/collections/fishy-filaments-by-fillamentum/0rca/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2023/07/TDS_Fishy-filament-OrCA_EN_20072023.pdf",
+      "datasheet_version": "2023-07-20 (date in file name)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.18,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 72,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 16,
+          "unit": "%",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 3600,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 2500,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "shore_hardness_d",
+          "direction": "",
+          "value": 77,
+          "unit": "Shore D",
+          "standard": "ISO 7619"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 160,
+          "unit": "kJ/m2",
+          "standard": "ISO 179"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 196,
+          "unit": "°C",
+          "standard": "ISO 306"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Fishy Filaments' 0rCA by Fillamentum: recycled PA6 (fishing nets) with 10 % carbon fibre. Dry or conditioned not stated. Tensile at 10 mm/min, 23 °C; strength at break (yield '-'). Flexural strength '-'. Tg 52 °C, melting 218 °C; temperature resistance 180 °C."
+    },
+    {
+      "product": "Porthcurno",
+      "aliases": [
+        "Fishy Filaments Porthcurno"
+      ],
+      "type": "PA6",
+      "product_url": "https://fillamentum.com/collections/fishy-filaments-by-fillamentum/porthcurno/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2023/04/TDS_Fishy-filament-Porthcurno_EN_06042023.pdf",
+      "datasheet_version": "2023-04-06 (date in file name)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.13,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 59,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 48,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 51,
+          "unit": "%",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2200,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 70,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 2100,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 195,
+          "unit": "°C",
+          "standard": "ISO 306"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". Fishy Filaments' Porthcurno by Fillamentum: 100 % recycled PA6 from fishing nets. Dry or conditioned not stated. Tensile at 10 mm/min, 23 °C. The impact row says 'Charpy impact strength 5 kJ/m2, ISO 180, notched' (Charpy named with the Izod standard), so it is left out. Tg 55 °C, melting 220 °C. Not in the current Fillamentum shop listing (2026-11-08); page and sheet still on fillamentum.com."
+    },
+    {
+      "product": "Fluorodur",
+      "type": "PVDF",
+      "product_url": "https://fillamentum.com/collections/fluorodur-filament/",
+      "datasheet_url": "https://fillamentum.com/wp-content/uploads/2021/01/Technical-Data-Sheet_Fluorodur_EN_09122020_FI.pdf",
+      "datasheet_version": "2020-12-09 (date in file name)",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet does not say how the test bars were made (printed or moulded) nor any print direction or print settings; it gives only recommended print settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.79,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 34,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 8,
+          "unit": "%",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2000,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 50,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 1700,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        }
+      ],
+      "notes": "Fillamentum one-page sheet: typical values with no print direction and no word on whether the bars were printed or injection moulded, so every direction is \"\". PVDF (Kynar by Arkema). Tensile strength at yield. Izod notched 5 kJ/m2 (ASTM D256, 23 °C). Not in the current Fillamentum shop listing (2026-11-08); page and sheet still on fillamentum.com."
+    }
+  ]
+}

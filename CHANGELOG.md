@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.10.0 – Manual printer and more data sheets
+
+Filamatch now works with any printer: set up its slots by hand. The
+printed values know 206 filaments from 11 makers' data sheets.
+
+**New**
+- **Manual printer.** For any printer Filamatch cannot read (Prusa,
+  Creality, Klipper, single-nozzle printers): **Settings > Printer > Manual**
+  takes the printer's name, nozzle size and material, and which Filamatch
+  filament is in each slot (with grams left if you like). **Fill from
+  design** puts the open design's filaments into the slots. Home then
+  matches the design to these slots, the design check knows the nozzle,
+  **Use it** works, and the slicer project gets each slot's filament preset.
+- **More filament data sheets:** 167 more engineering filaments from
+  Prusament, addnorth, Fillamentum, Extrudr, eSun, Elegoo, Overture, Sunlu
+  and 3DXTech, with a link to each sheet (206 filaments from 11 makers in
+  all). The printed values use 129 of them: the ones with values per print
+  direction. A sheet with values along the layers only gets its across-the-
+  layers values estimated from its type (±30 %); a sheet without a tensile
+  modulus takes its stiffness from the type's generic values. Safe now
+  takes the weakest bar, along or across the layers. Sheets that give one
+  value without a direction, often from moulded bars, are kept with their
+  links but not used.
+
+**Changed**
+- A printer slot without a filament shows "Empty" in the slot list.
+
+**Fixed**
+- **Your own presets when the slicer is signed out.** Bambu Studio and
+  OrcaSlicer read your own presets from one folder: your account's when
+  signed in, else a "default" folder. A preset saved while signed in was
+  missing when signed out, so the slicer's printer sync replaced it with a
+  generic one (for example "Polymaker PPS GF" became "Generic PPS"). With
+  **Save new filament presets in the slicer** on, Filamatch now copies the
+  presets a project uses into the folder the slicer uses (never replacing
+  one); with it off, the log says why.
+- Switching the printer source (for example from Manual back to the
+  Bambu printers) no longer fails with "maps to unknown Bambuddy slot". A
+  slot you chose for another source is set aside, and works again when you
+  switch back.
+- **Use it** and adding the printer's filaments use the first printer when
+  the saved printer is not in the chosen source any more (after switching
+  sources).
+
+**What is tested:** the manual printer in the module and palette self-tests,
+in the palette preview (the form, Fill from design, Save, matching on Home,
+the ready check, the welcome screen), and in Fusion: set up and used by
+hand, and a real design's filaments matched to manual slots (automatic)
+with the right slicer presets and nozzle. Switching from Manual back to
+the Bambu printers was tested in Fusion (the slot error above was found
+there and fixed). The preset copy was tested in Fusion with Bambu Studio
+signed out: after **Send to Bambu**, Bambu Studio's sync kept "Polymaker
+PPS GF". The data sheet values were typed from the sheets and spot-checked
+(Prusament PA11 CF: 17 values, Overture ASA: 9, three more by the
+collectors); `scripts/datasheet_docs.py` checks every record. Not tested:
+a print from a manual printer.
+
+The slicer test matrix is unchanged against 0.9.1 (24 cases the same); the
+printed weight still matches the slicer within 3.3 % on average.
+
 ## 0.9.1 – Real stiffness and strength for filament materials
 
 Fusion Simulation now gets sensible values from every Filamatch filament,

@@ -184,14 +184,18 @@ def entry_for_spool(spool: printer_model.SpoolInfo, slot: Optional[printer_model
     family = printer_model.material_family(spool.material) or spool.material or "PLA"
     material_label = spool.material_label or family
     color_name = spool.color_name or color_name_for_hex(spool.color_hex)
+    # A spool that is a catalog filament (manual source) is imported as that
+    # filament: its id, type and density.
+    catalog_id = getattr(spool, "catalog_id", "") or ""
+    density = getattr(spool, "density_g_cm3", None)
     return InventoryFilament(
-        id="{}{}".format(ENTRY_PREFIX, max(0, int(spool.id))),
+        id=catalog_id or "{}{}".format(ENTRY_PREFIX, max(0, int(spool.id))),
         manufacturer=spool.brand or "Unknown",
         product_line=material_label,
         color_name=color_name,
         color_hex=spool.color_hex,
-        slicer_filament_type=family,
-        density_g_cm3=printer_model.default_density(spool.material),
+        slicer_filament_type=(spool.material or family) if catalog_id else family,
+        density_g_cm3=density if catalog_id and density else printer_model.default_density(spool.material),
         template_material=printer_model.default_template_material(spool.material),
         category=family,
         orca_filament_profile=spool.slicer_filament_name or spool.slicer_filament or None,

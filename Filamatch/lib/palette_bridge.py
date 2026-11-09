@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from . import bambu_lan
 from . import body_settings
 from . import design_check
+from . import manual_printer
 from . import testing
 
 from .. import config
@@ -101,6 +102,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     # Bambu printers read directly over the LAN (see bambu_lan.LanPrinter);
     # each access code lives in the keychain, the file keeps it empty.
     "bambu_lan_printers": [],
+    # A printer described by hand (see manual_printer): name, nozzle, slots.
+    "manual_printers": [],
     # The As printed tab's own settings (lib/as_printed_bridge.py owns them).
     "as_printed": {},
 }
@@ -399,7 +402,13 @@ def public_settings(settings: Mapping[str, Any]) -> Dict[str, Any]:
     if not isinstance(slot_map, dict):
         payload["bambuddy_slot_map"] = {}
     payload[bambu_lan.SETTINGS_KEY] = _lan_printers_public(settings)
+    payload[manual_printer.SETTINGS_KEY] = _manual_printers_public(settings)
     return payload
+
+
+def _manual_printers_public(settings: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """Saved manual printers as the palette shows them."""
+    return [printer.public() for printer in manual_printer.printers_from_settings(settings)]
 
 
 def _lan_printers_public(settings: Mapping[str, Any]) -> List[Dict[str, Any]]:
@@ -415,6 +424,8 @@ def _printer_source_payload(settings: Mapping[str, Any]) -> Dict[str, Any]:
         "printer_source": printer_sources.selected_source_id(settings),
         "printer_configured": printer_sources.is_configured(settings),
         "bambu_lan": {"printers": _lan_printers_public(settings)},
+        "manual": {"printers": _manual_printers_public(settings),
+                   "nozzle_materials": list(manual_printer.NOZZLE_MATERIALS)},
         "sources": [
             {"id": info.source_id, "label": info.label}
             for info in printer_sources.registered_sources()
@@ -1068,6 +1079,32 @@ def _bambuddy_slot_display_name(slot: Any) -> str:
     return str(getattr(slot, "display_name", "") or "")
 
 
+def _slot_choices(settings: Mapping[str, Any], slots: Sequence[Any]) -> Dict[str, Any]:
+    """The saved slot choices that fit these slots ("Not loaded" always fits).
+
+    A choice made for another source or printer (after switching) is left
+    out here but stays saved, so it works again after switching back.
+    """
+    saved = settings.get("bambuddy_slot_map")
+    if not isinstance(saved, dict):
+        return {}
+    keys = {str(getattr(slot, "key", "")) for slot in slots}
+    return {
+        material_id: choice
+        for material_id, choice in saved.items()
+        if str(choice or "").strip().lower() in ("", "none") or str(choice).strip() in keys
+    }
+
+
+def _selected_printer_slots(context: Any, settings: Mapping[str, Any]) -> List[Any]:
+    """The chosen printer's slots; the first printer when the saved one is not in this source."""
+    printer_ids = [printer.id for printer in context.printers]
+    printer_id = int(settings.get("bambuddy_printer_id") or 0)
+    if printer_id not in printer_ids and printer_ids:
+        printer_id = printer_ids[0]
+    return [slot for slot in context.slots if slot.printer_id == printer_id]
+
+
 def _bambuddy_context_payload(
     settings: Mapping[str, Any], materials: Optional[Sequence[Any]] = None
 ) -> Dict[str, Any]:
@@ -1084,10 +1121,7 @@ def _bambuddy_context_payload(
         slot for slot in context.slots if slot.printer_id == selected_printer_id
     ]
     detected = list(materials or [])
-    saved_map = settings.get("bambuddy_slot_map")
-    if not isinstance(saved_map, dict):
-        saved_map = {}
-    mapping = slot_mapping.build_mapping(detected, slots, saved_map)
+    mapping = slot_mapping.build_mapping(detected, slots, _slot_choices(settings, slots))
     return {
         "ok": True,
         "configured": True,
@@ -1249,8 +1283,7 @@ def _import_bambuddy_slots(
         app = _active_app()
         if design is None or app is None:
             raise RuntimeError("Open a Fusion design before importing Bambuddy spools.")
-        printer_id = int(settings.get("bambuddy_printer_id") or 0)
-        slots = [slot for slot in context.slots if slot.printer_id == printer_id]
+        slots = _selected_printer_slots(context, settings)
         raw_keys = data.get("slot_keys")
         selected_keys = (
             [str(key) for key in raw_keys if str(key).strip()]
@@ -1351,8 +1384,7 @@ def _use_loaded_filament(
         design, app = _active_design(), _active_app()
         if design is None or app is None:
             raise RuntimeError("Open a Fusion design first.")
-        printer_id = int(settings.get("bambuddy_printer_id") or 0)
-        slots = [slot for slot in context.slots if slot.printer_id == printer_id]
+        slots = _selected_printer_slots(context, settings)
         if not any(slot.key == slot_key and slot.loaded for slot in slots):
             raise RuntimeError("That printer slot has no spool now. Read the printer again.")
         entries, results = inventory_sync.sync_slots_to_favorites(app, design, slots, selected_keys=[slot_key])
@@ -2215,8 +2247,7 @@ def _read_slot_rows(detected: Sequence[Any], settings: Mapping[str, Any]) -> Opt
     if printer_id not in printers and context.printers:
         printer_id = context.printers[0].id
     slots = [slot for slot in context.slots if slot.printer_id == printer_id]
-    saved_map = settings.get("bambuddy_slot_map")
-    rows = slot_mapping.build_mapping(list(detected), slots, saved_map if isinstance(saved_map, dict) else {})
+    rows = slot_mapping.build_mapping(list(detected), slots, _slot_choices(settings, slots))
     return types.SimpleNamespace(printers=printers, printer_id=printer_id, slots=slots, rows=rows)
 
 
@@ -2352,6 +2383,36 @@ def _report_built_presets(paths: Sequence[str], kind: str, save: bool) -> None:
         except Exception as exc:
             LOGGER.exception("Could not save the built filament preset %r", path)
             log_message("Could not save the filament preset {}: {}".format(Path(path).stem, _error_text(exc)))
+
+
+def _report_user_presets(project: Path, kind: str, save: bool) -> None:
+    """Your own presets the project uses that the slicer cannot see (another
+    account's user folder): with ``save`` copy them into the folder it uses,
+    else say why the slicer may show a generic filament (never fails the export)."""
+    from . import filament_presets
+
+    try:
+        missing = filament_presets.presets_in_other_folders(filament_presets.project_filament_presets(project), kind)
+    except Exception:
+        LOGGER.exception("Could not check the project's user presets")
+        return
+    app = {"bambu": "Bambu Studio", "orca": "OrcaSlicer"}.get(kind, "the slicer")
+    for preset in missing:
+        name = preset["name"]
+        if not save:
+            log_message("Your preset {!r} is in another account's preset folder, so {} may not find it and "
+                        "use a generic filament. Turn on Save new filament presets in the slicer (Settings) "
+                        "to copy it, or sign in to {}.".format(name, app, app))
+            continue
+        try:
+            status, _target = filament_presets.copy_to_active_folder(Path(preset["path"]), kind)
+        except Exception as exc:
+            LOGGER.exception("Could not copy the user preset %r", name)
+            log_message("Could not copy your preset {!r} for {}: {}".format(name, app, _error_text(exc)))
+            continue
+        if status == "copied":
+            log_message("Copied your preset {!r} into the presets {} uses now (it shows after {} restarts)".format(
+                name, app, app))
 
 
 def _attach_bambuddy_slot_manifest(
@@ -2722,6 +2783,11 @@ def _finish_export_files(job: Mapping[str, Any]) -> Dict[str, Any]:
             )
             _report_built_presets(
                 getattr(prepared_result, "built_presets", ()) or (),
+                _slicer_kind(open_app) or _slicer_kind(slicer_exe),
+                bool(settings.get("save_slicer_presets", False)),
+            )
+            _report_user_presets(
+                output,
                 _slicer_kind(open_app) or _slicer_kind(slicer_exe),
                 bool(settings.get("save_slicer_presets", False)),
             )
@@ -3252,11 +3318,12 @@ def _handle_open_material_browser(palette: Any) -> None:
 def _handle_save_settings(data: Mapping[str, Any], palette: Any) -> None:
     """Persist palette settings and acknowledge them.
 
-    The LAN printer list is changed only by its own actions: the palette holds
-    a public copy without serials and access codes.
+    The LAN and manual printer lists are changed only by their own actions:
+    the palette holds a public copy (LAN: without serials and access codes).
     """
     try:
-        changes = {key: value for key, value in data.items() if key != bambu_lan.SETTINGS_KEY}
+        changes = {key: value for key, value in data.items()
+                   if key not in (bambu_lan.SETTINGS_KEY, manual_printer.SETTINGS_KEY)}
         settings = save_settings(changes)
         log_message("Settings saved")
         _send(palette, "settingsSaved", _settings_reply(settings))
@@ -3419,6 +3486,61 @@ def _handle_bambu_lan_save(data: Mapping[str, Any], palette: Any) -> None:
     _run_job("printer-save", lambda: bambu_lan.probe(ip, code, trust), finish)
 
 
+def _manual_printers_reply(settings: Mapping[str, Any], **extra: Any) -> Dict[str, Any]:
+    reply = _settings_reply(settings)
+    reply["printers"] = _manual_printers_public(settings)
+    reply.update(extra)
+    return reply
+
+
+def _handle_manual_printer_save(data: Mapping[str, Any], palette: Any) -> None:
+    """Save the manual printer from the palette form and select the manual source.
+
+    Each slot names a catalog filament; its fields are kept with the slot. The
+    manual printer becomes the chosen printer.
+    """
+    try:
+        from . import catalog
+
+        entries = _load_catalog_entries()
+
+        def find_entry(entry_id: str) -> Any:
+            try:
+                return catalog.find_by_id(entries, entry_id)
+            except Exception:
+                return None
+
+        current = load_settings()
+        saved = manual_printer.printers_from_settings(current)
+        printer = manual_printer.printer_from_palette(data.get("printer") or {}, find_entry,
+                                                      existing=saved[0] if saved else None)
+        settings = save_settings({
+            manual_printer.SETTINGS_KEY: [printer.to_settings()],
+            "printer_source": manual_printer.SOURCE_ID,
+            "bambuddy_printer_id": printer.id,
+        })
+        loaded = sum(1 for slot in printer.slots if slot.catalog_id)
+        log_message("Saved manual printer {} ({} slots, {} with a filament)".format(
+            printer.name, len(printer.slots), loaded))
+        _send(palette, "manualPrinters", _manual_printers_reply(settings))
+    except manual_printer.ManualPrinterError as exc:
+        _send_error(palette, "manualPrinters", str(exc))
+    except Exception as exc:
+        LOGGER.exception("Could not save the manual printer")
+        _send_error(palette, "manualPrinters", _error_text(exc))
+
+
+def _handle_manual_printer_remove(palette: Any) -> None:
+    """Forget the manual printer."""
+    try:
+        settings = save_settings({manual_printer.SETTINGS_KEY: []})
+        log_message("Removed the manual printer")
+        _send(palette, "manualPrinters", _manual_printers_reply(settings))
+    except Exception as exc:
+        LOGGER.exception("Could not remove the manual printer")
+        _send_error(palette, "manualPrinters", _error_text(exc))
+
+
 def _handle_bambu_lan_remove(data: Mapping[str, Any], palette: Any) -> None:
     """Forget one LAN printer and its access code."""
     try:
@@ -3541,6 +3663,10 @@ def dispatch(action: str, data: Any, palette: Any) -> None:
         _handle_bambu_lan_save(payload, palette)
     elif action == "bambu_lan_remove":
         _handle_bambu_lan_remove(payload, palette)
+    elif action == "manual_printer_save":
+        _handle_manual_printer_save(payload, palette)
+    elif action == "manual_printer_remove":
+        _handle_manual_printer_remove(palette)
     elif action == "get_log":
         _handle_get_log(palette)
     elif not _dispatch_module(action, payload, palette):
@@ -3927,6 +4053,48 @@ def _self_test() -> int:
                 and secret_store.get_secret(bambu_lan.secret_account(lan_printer.serial)) is None,
                 "removing a LAN printer deletes its access code",
             )
+            # The manual printer: saved from the form with catalog filaments, then read like any source.
+            manual = _FakePalette()
+            dispatch("manual_printer_save", json.dumps({"printer": {
+                "name": "Prusa MK4", "nozzle_diameter": 0.6, "nozzle_material": "brass",
+                "slots": [{"label": "T1", "catalog_id": "bambu_pla_basic_black", "remaining_g": 300},
+                          {"label": "", "catalog_id": ""}]}}), manual)
+            reply = manual.sent[-1][1]
+            _check(
+                manual.sent[-1][0] == "manualPrinters" and reply.get("ok") is True
+                and reply["settings"]["printer_source"] == "manual" and reply["printer_configured"] is True
+                and reply["printers"][0]["slots"][0]["display_name"] == "Bambu Lab - PLA Basic - Black"
+                and reply["printers"][0]["slots"][1]["label"] == "Slot 2",
+                "manual_printer_save keeps the filament and selects the manual source",
+            )
+            from . import printer_sources
+
+            context = printer_sources.fetch_context(load_settings())
+            first = context.slots[0]
+            stale = {"bambuddy_slot_map": {"m1": "1:0:3", "m2": "none", "m3": context.slots[0].key}}
+            _check(
+                _slot_choices(stale, context.slots) == {"m2": "none", "m3": context.slots[0].key},
+                "a slot choice from another source is left out; Not loaded and this source's choices stay",
+            )
+            _check(
+                first.spool is not None and first.spool.catalog_id == "bambu_pla_basic_black"
+                and first.slot_label == "T1" and not context.slots[1].loaded
+                and context.printers[0].nozzles[0].diameter == 0.6
+                and _selected_printer_slots(context, {"bambuddy_printer_id": 12345}) == list(context.slots),
+                "the manual source gives the slots; an old printer id falls back to the first printer",
+            )
+            dispatch("manual_printer_save", json.dumps({"printer": {"nozzle_diameter": 0.4, "slots": [
+                {"catalog_id": "no_such_filament"}]}}), manual)
+            _check(
+                manual.sent[-1][1].get("ok") is False and "not in Filamatch" in manual.sent[-1][1].get("error", ""),
+                "an unknown filament is refused with a plain message",
+            )
+            dispatch("save_settings", json.dumps({manual_printer.SETTINGS_KEY: []}), manual)
+            _check(manual_printer.printers_from_settings(load_settings()),
+                   "save_settings from the palette cannot overwrite the manual printer")
+            dispatch("manual_printer_remove", "{}", manual)
+            _check(manual.sent[-1][1]["printers"] == [] and manual.sent[-1][1]["printer_configured"] is False,
+                   "manual_printer_remove forgets the manual printer")
             _SECRETS_NEED_FUSION = True
             _check(
                 load_settings()["bambuddy_api_key"] == "",

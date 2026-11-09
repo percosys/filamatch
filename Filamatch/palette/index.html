@@ -222,6 +222,10 @@
               <input id="printer-source-bambu-lan" type="radio" name="printer-source" value="bambu_lan">
               <span>Bambu printer (LAN)</span>
             </label>
+            <label class="segmented__option" for="printer-source-manual">
+              <input id="printer-source-manual" type="radio" name="printer-source" value="manual">
+              <span>Manual</span>
+            </label>
           </div>
           <p id="printer-source-status" class="status status--muted" role="status" aria-live="polite"></p>
 
@@ -294,6 +298,67 @@
               </div>
             </div>
           </div>
+
+          <div id="manual-card" class="card" hidden>
+            <div class="card__row">
+              <span id="manual-dot" class="dot dot--off" aria-hidden="true"></span>
+              <div class="card__main">
+                <div id="manual-title" class="card__name">Manual printer</div>
+                <div id="manual-summary" class="faint">Not set up</div>
+              </div>
+              <button id="manual-edit-toggle" class="btn btn--ghost btn--small" type="button" aria-expanded="false" aria-controls="manual-form">Set up</button>
+            </div>
+            <div class="card__body">
+              <p id="manual-intro" class="faint">For any printer: say which filament is in which slot. Filamatch matches the design to these slots and gives the slicer each slot's filament.</p>
+              <p id="manual-list-status" class="status status--muted" role="status" aria-live="polite"></p>
+              <div id="manual-form" class="manual-form" hidden>
+                <div class="field">
+                  <label class="field-label" for="manual-name">Printer name</label>
+                  <input id="manual-name" class="text-input" type="text" placeholder="My printer" autocomplete="off" spellcheck="false" maxlength="60">
+                </div>
+                <div class="field-pair">
+                  <div class="field">
+                    <label class="field-label" for="manual-nozzle-size">Nozzle</label>
+                    <select id="manual-nozzle-size" class="select-input">
+                      <option value="0.2">0.2 mm</option>
+                      <option value="0.25">0.25 mm</option>
+                      <option value="0.3">0.3 mm</option>
+                      <option value="0.4" selected>0.4 mm</option>
+                      <option value="0.5">0.5 mm</option>
+                      <option value="0.6">0.6 mm</option>
+                      <option value="0.8">0.8 mm</option>
+                      <option value="1">1.0 mm</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="manual-nozzle-material">Nozzle material</label>
+                    <select id="manual-nozzle-material" class="select-input">
+                      <option value="">Not sure</option>
+                      <option value="brass">Brass</option>
+                      <option value="stainless_steel">Stainless steel</option>
+                      <option value="hardened_steel">Hardened steel</option>
+                      <option value="tungsten_carbide">Tungsten carbide</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field">
+                  <span id="manual-slots-label" class="field-label">Slots</span>
+                  <div id="manual-slots" class="manual-slots" role="list" aria-labelledby="manual-slots-label"></div>
+                  <div class="button-row button-row--start">
+                    <button id="manual-add-slot-btn" class="btn btn--ghost btn--small" type="button">Add slot</button>
+                    <button id="manual-fill-btn" class="btn btn--ghost btn--small" type="button" title="One slot for each filament in the open design">Fill from design</button>
+                  </div>
+                  <p class="faint">Pick from the filaments you added to Filamatch; add others under Add filaments first. Grams left are optional, for the spool check.</p>
+                </div>
+                <div class="button-row">
+                  <button id="manual-remove-btn" class="link link--small manual-remove" type="button" hidden>Remove printer</button>
+                  <button id="manual-cancel-btn" class="btn btn--ghost" type="button">Cancel</button>
+                  <button id="manual-save-btn" class="btn btn--primary" type="button">Save</button>
+                </div>
+                <p id="manual-status" class="status status--muted" role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="group" aria-labelledby="connections-title">
@@ -350,7 +415,7 @@
             <span>Save new filament presets in the slicer</span>
             <input id="save-slicer-presets" type="checkbox">
           </label>
-          <p class="faint">When the slicer has no preset for a filament from the Open Filament Database, Filamatch makes one from the database values. The project always gets it. With this on, Bambu Studio, OrcaSlicer or PrusaSlicer also keeps it as your own preset (shown after the slicer restarts). A preset you already have is never replaced.</p>
+          <p class="faint">When the slicer has no preset for a filament from the Open Filament Database, Filamatch makes one from the database values. The project always gets it. With this on, Bambu Studio, OrcaSlicer or PrusaSlicer also keeps it as your own preset (shown after the slicer restarts). It also copies your own presets that the project uses from a signed-in account's folder into the one the slicer uses now, so Bambu Studio and OrcaSlicer find them when you are signed out. A preset you already have is never replaced.</p>
         </section>
 
         <section class="group" aria-labelledby="library-title">
@@ -426,6 +491,10 @@
           <button id="welcome-bambuddy-btn" class="choice" type="button" aria-expanded="false" aria-controls="welcome-bambuddy-form">
             <span class="choice__title">Connect Bambuddy</span>
             <span class="choice__sub">Read printers and spools from your Bambuddy server.</span>
+          </button>
+          <button id="welcome-manual-btn" class="choice" type="button">
+            <span class="choice__title">Any other printer</span>
+            <span class="choice__sub">Say which filament is in which slot. Works for every printer, with no network.</span>
           </button>
         </div>
         <div id="welcome-bambuddy-form" class="welcome-form" hidden>

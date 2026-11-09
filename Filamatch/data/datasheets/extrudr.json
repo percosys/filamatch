@@ -1,0 +1,952 @@
+{
+  "schema": 1,
+  "maker": "Extrudr",
+  "accessed": "2026-11-08",
+  "filaments": [
+    {
+      "product": "DuraPro ABS",
+      "type": "ABS",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-abs/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-abs-TDS-en.pdf",
+      "datasheet_version": "2024-06-19",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 220-250 °C, bed 100-110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.06,
+          "unit": "g/cm3",
+          "standard": "ASTM D792"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2350,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 49,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 10,
+          "unit": "%",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 2550,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 78,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 92,
+          "unit": "°C",
+          "standard": "ASTM D1525 (VICAT A)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. The impact rows name ASTM D256 (Izod, normally J/m) with the unit kJ/m2 and give '220 / 23°C' notched and '90 / -30°C' unnotched; the unit and numbers do not fit, so the impact values are left out. HDT/B 85 °C (ASTM D648; load not stated beyond 'B', so left out). Elongation at yield 5 %. Rockwell R 110. UL94 HB at 1.5 mm. The MFR row gives the unit g/cm3 (sheet error)."
+    },
+    {
+      "product": "DuraPro ABS CF",
+      "type": "ABS-CF",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-abs-cf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-abs-cf-TDS-en.pdf",
+      "datasheet_version": "2026-05-04",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 220-250 °C, bed 100-110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.04,
+          "unit": "g/cm3",
+          "standard": "ASTM D792"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2850,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 55,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 8,
+          "unit": "%",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 3400,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 65,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 95,
+          "unit": "°C",
+          "standard": "ASTM D1525 (VICAT A)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. ABS with carbon fibres. The impact rows print '250°C' (notched) and '110°C' (unnotched) in the value column with the unit kJ/m2: a sheet error, left out. HDT/B 88 °C (left out, load not stated beyond 'B'). Elongation at yield 3 %. Rockwell R 120."
+    },
+    {
+      "product": "DuraPro ASA",
+      "aliases": [
+        "ASA"
+      ],
+      "type": "ASA",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-asa/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-asa-TDS-en.pdf",
+      "datasheet_version": "2026-10-23",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 220-270 °C, bed 100-110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.05,
+          "unit": "g/cm3",
+          "standard": "ASTM D792"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2200,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 62.2,
+          "plus_minus": 3,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 20,
+          "unit": "%",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 3500,
+          "plus_minus": 200,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 78,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 96,
+          "unit": "°C",
+          "standard": "ASTM D1525 (VICAT A)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. The impact rows name ASTM D256 (Izod, normally J/m) with the unit kJ/m2 and give '140 @ 23°C' notched and '29 @ -30°C' unnotched; the unit and numbers do not fit, so the impact values are left out. HDT/B 96 °C (left out, load not stated beyond 'B'). Elongation at yield 6 %. Rockwell R 105. UL94 HB at 1.5/3.0/6.0 mm; UL 746 electrical ratings and a weathering test on pages 2-3."
+    },
+    {
+      "product": "DuraPro ASA CF",
+      "type": "ASA-CF",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-asa-cf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-asa-cf-TDS-en.pdf",
+      "datasheet_version": "2026-03-27",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 240-260 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.14,
+          "unit": "g/cm3",
+          "standard": "ASTM D792"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2500,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 49,
+          "unit": "MPa",
+          "standard": "ASTM D638"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 4500,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 78,
+          "unit": "MPa",
+          "standard": "ASTM D790"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 101,
+          "unit": "°C",
+          "standard": "ASTM D1525 (VICAT A)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. The impact rows name ASTM D256 (Izod, normally J/m) with the unit kJ/m2 and give '100 @ 23°C' notched and '20 @ -30°C' unnotched; the unit and numbers do not fit, so the impact values are left out. HDT/B 96 °C (left out). Carbon fibre content 12 %vol (the sheet names ASTM D785, a hardness method). Rockwell R 105."
+    },
+    {
+      "product": "DuraPro ASA GF",
+      "aliases": [
+        "ASA GF"
+      ],
+      "type": "ASA-GF",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-asa-gf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-asa-gf-TDS-en.pdf",
+      "datasheet_version": "2025-10-28",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 230-270 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.18,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        }
+      ],
+      "notes": "extrudr sheet with ranges only: tensile strength at yield 60-66 MPa (ISO 527), elongation at break 5-8 %, flexural strength 95-105 MPa, flexural modulus 2900-3300 MPa (ISO 178), Izod notched 9-11 kJ/m2, Charpy notched 8-10 kJ/m2 (ISO 179/1eA), HDT 92-100 °C (4 mm, unannealed, load not stated), Vicat (50 N) 100-104 °C. Ranges are not recorded as values; only the single density value is. The rows 'Mold Shrinkage (3.2 mm)' and 'HDT (4mm, Unannealed)' suggest moulded resin data; the sheet does not say. No tensile modulus."
+    },
+    {
+      "product": "DuraPro PA12",
+      "aliases": [
+        "PA12"
+      ],
+      "type": "PA12",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-pa12/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pa12-TDS-en.pdf",
+      "datasheet_version": "2024-07-22",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 260-290 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.01,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 1.6,
+          "unit": "%",
+          "standard": "ISO 62 (saturation 23 °C)"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1440,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 43.0,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 11,
+          "unit": "kJ/m2",
+          "standard": "ISO 179/1eA"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 135,
+          "unit": "°C",
+          "standard": "ISO 75-2/B"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 55.0,
+          "unit": "°C",
+          "standard": "ISO 75-2/A"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 142,
+          "unit": "°C",
+          "standard": "ISO 306/B50"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. Nylon 12; dry or conditioned not stated. The tensile strength row reads 'Tensile Strength (Indentation Depth)' (likely a mistranslated yield value; its strain is 5.0 %). Nominal elongation at break '>50' (left out). Charpy notched 6.0 kJ/m2 at -30 °C; unnotched no break. Heat deflection values unannealed. The table matches a moulding-grade resin sheet (puncture tests, CTI); the sheet does not say."
+    },
+    {
+      "product": "DuraPro PA12 CF",
+      "aliases": [
+        "DuraPro CF PA12"
+      ],
+      "type": "PA12-CF",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-pa12-cf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pa12-cf-TDS-en.pdf",
+      "datasheet_version": "2026-03-27",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 260-290 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.03,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 1.6,
+          "unit": "%",
+          "standard": "ISO 62 (saturation 23 °C)"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2820,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 60.4,
+          "unit": "MPa",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 9,
+          "unit": "kJ/m2",
+          "standard": "ISO 179/1eA"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 139,
+          "unit": "°C",
+          "standard": "ISO 75-2/B"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 58,
+          "unit": "°C",
+          "standard": "ISO 75-2/A"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 145,
+          "unit": "°C",
+          "standard": "ISO 306/B50"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. Nylon 12 with carbon fibres; dry or conditioned not stated. Tensile strength row reads 'Tensile Strength (Indentation Depth)' (strain 4 %). Nominal elongation at break '>35' (left out). Charpy notched 5 kJ/m2 at -30 °C; unnotched no break. Heat deflection values unannealed."
+    },
+    {
+      "product": "DuraPro PA6 CF",
+      "type": "PA6-CF",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-pa6-cf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pa6-cf-TDS-en.pdf",
+      "datasheet_version": "2026-05-04",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 270-300 °C, bed 80-100 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.15,
+          "unit": "g/cm3",
+          "standard": "ISO 1183"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 9,
+          "unit": "%",
+          "standard": "ISO 62 (saturation 23 °C)"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 1100,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 60,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 4.0,
+          "unit": "%",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 16,
+          "unit": "kJ/m2",
+          "standard": "ISO 179/1eA"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 170,
+          "unit": "°C",
+          "standard": "ISO 75-2/B"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 105,
+          "unit": "°C",
+          "standard": "ISO 75-2/A"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. PA6 with carbon fibres; dry or conditioned not stated. Tensile modulus 1100 MPa is as printed (low for a carbon-filled PA6; not checked). Yield strain 3.5 %. Charpy unnotched no break; Izod notched (ISO 180) 5 kJ/m2. The sheet lists moulding shrinkage (ISO 294-4), which suggests moulded test bars; it does not say."
+    },
+    {
+      "product": "DuraPro PA6 GF",
+      "type": "PA6-GF",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-pa6-gf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pa6-gf-TDS-en.pdf",
+      "datasheet_version": "2026-11-05",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 270-300 °C, bed 80-100 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.2,
+          "unit": "g/cm3",
+          "standard": "ISO 1183-1"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 10.5,
+          "unit": "%",
+          "standard": "ISO 62 (23 °C)"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 4800,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 100,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 83,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 3.5,
+          "unit": "%",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 4320,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 140,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength",
+          "direction": "",
+          "value": 60,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1eU"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 8,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1eA"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 168,
+          "unit": "°C",
+          "standard": "ISO 75-1"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 140,
+          "unit": "°C",
+          "standard": "ISO 75-1"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 177,
+          "unit": "°C",
+          "standard": "ISO 306 (VST/B50)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. PA6 with glass fibres; dry or conditioned not stated. Tensile strength = 'Stress at break' 83 MPa; yield 100 MPa. Charpy at -30 °C: notched 6, unnotched 10 kJ/m2. Tg 55 °C, Tm 182 °C (low for PA6; as printed). Mould shrinkage is listed, which suggests moulded bars; the sheet does not say."
+    },
+    {
+      "product": "DuraPro PC FR V0",
+      "aliases": [
+        "DuraPro PC-FR V0"
+      ],
+      "type": "PC",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-pc-fr-v0/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pc-fr-v0-TDS-en.pdf",
+      "datasheet_version": "2026-02-24",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 260-290 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1190,
+          "unit": "kg/m3",
+          "standard": "ISO 1183-1"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.2,
+          "unit": "%",
+          "standard": "ISO 62 (equilibrium)"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2650,
+          "unit": "MPa",
+          "standard": "ISO 527-1,-2"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 69,
+          "unit": "MPa",
+          "standard": "ISO 527-1,-2"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 53,
+          "unit": "MPa",
+          "standard": "ISO 527-1,-2"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 98,
+          "unit": "°C",
+          "standard": "ISO 75-1,-2"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 106,
+          "unit": "°C",
+          "standard": "ISO 75-1,-2"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 115,
+          "unit": "°C",
+          "standard": "ISO 306 (VICAT B)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. Flame-retardant PC: UL 94 V-0 (1.5 mm), 5VA (3.0 mm); EN 45545-2 HL3 (R22, R23, R24) for printed parts 1.5-3 mm. Tensile strength = 'Stress at break' 53 MPa; yield 69 MPa at 5 %; strain at break >50 %. Izod (ISO 180) unnotched 'N' (no break), notched 40 kJ/m2 at 23 °C, 10 at -30 °C. Moulding shrinkage (ISO 2577) is listed, which suggests moulded bars; the sheet does not say. Water absorption at saturation 0.5 %."
+    },
+    {
+      "product": "DuraPro PC/PBT",
+      "aliases": [
+        "DuraPro PBT PC",
+        "DuraPro PC-PBT"
+      ],
+      "type": "PC-PBT",
+      "product_url": "https://www.extrudr.com/en/de/products/durapro-pc-pbt/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pc-pbt-TDS-en.pdf",
+      "datasheet_version": "2026-11-03",
+      "specimen": {
+        "conditioning": "not stated; values are for the base resin",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 260-290 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.2,
+          "unit": "g/cm3",
+          "standard": "ISO 1183-1"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 2200,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 60,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 50,
+          "unit": "MPa",
+          "standard": "ISO 527-1"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 2150,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 80,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 60,
+          "unit": "kJ/m2",
+          "standard": "ISO 179-1eA"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 110,
+          "unit": "°C",
+          "standard": "ISO 75-1"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 85,
+          "unit": "°C",
+          "standard": "ISO 75-1"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 126,
+          "unit": "°C",
+          "standard": "ISO 306 (VST/B120)"
+        }
+      ],
+      "notes": "INJECTION-MOULDED: the sheet says the values are typical data of the base material from injection-moulded ISO test specimens, not 3D-printed parts. No direction (\"\"). Tensile strength = 'Stress at break' 50 MPa; elongation at break >50 %. Charpy notched 40 kJ/m2 at -30 °C; unnotched no break. Water absorption 0.5 % (23 °C, no method). UL 94 HB (1.6 mm)."
+    },
+    {
+      "product": "DuraPro PC-PBT CF",
+      "type": "PC-PBT-CF",
+      "product_url": "",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/durapro-pc-pbt-cf-TDS-en.pdf",
+      "datasheet_version": "2026-03-27",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 265-295 °C, bed 110 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1200,
+          "unit": "kg/m3",
+          "standard": "ISO 1183-1"
+        },
+        {
+          "property": "water_absorption",
+          "direction": "",
+          "value": 0.2,
+          "unit": "%",
+          "standard": "ISO 62 (equilibrium)"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 4520,
+          "unit": "MPa",
+          "standard": "ISO 527-1,-2"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 70.2,
+          "unit": "MPa",
+          "standard": "ISO 527-1,-2"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 60.8,
+          "unit": "MPa",
+          "standard": "ISO 527-1,-2"
+        },
+        {
+          "property": "flexural_modulus",
+          "direction": "",
+          "value": 3350,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "flexural_strength",
+          "direction": "",
+          "value": 85,
+          "unit": "MPa",
+          "standard": "ISO 178"
+        },
+        {
+          "property": "impact_strength_notched",
+          "direction": "",
+          "value": 65,
+          "unit": "kJ/m2",
+          "standard": "ISO 179/1eA"
+        },
+        {
+          "property": "heat_deflection_18",
+          "direction": "",
+          "value": 89,
+          "unit": "°C",
+          "standard": "ISO 75-1,-2"
+        },
+        {
+          "property": "heat_deflection_045",
+          "direction": "",
+          "value": 115,
+          "unit": "°C",
+          "standard": "ISO 75-1,-2"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 130,
+          "unit": "°C",
+          "standard": "ISO 306"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. PC-PBT blend with carbon fibres. Listed on extrudr's data-sheet page; no product page in the current shop (2026-11-08), so product_url is empty. Yield strain 4 %; elongation at break >35 %. Charpy unnotched 'N' (no break); Izod notched (ISO 180/A) 55 kJ/m2. Ball indentation hardness 112 N/mm2. UL 94 HB (1.5 mm)."
+    },
+    {
+      "product": "XPETG CF",
+      "aliases": [
+        "xPETG CF"
+      ],
+      "type": "PETG-CF",
+      "product_url": "https://www.extrudr.com/en/de/products/xpetg-cf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/xpetg-cf-TDS-en.pdf",
+      "datasheet_version": "2026-03-27",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 220-250 °C, bed 60-90 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.29,
+          "unit": "g/cm3",
+          "standard": "ISO 1183-1XA"
+        },
+        {
+          "property": "tensile_modulus",
+          "direction": "",
+          "value": 3350,
+          "plus_minus": 50,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "yield_strength",
+          "direction": "",
+          "value": 59,
+          "plus_minus": 0.4,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 59,
+          "plus_minus": 0.4,
+          "unit": "MPa",
+          "standard": "ISO 527"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 9.4,
+          "plus_minus": 1.5,
+          "unit": "%",
+          "standard": "ISO 527-2"
+        },
+        {
+          "property": "vicat_softening",
+          "direction": "",
+          "value": 85,
+          "unit": "°C",
+          "standard": "ISO 306 (VICAT A)"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. PETG with carbon fibres. The 'Strength' row (59 ± 0.4 MPa) repeats the yield stress. Elongation at yield 3.8 ± 0.1 %. Izod (ISO 180): notched 1.7 ± 0.4, unnotched 67 ± 7 kJ/m2. HDT/B 69 °C (ISO 75; load not stated beyond 'B', left out). UL 94 V-2 at 3.2 mm."
+    },
+    {
+      "product": "PLA Basic CF",
+      "type": "PLA-CF",
+      "product_url": "https://www.extrudr.com/en/de/products/pla-basic-cf/",
+      "datasheet_url": "https://s3.extrudr.com/extrudr-media/datasheets/tds/tds-en/pla-basic-cf-TDS-en.pdf",
+      "datasheet_version": "2026-05-04",
+      "specimen": {
+        "conditioning": "not stated on the sheet",
+        "orientation_note": "The sheet gives no print direction and does not say how the test bars were made. Its print settings (nozzle 200-230 °C, bed 20-60 °C) are recommendations, not the specimen settings."
+      },
+      "properties": [
+        {
+          "property": "density",
+          "direction": "",
+          "value": 1.24,
+          "unit": "g/cm3",
+          "standard": "ASTM D792"
+        },
+        {
+          "property": "tensile_strength",
+          "direction": "",
+          "value": 53,
+          "unit": "MPa",
+          "standard": "ASTM D882"
+        },
+        {
+          "property": "elongation_at_break",
+          "direction": "",
+          "value": 6,
+          "unit": "%",
+          "standard": "ASTM D882"
+        }
+      ],
+      "notes": "extrudr sheet: typical values with no print direction and no word on whether the bars were printed or moulded (so every direction is \"\"); the footnote says temperature resistance was tested at a minimum wall thickness of 4 mm. PLA with carbon fibres. Tests name ASTM D882 (a thin-film tensile method). Tensile modulus printed as '500 (3,5)': unclear, left out. 'Stress at break' 60 MPa is higher than 'Tensile strength' 53 MPa (as printed). Notched impact 0.3 kJ/m2 (ASTM D256 with kJ/m2; left out). HDT 55 °C (ASTM E2092, load not stated)."
+    }
+  ]
+}

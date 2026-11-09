@@ -27,8 +27,9 @@ import sys
 import tempfile
 import time
 import traceback
+import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 logger = logging.getLogger("Filamatch." + __name__.rsplit(".", 1)[-1])
 
@@ -346,6 +347,59 @@ def save_to_slicer(preset: Mapping[str, Any], kind: str) -> Tuple[str, Optional[
     return "saved", target
 
 
+def project_filament_presets(project: Path) -> List[str]:
+    """The filament preset names a Bambu Studio / OrcaSlicer project uses (``filament_settings_id``)."""
+    try:
+        with zipfile.ZipFile(str(project)) as archive:
+            config = json.loads(archive.read("Metadata/project_settings.config"))
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile):
+        return []
+    names = config.get("filament_settings_id") if isinstance(config, dict) else None
+    return [str(name) for name in names] if isinstance(names, list) else []
+
+
+def presets_in_other_folders(names: Sequence[str], kind: str) -> List[Dict[str, Any]]:
+    """The named user presets the slicer cannot see: in another user folder only.
+
+    A slicer reads only one user folder (a signed-in account's, else
+    ``default``), so a preset saved while signed in is missing when signed out.
+    Returns ``{"path", "name"}`` for each name found only outside the active folder.
+    """
+    wanted = {str(name).strip() for name in names if str(name).strip()}
+    if not wanted or kind not in APP_FOLDERS:
+        return []
+    visible = {preset["name"] for preset in user_presets(kind)}
+    found: Dict[str, Dict[str, Any]] = {}
+    for preset in user_presets(kind, all_folders=True):
+        name = preset["name"]
+        if name in wanted and name not in visible and name not in found:
+            found[name] = {"path": preset["path"], "name": name}
+    return [found[name] for name in sorted(found)]
+
+
+def copy_to_active_folder(path: Path, kind: str) -> Tuple[str, Optional[Path]]:
+    """Copy one user preset into the slicer's active user folder; never overwrites.
+
+    The preset stays as it is; its ``.info`` file is new, without the
+    account's cloud ids (like a preset saved while signed out). Returns
+    ``("copied", target)``, ``("exists", target)`` or ``("unsupported", None)``.
+    """
+    folder = user_filament_folder(kind)
+    data = _read_json(Path(path))
+    if folder is None or data is None:
+        return "unsupported", None
+    base = folder / "base"
+    base.mkdir(parents=True, exist_ok=True)
+    target = base / Path(path).name
+    if target.exists():
+        return "exists", target
+    _write_text(target, Path(path).read_text(encoding="utf-8"))
+    info = "sync_info = \nuser_id = \nsetting_id = \nbase_id = \nupdated_time = {}\n".format(int(time.time()))
+    _write_text(target.with_suffix(".info"), info)
+    logger.info("Copied the user preset %r into %s's active user folder.", data.get("name"), APP_FOLDERS[kind])
+    return "copied", target
+
+
 #: Keys of a made PrusaSlicer preset that are not settings.
 _PRUSA_META_KEYS = ("name", "filamatch_slicer", "inherits", "compatible_printers", "compatible_printers_condition",
                     "compatible_prints", "compatible_prints_condition", "renamed_from", "alias")
@@ -476,11 +530,45 @@ def _check_save() -> None:
             _CONF_ROOT_OVERRIDE = None
 
 
+def _check_other_folders() -> None:
+    global _CONF_ROOT_OVERRIDE
+    with tempfile.TemporaryDirectory(prefix="filamatch-presets-test-") as temp:
+        _CONF_ROOT_OVERRIDE = Path(temp)
+        try:
+            user = Path(temp) / "BambuStudio" / "user"
+            account = user / "290488310" / "filament" / "base"
+            account.mkdir(parents=True)
+            name = "Polymaker PPS GF @Bambu Lab H2D 0.4 nozzle"
+            (account / (name + ".json")).write_text(json.dumps({"name": name, "filament_id": "P7bc2bae"}),
+                                                    encoding="utf-8")
+            (account / (name + ".info")).write_text("setting_id = PFUS123\n", encoding="utf-8")
+            project = Path(temp) / "p.3mf"
+            with zipfile.ZipFile(str(project), "w") as archive:
+                archive.writestr("Metadata/project_settings.config", json.dumps(
+                    {"filament_settings_id": ["Bambu ABS-GF @BBL H2D", name]}))
+            names = project_filament_presets(project)
+            _expect(names == ["Bambu ABS-GF @BBL H2D", name], "the project's filament presets are read")
+            missing = presets_in_other_folders(names, "bambu")
+            _expect([item["name"] for item in missing] == [name],
+                    "only the user preset outside the active folder is missing (a system preset is not)")
+            status, target = copy_to_active_folder(Path(missing[0]["path"]), "bambu")
+            _expect(status == "copied" and target == user / "default" / "filament" / "base" / (name + ".json")
+                    and json.loads(target.read_text(encoding="utf-8"))["filament_id"] == "P7bc2bae"
+                    and "PFUS" not in target.with_suffix(".info").read_text(encoding="utf-8"),
+                    "copied as it is into the signed-out folder, without the account's cloud id")
+            _expect(presets_in_other_folders(names, "bambu") == [], "after the copy the slicer sees it")
+            _expect(copy_to_active_folder(Path(missing[0]["path"]), "bambu")[0] == "exists", "never overwritten")
+            _expect(project_filament_presets(Path(temp) / "nope.3mf") == [], "a missing project gives no names")
+        finally:
+            _CONF_ROOT_OVERRIDE = None
+
+
 def _selftest() -> int:
     failures = 0
     for label, check in (
         ("a preset is built from a generic preset and the database values", _check_build),
         ("a built preset is saved once in the slicer's user folder", _check_save),
+        ("a user preset in another account's folder is copied to the active one", _check_other_folders),
     ):
         try:
             check()
